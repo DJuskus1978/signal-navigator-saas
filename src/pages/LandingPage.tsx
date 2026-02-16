@@ -157,7 +157,7 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Link to="/auth">
-                <Button className="w-full" size="lg" variant="outline">Start Free Trial</Button>
+                <Button className="w-full bg-signal-buy hover:bg-signal-buy/90 text-white" size="lg">Start Free Trial</Button>
               </Link>
             </CardContent>
           </Card>
