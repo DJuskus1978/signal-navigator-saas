@@ -59,10 +59,10 @@ export default function StockDetail() {
   const { technical: t, fundamental: f, sentiment: s, phaseScores } = stock;
 
   const explanations: Record<string, string> = {
-    "strong-buy": `${stock.name} scores exceptionally across all three phases — strong fundamentals, positive market sentiment, and bullish technical signals. This is a high-conviction entry opportunity.`,
+    "strong-buy": `${stock.name} scores exceptionally across all three phases — strong fundamentals, positive market sentiment, and bullish technical radars. This is a high-conviction entry opportunity.`,
     buy: `${stock.name} shows solid fundamentals reinforced by positive news sentiment. Technical indicators confirm the upward momentum — a good time to consider entering.`,
-    hold: `${stock.name} has decent fundamentals but mixed signals from news and technicals. Hold existing positions and monitor for stronger directional cues.`,
-    "dont-buy": `${stock.name} shows concerning signals across our analysis phases. Fundamentals or sentiment are weak, and technicals don't support entry. Wait for conditions to improve.`,
+    hold: `${stock.name} has decent fundamentals but mixed radars from news and technicals. Hold existing positions and monitor for stronger directional cues.`,
+    "dont-buy": `${stock.name} shows concerning radars across our analysis phases. Fundamentals or sentiment are weak, and technicals don't support entry. Wait for conditions to improve.`,
     sell: `${stock.name} is flagged across all phases — deteriorating fundamentals, negative sentiment, and bearish technicals. Consider reducing exposure.`,
   };
 

@@ -90,7 +90,7 @@ export default function Dashboard() {
               <SelectValue placeholder="Filter" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Signals</SelectItem>
+              <SelectItem value="all">All Radars</SelectItem>
               <SelectItem value="strong-buy">🟢🟢 Strong Buy</SelectItem>
               <SelectItem value="buy">🟢 Buy</SelectItem>
               <SelectItem value="hold">🟡 Hold</SelectItem>

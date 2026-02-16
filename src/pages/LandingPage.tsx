@@ -61,7 +61,7 @@ export default function LandingPage() {
             className="text-base text-muted-foreground/80 mb-10 max-w-2xl mx-auto italic"
             initial="hidden" animate="visible" custom={2.5} variants={fadeUp}
           >
-            Our proprietary AI-powered algorithm evaluates each stock through three phases — fundamentals, real-time news sentiment, and technical indicators — delivering a single, clear recommendation you can trust. No jargon, no complexity: just actionable signals designed for everyday investors who want professional-grade insights without the learning curve.
+            Our proprietary AI-powered algorithm evaluates each stock through three phases — fundamentals, real-time news sentiment, and technical indicators — delivering a single, clear recommendation you can trust. No jargon, no complexity: just actionable radars designed for everyday investors who want professional-grade insights without the learning curve.
           </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
@@ -103,7 +103,7 @@ export default function LandingPage() {
             {[
               { icon: Zap, title: "Sign Up", desc: "Create your free account in seconds with Google or email." },
               { icon: Shield, title: "Subscribe", desc: "Unlock full access to all recommendations for just €7/month." },
-              { icon: BarChart3, title: "Get Signals", desc: "See clear Buy, Hold, or Sell recommendations for every stock." },
+              { icon: BarChart3, title: "Get Radars", desc: "See clear Buy, Hold, or Sell recommendations for every stock." },
             ].map((step, i) => (
               <motion.div
                 key={step.title}
@@ -142,7 +142,7 @@ export default function LandingPage() {
             <ul className="text-sm text-left space-y-3 mb-8">
               {[
                 "All Nasdaq, Dow & S&P 500 stocks",
-                "Real-time Buy/Hold/Sell signals",
+                "Real-time Buy/Hold/Sell radars",
                 "Technical & fundamental analysis",
                 "Confidence indicators",
                 "Mobile-friendly dashboard",
