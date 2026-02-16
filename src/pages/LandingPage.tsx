@@ -67,7 +67,7 @@ export default function LandingPage() {
               </Button>
             </Link>
             <a href="#pricing">
-              <Button size="lg" variant="outline" className="text-base px-8">
+              <Button size="lg" variant="outline" className="text-base px-8 border-foreground">
                 View Pricing
               </Button>
             </a>
