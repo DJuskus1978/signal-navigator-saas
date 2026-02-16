@@ -126,7 +126,67 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Customer Radars */}
+      <section className="container mx-auto px-4 py-20">
+        <h2 className="font-display text-3xl font-bold text-center mb-4">Customer Radars</h2>
+        <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
+          See what everyday investors are saying about StocksRadars
+        </p>
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {[
+            {
+              name: "Sarah M.",
+              role: "Retail Investor",
+              quote: "StocksRadars cut through all the noise. I used to spend hours reading conflicting opinions online — now I check my radars in 30 seconds and make confident decisions.",
+            },
+            {
+              name: "James T.",
+              role: "Part-time Trader",
+              quote: "The simplicity is what sold me. No jargon, no complicated charts — just a clear green, yellow, or red light. I've made smarter trades in two weeks than I did in six months on my own.",
+            },
+            {
+              name: "Elena R.",
+              role: "First-time Investor",
+              quote: "I was overwhelmed by the amount of stock information out there. StocksRadars made it so easy to understand what to buy and what to avoid. It's like having a financial advisor in my pocket.",
+            },
+            {
+              name: "David K.",
+              role: "Freelance Designer",
+              quote: "I don't have time to research every stock. StocksRadars saves me hours every week and the recommendations have been spot-on. Fastest investing decisions I've ever made.",
+            },
+            {
+              name: "Priya N.",
+              role: "Software Engineer",
+              quote: "I love data but hated sifting through endless financial reports. StocksRadars distills everything into one clear radar — it helped me navigate the market with real confidence.",
+            },
+          ].map((testimonial, i) => (
+            <motion.div
+              key={testimonial.name}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              custom={i}
+              variants={fadeUp}
+            >
+              <Card className="h-full">
+                <CardContent className="p-6">
+                  <p className="text-sm text-muted-foreground mb-4 italic">"{testimonial.quote}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
+                      {testimonial.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{testimonial.name}</p>
+                      <p className="text-xs text-muted-foreground">{testimonial.role}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
       <section id="pricing" className="container mx-auto px-4 py-20">
         <h2 className="font-display text-3xl font-bold text-center mb-4">Simple pricing</h2>
         <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
