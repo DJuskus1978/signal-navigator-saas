@@ -52,10 +52,12 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         signal: {
+          "strong-buy": "hsl(var(--signal-strong-buy))",
           buy: "hsl(var(--signal-buy))",
           hold: "hsl(var(--signal-hold))",
           "dont-buy": "hsl(var(--signal-dont-buy))",
           sell: "hsl(var(--signal-sell))",
+          "strong-buy-bg": "hsl(var(--signal-strong-buy-bg))",
           "buy-bg": "hsl(var(--signal-buy-bg))",
           "hold-bg": "hsl(var(--signal-hold-bg))",
           "dont-buy-bg": "hsl(var(--signal-dont-buy-bg))",
