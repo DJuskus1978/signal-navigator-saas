@@ -61,7 +61,7 @@ export default function AuthPage() {
       <div className="w-full max-w-sm">
         <Link to="/" className="flex items-center gap-2 justify-center mb-8">
           <RadarLogo />
-          <span className="font-display font-bold text-xl">StockRadar</span>
+          <span className="font-display font-bold text-xl">StocksRadars</span>
         </Link>
 
         <Card>

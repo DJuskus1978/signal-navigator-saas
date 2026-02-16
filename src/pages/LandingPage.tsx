@@ -23,7 +23,7 @@ export default function LandingPage() {
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <Link to="/" className="flex items-center gap-2">
             <RadarLogo />
-            <span className="font-display font-bold text-xl">StockRadar</span>
+            <span className="font-display font-bold text-xl">StocksRadars</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link to="/auth">
@@ -55,7 +55,7 @@ export default function LandingPage() {
             className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
             initial="hidden" animate="visible" custom={2} variants={fadeUp}
           >
-            Stop guessing. StockRadar analyzes technical and fundamental data across Nasdaq, Dow Jones, and S&P 500 — and tells you exactly what to do with a simple traffic light.
+            Stop guessing. StocksRadars analyzes technical and fundamental data across Nasdaq, Dow Jones, and S&P 500 — and tells you exactly what to do with a simple traffic light.
            </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
@@ -164,7 +164,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} StockRadar. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} StocksRadars. All rights reserved.</p>
           <p className="mt-1">Not financial advice. For educational purposes only.</p>
         </div>
       </footer>

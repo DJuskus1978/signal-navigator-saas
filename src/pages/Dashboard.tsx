@@ -54,7 +54,7 @@ export default function Dashboard() {
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <Link to="/" className="flex items-center gap-2">
             <RadarLogo />
-            <span className="font-display font-bold text-xl">StockRadar</span>
+            <span className="font-display font-bold text-xl">StocksRadars</span>
           </Link>
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground hidden sm:inline">
