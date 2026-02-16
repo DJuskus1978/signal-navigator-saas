@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_usage: {
+        Row: {
+          call_count: number
+          created_at: string
+          id: string
+          updated_at: string
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          call_count?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          call_count?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -70,6 +97,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_increment_usage: {
+        Args: { _daily_limit: number; _user_id: string }
+        Returns: boolean
+      }
       get_admin_users: {
         Args: never
         Returns: {
