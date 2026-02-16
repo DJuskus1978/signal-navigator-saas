@@ -89,6 +89,13 @@ export default function LandingPage() {
             <TrafficLight recommendation="dont-buy" size="lg" />
             <TrafficLight recommendation="sell" size="lg" />
           </motion.div>
+
+          <motion.p
+            className="mt-10 text-base text-muted-foreground/80 mb-0 max-w-2xl mx-auto italic"
+            initial="hidden" animate="visible" custom={5} variants={fadeUp}
+          >
+            Our proprietary AI-powered algorithm evaluates each stock through three phases — fundamentals, real-time news sentiment, and technical indicators — delivering a single, clear recommendation you can trust. No jargon, no complexity: just actionable radars designed for everyday investors who want professional-grade insights without the learning curve.
+          </motion.p>
         </div>
       </section>
 
