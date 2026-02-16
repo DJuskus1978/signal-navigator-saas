@@ -27,10 +27,10 @@ export default function LandingPage() {
             <span className="font-display font-bold text-xl">StockRadar</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link to="/dashboard">
-              <Button variant="ghost" size="sm">Dashboard</Button>
+            <Link to="/auth">
+              <Button variant="ghost" size="sm">Sign In</Button>
             </Link>
-            <Link to="/dashboard">
+            <Link to="/auth">
               <Button size="sm">Get Started</Button>
             </Link>
           </div>
@@ -62,7 +62,7 @@ export default function LandingPage() {
             className="flex flex-col sm:flex-row gap-4 justify-center"
             initial="hidden" animate="visible" custom={3} variants={fadeUp}
           >
-            <Link to="/dashboard">
+            <Link to="/auth">
               <Button size="lg" className="gap-2 text-base px-8">
                 Start Free <ArrowRight className="w-4 h-4" />
               </Button>
@@ -148,7 +148,7 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
-            <Link to="/dashboard">
+            <Link to="/auth">
               <Button className="w-full" size="lg">Get Started</Button>
             </Link>
           </CardContent>
