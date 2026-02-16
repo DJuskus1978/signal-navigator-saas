@@ -5,7 +5,8 @@ import { TrafficLight } from "@/components/TrafficLight";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, TrendingUp } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { RadarLogo } from "@/components/RadarLogo";
 import { cn } from "@/lib/utils";
 
 function Indicator({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
@@ -50,9 +51,7 @@ export default function StockDetail() {
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <RadarLogo />
             <span className="font-display font-bold text-xl">StockRadar</span>
           </Link>
         </div>

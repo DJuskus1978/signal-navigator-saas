@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { StockCard } from "@/components/StockCard";
 import { getStocksByExchange } from "@/lib/mock-data";
 import { Exchange, Recommendation } from "@/lib/types";
-import { TrendingUp, Search, Filter, LogOut } from "lucide-react";
+import { Search, Filter, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { RadarLogo } from "@/components/RadarLogo";
 import {
   Select,
   SelectContent,
@@ -52,9 +53,7 @@ export default function Dashboard() {
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <RadarLogo />
             <span className="font-display font-bold text-xl">StockRadar</span>
           </Link>
           <div className="flex items-center gap-3">
