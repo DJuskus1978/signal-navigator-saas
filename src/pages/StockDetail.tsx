@@ -257,7 +257,7 @@ export default function StockDetail() {
         </div>
 
         <p className="text-xs text-muted-foreground text-center mt-8">
-          This is not financial advice. Data shown is for educational purposes only.
+          StocksRadars does not serve as financial advice. The data shown is for recommendational purposes only.
         </p>
       </main>
     </div>

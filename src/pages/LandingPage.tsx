@@ -258,10 +258,17 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} StocksRadars. All rights reserved.</p>
-          <p className="mt-1">Not financial advice. For educational purposes only.</p>
+      <footer className="border-t border-border py-10">
+        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground space-y-4">
+          <p className="font-medium text-foreground/80">
+            StocksRadars does not serve as financial advice. The data shown is for recommendational purposes only.
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <Link to="/terms" className="hover:text-foreground underline underline-offset-4">Terms of Use</Link>
+            <span>·</span>
+            <Link to="/privacy" className="hover:text-foreground underline underline-offset-4">Privacy Policy</Link>
+          </div>
+          <p className="text-xs">© {new Date().getFullYear()} StocksRadars. All rights reserved.</p>
         </div>
       </footer>
     </div>
