@@ -91,6 +91,7 @@ export default function Dashboard() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Signals</SelectItem>
+              <SelectItem value="strong-buy">🟢🟢 Strong Buy</SelectItem>
               <SelectItem value="buy">🟢 Buy</SelectItem>
               <SelectItem value="hold">🟡 Hold</SelectItem>
               <SelectItem value="dont-buy">🟠 Don't Buy</SelectItem>

@@ -11,6 +11,7 @@ interface TrafficLightProps {
 const sizePx = { sm: 12, md: 16, lg: 24 };
 
 const signalHsl: Record<Recommendation, string> = {
+  "strong-buy": "var(--signal-strong-buy)",
   buy: "var(--signal-buy)",
   hold: "var(--signal-hold)",
   "dont-buy": "var(--signal-dont-buy)",
