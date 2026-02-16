@@ -52,10 +52,16 @@ export default function LandingPage() {
             <span className="text-primary">everyday investors</span>
           </motion.h1>
           <motion.p
-            className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
+            className="text-lg md:text-xl text-muted-foreground mb-6 max-w-2xl mx-auto"
             initial="hidden" animate="visible" custom={2} variants={fadeUp}
           >
             Stop guessing. StockRadar analyzes technical and fundamental data across Nasdaq, Dow Jones, and S&P 500 — and tells you exactly what to do with a simple traffic light.
+          </motion.p>
+          <motion.p
+            className="text-base text-muted-foreground/80 mb-10 max-w-2xl mx-auto italic"
+            initial="hidden" animate="visible" custom={2.5} variants={fadeUp}
+          >
+            Our proprietary AI-powered algorithm evaluates each stock through three phases — fundamentals, real-time news sentiment, and technical indicators — delivering a single, clear recommendation you can trust. No jargon, no complexity: just actionable signals designed for everyday investors who want professional-grade insights without the learning curve.
           </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
