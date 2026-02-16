@@ -62,7 +62,7 @@ export default function LandingPage() {
             initial="hidden" animate="visible" custom={3} variants={fadeUp}
           >
             <Link to="/auth">
-              <Button size="lg" className="gap-2 text-base px-8 bg-signal-buy hover:bg-signal-buy/90 text-white">
+              <Button size="lg" className="gap-2 text-base px-8">
                 Start Free <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
