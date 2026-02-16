@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { StockCard } from "@/components/StockCard";
 import { getStocksByExchange } from "@/lib/mock-data";
 import { Exchange, Recommendation } from "@/lib/types";
-import { TrendingUp, Search, Filter } from "lucide-react";
+import { TrendingUp, Search, Filter, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Select,
   SelectContent,
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/select";
 
 export default function Dashboard() {
+  const { user, signOut } = useAuth();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
 
@@ -56,9 +58,12 @@ export default function Dashboard() {
             <span className="font-display font-bold text-xl">StockRadar</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link to="/">
-              <Button variant="ghost" size="sm">Home</Button>
-            </Link>
+            <span className="text-sm text-muted-foreground hidden sm:inline">
+              {user?.email}
+            </span>
+            <Button variant="ghost" size="sm" onClick={signOut} className="gap-1.5">
+              <LogOut className="w-4 h-4" /> Sign Out
+            </Button>
           </div>
         </div>
       </header>
