@@ -37,19 +37,6 @@ export function RadarLogo({ size = 32 }: { size?: number }) {
           animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
-        {/* Sweep line */}
-        <motion.line
-          x1={center}
-          y1={center}
-          x2={center + r3}
-          y2={center}
-          stroke="hsl(var(--primary-foreground))"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          style={{ transformOrigin: `${center}px ${center}px` }}
-          animate={{ rotate: [0, 360] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-        />
       </svg>
     </div>
   );
