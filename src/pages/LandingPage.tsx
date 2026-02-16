@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrafficLight } from "@/components/TrafficLight";
 import { motion, type Variants } from "framer-motion";
-import { ArrowRight, BarChart3, Shield, Zap, TrendingUp } from "lucide-react";
+import { ArrowRight, BarChart3, Shield, Zap } from "lucide-react";
+import { RadarLogo } from "@/components/RadarLogo";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -21,9 +22,7 @@ export default function LandingPage() {
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <RadarLogo />
             <span className="font-display font-bold text-xl">StockRadar</span>
           </Link>
           <div className="flex items-center gap-3">
