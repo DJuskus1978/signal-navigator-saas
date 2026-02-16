@@ -1,11 +1,11 @@
 import { useParams, Link } from "react-router-dom";
 import { getStockByTicker } from "@/lib/mock-data";
-import { getRecommendationLabel, getPhaseEmoji } from "@/lib/recommendation-engine";
+import { getRecommendationLabel } from "@/lib/recommendation-engine";
 import { TrafficLight } from "@/components/TrafficLight";
+import { RadarChart } from "@/components/RadarChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, TrendingUp, Newspaper, BarChart3 } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
 import { cn } from "@/lib/utils";
@@ -22,23 +22,6 @@ function Indicator({ label, value, hint }: { label: string; value: string | numb
   );
 }
 
-function PhaseBar({ label, score, icon }: { label: string; score: number; icon: React.ReactNode }) {
-  // Map score range roughly -100..+100 to 0..100 for progress
-  const normalized = Math.max(0, Math.min(100, (score + 80) / 1.6));
-  const emoji = getPhaseEmoji(score);
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          {icon}
-          <span>{label}</span>
-        </div>
-        <span className="font-semibold">{emoji} {score > 0 ? "+" : ""}{score}</span>
-      </div>
-      <Progress value={normalized} className="h-2" />
-    </div>
-  );
-}
 
 export default function StockDetail() {
   const { ticker } = useParams<{ ticker: string }>();
@@ -109,12 +92,14 @@ export default function StockDetail() {
             <p className="text-muted-foreground mb-6">{explanations[stock.recommendation]}</p>
 
             {/* 3-Phase Score Breakdown */}
-            <div className="space-y-3 pt-4 border-t border-border">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Analysis Phases</p>
-              <PhaseBar label="Fundamentals (40%)" score={phaseScores.fundamental} icon={<BarChart3 className="w-4 h-4" />} />
-              <PhaseBar label="News & Sentiment (25%)" score={phaseScores.sentiment} icon={<Newspaper className="w-4 h-4" />} />
-              <PhaseBar label="Technicals (35%)" score={phaseScores.technical} icon={<TrendingUp className="w-4 h-4" />} />
-            </div>
+            <RadarChart
+              data={[
+                { label: "Fundamentals", value: phaseScores.fundamental, weight: "40%", icon: <BarChart3 className="w-3.5 h-3.5" /> },
+                { label: "Sentiment", value: phaseScores.sentiment, weight: "25%", icon: <Newspaper className="w-3.5 h-3.5" /> },
+                { label: "Technicals", value: phaseScores.technical, weight: "35%", icon: <TrendingUp className="w-3.5 h-3.5" /> },
+              ]}
+              size={220}
+            />
           </CardContent>
         </Card>
 
