@@ -130,35 +130,71 @@ export default function LandingPage() {
       <section id="pricing" className="container mx-auto px-4 py-20">
         <h2 className="font-display text-3xl font-bold text-center mb-4">Simple pricing</h2>
         <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
-          One plan. Full access. No hidden fees.
+          Start free, upgrade when you're ready.
         </p>
-        <Card className="max-w-sm mx-auto border-2 border-primary shadow-lg">
-          <CardContent className="p-8 text-center">
-            <p className="text-sm font-medium text-primary mb-2">PRO</p>
-            <div className="flex items-baseline justify-center gap-1 mb-2">
-              <span className="font-display text-5xl font-bold">€7</span>
-              <span className="text-muted-foreground">/month</span>
+        <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          {/* Free Plan */}
+          <Card className="border border-border">
+            <CardContent className="p-8 text-center">
+              <p className="text-sm font-medium text-muted-foreground mb-2">FREE</p>
+              <div className="flex items-baseline justify-center gap-1 mb-2">
+                <span className="font-display text-5xl font-bold">€0</span>
+                <span className="text-muted-foreground">/month</span>
+              </div>
+              <p className="text-muted-foreground text-sm mb-8">7-day free trial</p>
+              <ul className="text-sm text-left space-y-3 mb-8">
+                {[
+                  "2 stock checks per day",
+                  "Nasdaq, Dow & S&P 500 coverage",
+                  "Buy/Hold/Sell radars",
+                  "Basic technical analysis",
+                  "Mobile-friendly dashboard",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <span className="text-signal-buy mt-0.5">✓</span>
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link to="/auth">
+                <Button className="w-full" size="lg" variant="outline">Start Free Trial</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Pro Plan */}
+          <Card className="border-2 border-primary shadow-lg relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-primary text-primary-foreground text-xs font-semibold rounded-full">
+              MOST POPULAR
             </div>
-            <p className="text-muted-foreground text-sm mb-8">Cancel anytime</p>
-            <ul className="text-sm text-left space-y-3 mb-8">
-              {[
-                "All Nasdaq, Dow & S&P 500 stocks",
-                "Real-time Buy/Hold/Sell radars",
-                "Technical & fundamental analysis",
-                "Confidence indicators",
-                "Mobile-friendly dashboard",
-              ].map((f) => (
-                <li key={f} className="flex items-start gap-2">
-                  <span className="text-signal-buy mt-0.5">✓</span>
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            <Link to="/auth">
-              <Button className="w-full" size="lg">Get Started</Button>
-            </Link>
-          </CardContent>
-        </Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-sm font-medium text-primary mb-2">PRO</p>
+              <div className="flex items-baseline justify-center gap-1 mb-2">
+                <span className="font-display text-5xl font-bold">€7</span>
+                <span className="text-muted-foreground">/month</span>
+              </div>
+              <p className="text-muted-foreground text-sm mb-8">Cancel anytime</p>
+              <ul className="text-sm text-left space-y-3 mb-8">
+                {[
+                  "Unlimited stock checks",
+                  "All Nasdaq, Dow & S&P 500 stocks",
+                  "Real-time Buy/Hold/Sell radars",
+                  "Technical & fundamental analysis",
+                  "Confidence indicators",
+                  "Mobile-friendly dashboard",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <span className="text-signal-buy mt-0.5">✓</span>
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link to="/auth">
+                <Button className="w-full" size="lg">Get Started</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
       {/* Footer */}
