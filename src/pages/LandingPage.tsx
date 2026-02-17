@@ -95,7 +95,7 @@ export default function LandingPage() {
       </section>
 
       {/* Inside Radar */}
-      <section className="container mx-auto px-4 py-20">
+      <section className="container mx-auto px-4 -mt-10 pb-20">
         <motion.div
           className="max-w-3xl mx-auto text-center"
           initial="hidden"
