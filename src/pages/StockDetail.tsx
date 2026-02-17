@@ -94,11 +94,16 @@ export default function StockDetail() {
             {/* 3-Phase Score Breakdown */}
             <div className="space-y-4">
               {[
-                { label: "Fundamentals", value: phaseScores.fundamental, weight: "40%", icon: <BarChart3 className="w-4 h-4" />, color: "hsl(220, 70%, 50%)" },
-                { label: "Sentiment", value: phaseScores.sentiment, weight: "25%", icon: <Newspaper className="w-4 h-4" />, color: "hsl(35, 95%, 50%)" },
-                { label: "Technicals", value: phaseScores.technical, weight: "35%", icon: <TrendingUp className="w-4 h-4" />, color: "hsl(150, 70%, 40%)" },
+                { label: "Fundamentals", value: phaseScores.fundamental, weight: "40%", icon: <BarChart3 className="w-4 h-4" /> },
+                { label: "Sentiment", value: phaseScores.sentiment, weight: "25%", icon: <Newspaper className="w-4 h-4" /> },
+                { label: "Technicals", value: phaseScores.technical, weight: "35%", icon: <TrendingUp className="w-4 h-4" /> },
               ].map((phase) => {
                 const normalized = Math.max(0, Math.min(100, (phase.value + 80) / 1.6));
+                const barColor = phase.value > 30
+                  ? "hsl(var(--signal-buy))"
+                  : phase.value < -30
+                    ? "hsl(var(--signal-sell))"
+                    : "hsl(var(--signal-hold))";
                 return (
                   <div key={phase.label} className="space-y-1.5">
                     <div className="flex items-center justify-between text-sm">
@@ -111,7 +116,7 @@ export default function StockDetail() {
                         {phase.value > 0 ? "+" : ""}{phase.value}
                       </span>
                     </div>
-                    <Progress value={normalized} className="h-2 [&>div]:transition-all" style={{ "--progress-color": phase.color } as React.CSSProperties} />
+                    <Progress value={normalized} className="h-2" style={{ "--progress-color": barColor } as React.CSSProperties} />
                   </div>
                 );
               })}
