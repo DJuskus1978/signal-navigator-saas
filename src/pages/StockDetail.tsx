@@ -94,11 +94,11 @@ export default function StockDetail() {
             {/* 3-Phase Score Breakdown */}
             <div className="space-y-4">
               {[
-                { label: "Fundamentals", value: phaseScores.fundamental, weight: "40%", icon: <BarChart3 className="w-4 h-4" /> },
-                { label: "Sentiment", value: phaseScores.sentiment, weight: "25%", icon: <Newspaper className="w-4 h-4" /> },
-                { label: "Technicals", value: phaseScores.technical, weight: "35%", icon: <TrendingUp className="w-4 h-4" /> },
+                { label: "Fundamentals", value: phaseScores.fundamental, icon: <BarChart3 className="w-4 h-4" /> },
+                { label: "Sentiment", value: phaseScores.sentiment, icon: <Newspaper className="w-4 h-4" /> },
+                { label: "Technicals", value: phaseScores.technical, icon: <TrendingUp className="w-4 h-4" /> },
               ].map((phase) => {
-                const normalized = Math.max(0, Math.min(100, (phase.value + 80) / 1.6));
+                const normalized = Math.max(0, Math.min(100, (phase.value + 100) / 2));
                 const barColor = phase.value > 30
                   ? "hsl(var(--signal-buy))"
                   : phase.value < -30
@@ -110,13 +110,17 @@ export default function StockDetail() {
                       <div className="flex items-center gap-2 text-muted-foreground">
                         {phase.icon}
                         <span className="font-medium">{phase.label}</span>
-                        <span className="text-xs">({phase.weight})</span>
                       </div>
                       <span className="font-display font-bold">
                         {phase.value > 0 ? "+" : ""}{phase.value}
                       </span>
                     </div>
                     <Progress value={normalized} className="h-2" style={{ "--progress-color": barColor } as React.CSSProperties} />
+                    <div className="flex justify-between text-[10px] text-muted-foreground/60">
+                      <span>-100</span>
+                      <span>0</span>
+                      <span>+100</span>
+                    </div>
                   </div>
                 );
               })}
