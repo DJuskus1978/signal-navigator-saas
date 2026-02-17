@@ -224,7 +224,7 @@ export default function LandingPage() {
             <CardContent className="p-8 text-center">
               <p className="text-sm font-medium text-muted-foreground mb-2">FREE</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="font-display text-5xl font-bold">€0</span>
+                <span className="font-display text-5xl font-bold">$0</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
               <p className="text-muted-foreground text-sm mb-8">7-day free trial</p>
@@ -256,7 +256,7 @@ export default function LandingPage() {
             <CardContent className="p-8 text-center">
               <p className="text-sm font-medium text-primary mb-2">PRO</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="font-display text-5xl font-bold">€7</span>
+                <span className="font-display text-5xl font-bold">$7</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
               <p className="text-muted-foreground text-sm mb-8">Cancel anytime</p>
