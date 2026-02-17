@@ -160,7 +160,7 @@ export default function StockDetail() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-0">
-            <div className="bg-muted/50 rounded-lg p-3 mb-7">
+            <div className="bg-muted/50 rounded-lg p-3 mb-10">
               <p className="text-sm font-medium italic">"{s.headline}"</p>
             </div>
             <Indicator
