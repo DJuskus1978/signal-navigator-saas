@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { getStockByTicker } from "@/lib/mock-data";
 import { getRecommendationLabel } from "@/lib/recommendation-engine";
 import { TrafficLight } from "@/components/TrafficLight";
-import { RadarChart } from "@/components/RadarChart";
+import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -92,14 +92,30 @@ export default function StockDetail() {
             <p className="text-muted-foreground mb-6">{explanations[stock.recommendation]}</p>
 
             {/* 3-Phase Score Breakdown */}
-            <RadarChart
-              data={[
-                { label: "Fundamentals", value: phaseScores.fundamental, weight: "40%", icon: <BarChart3 className="w-3.5 h-3.5" /> },
-                { label: "Sentiment", value: phaseScores.sentiment, weight: "25%", icon: <Newspaper className="w-3.5 h-3.5" /> },
-                { label: "Technicals", value: phaseScores.technical, weight: "35%", icon: <TrendingUp className="w-3.5 h-3.5" /> },
-              ]}
-              size={220}
-            />
+            <div className="space-y-4">
+              {[
+                { label: "Fundamentals", value: phaseScores.fundamental, weight: "40%", icon: <BarChart3 className="w-4 h-4" /> },
+                { label: "Sentiment", value: phaseScores.sentiment, weight: "25%", icon: <Newspaper className="w-4 h-4" /> },
+                { label: "Technicals", value: phaseScores.technical, weight: "35%", icon: <TrendingUp className="w-4 h-4" /> },
+              ].map((phase) => {
+                const normalized = Math.max(0, Math.min(100, (phase.value + 80) / 1.6));
+                return (
+                  <div key={phase.label} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        {phase.icon}
+                        <span className="font-medium">{phase.label}</span>
+                        <span className="text-xs">({phase.weight})</span>
+                      </div>
+                      <span className="font-display font-bold">
+                        {phase.value > 0 ? "+" : ""}{phase.value}
+                      </span>
+                    </div>
+                    <Progress value={normalized} className="h-2" />
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
 
