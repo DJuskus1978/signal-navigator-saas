@@ -94,9 +94,9 @@ export default function StockDetail() {
             {/* 3-Phase Score Breakdown */}
             <div className="space-y-4">
               {[
-                { label: "Fundamentals", value: phaseScores.fundamental, weight: "40%", icon: <BarChart3 className="w-4 h-4" /> },
-                { label: "Sentiment", value: phaseScores.sentiment, weight: "25%", icon: <Newspaper className="w-4 h-4" /> },
-                { label: "Technicals", value: phaseScores.technical, weight: "35%", icon: <TrendingUp className="w-4 h-4" /> },
+                { label: "Fundamentals", value: phaseScores.fundamental, weight: "40%", icon: <BarChart3 className="w-4 h-4" />, color: "hsl(220, 70%, 50%)" },
+                { label: "Sentiment", value: phaseScores.sentiment, weight: "25%", icon: <Newspaper className="w-4 h-4" />, color: "hsl(35, 95%, 50%)" },
+                { label: "Technicals", value: phaseScores.technical, weight: "35%", icon: <TrendingUp className="w-4 h-4" />, color: "hsl(150, 70%, 40%)" },
               ].map((phase) => {
                 const normalized = Math.max(0, Math.min(100, (phase.value + 80) / 1.6));
                 return (
@@ -111,7 +111,7 @@ export default function StockDetail() {
                         {phase.value > 0 ? "+" : ""}{phase.value}
                       </span>
                     </div>
-                    <Progress value={normalized} className="h-2" />
+                    <Progress value={normalized} className="h-2 [&>div]:transition-all" style={{ "--progress-color": phase.color } as React.CSSProperties} />
                   </div>
                 );
               })}
