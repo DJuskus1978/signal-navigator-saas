@@ -301,6 +301,14 @@ export default function StockDetail() {
               <Indicator
                 label="Bollinger Bands"
                 value={`$${t.bollingerLower.toFixed(0)} – $${t.bollingerUpper.toFixed(0)}`}
+                hint={
+                  stock.price < t.bollingerLower ? "Near lower band" :
+                  stock.price > t.bollingerUpper ? "Near upper band" : "Within range"
+                }
+                signal={
+                  stock.price < t.bollingerLower ? "bullish" :
+                  stock.price > t.bollingerUpper ? "bearish" : "neutral"
+                }
               />
               <Indicator
                 label="ATR (Volatility)"
