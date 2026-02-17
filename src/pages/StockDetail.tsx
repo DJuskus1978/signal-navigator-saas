@@ -120,9 +120,9 @@ export default function StockDetail() {
                 { label: "Technicals", value: phaseScores.technical, icon: <TrendingUp className="w-4 h-4" /> },
               ].map((phase) => {
                 const normalized = Math.max(0, Math.min(100, (phase.value + 100) / 2));
-                const barColor = phase.value > 30
+                const barColor = phase.value > 0
                   ? "hsl(var(--signal-buy))"
-                  : phase.value < -30
+                  : phase.value < 0
                     ? "hsl(var(--signal-sell))"
                     : "hsl(var(--signal-hold))";
                 return (

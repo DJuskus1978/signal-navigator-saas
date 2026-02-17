@@ -40,13 +40,13 @@
     --signal-strong-buy: 150 80% 35%;
     --signal-buy: 145 65% 42%;
     --signal-hold: 45 95% 50%;
-    --signal-dont-buy: 25 95% 53%;
+    --signal-dont-buy: 0 70% 50%;
     --signal-sell: 0 75% 55%;
 
     --signal-strong-buy-bg: 150 80% 94%;
     --signal-buy-bg: 145 65% 95%;
     --signal-hold-bg: 45 95% 94%;
-    --signal-dont-buy-bg: 25 95% 94%;
+    --signal-dont-buy-bg: 0 70% 95%;
     --signal-sell-bg: 0 75% 95%;
 
     --sidebar-background: 0 0% 98%;
@@ -91,13 +91,13 @@
     --signal-strong-buy: 150 80% 45%;
     --signal-buy: 145 65% 50%;
     --signal-hold: 45 95% 55%;
-    --signal-dont-buy: 25 95% 58%;
+    --signal-dont-buy: 0 70% 55%;
     --signal-sell: 0 75% 60%;
 
     --signal-strong-buy-bg: 150 80% 14%;
     --signal-buy-bg: 145 65% 12%;
     --signal-hold-bg: 45 95% 12%;
-    --signal-dont-buy-bg: 25 95% 12%;
+    --signal-dont-buy-bg: 0 70% 12%;
     --signal-sell-bg: 0 75% 12%;
 
     --sidebar-background: 240 5.9% 10%;
