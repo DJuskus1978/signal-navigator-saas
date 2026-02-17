@@ -132,7 +132,10 @@ export default function StockDetail() {
                         {phase.icon}
                         <span className="font-medium">{phase.label}</span>
                       </div>
-                      <span className="font-display font-bold">
+                      <span className={cn(
+                        "font-display font-bold",
+                        phase.value > 0 ? "text-signal-buy" : phase.value < 0 ? "text-signal-sell" : "text-muted-foreground"
+                      )}>
                         {phase.value > 0 ? "+" : ""}{phase.value}
                       </span>
                     </div>
