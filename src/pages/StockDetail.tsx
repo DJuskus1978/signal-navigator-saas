@@ -274,7 +274,12 @@ export default function StockDetail() {
                 hint={t.macd > t.macdSignal ? "Bullish crossover" : "Bearish crossover"}
                 signal={t.macd > t.macdSignal ? "bullish" : "bearish"}
               />
-              <Indicator label="MACD Signal" value={t.macdSignal.toFixed(2)} />
+              <Indicator
+                label="MACD Signal"
+                value={t.macdSignal.toFixed(2)}
+                hint={t.macdSignal > 0 ? "Bullish" : t.macdSignal < 0 ? "Bearish" : "Neutral"}
+                signal={t.macdSignal > 0 ? "bullish" : t.macdSignal < 0 ? "bearish" : "neutral"}
+              />
               <Indicator
                 label="EMA 20"
                 value={`$${t.ema20.toFixed(2)}`}
@@ -287,7 +292,12 @@ export default function StockDetail() {
                 hint={t.sma50 > t.sma200 ? "Above 200-day" : "Below 200-day"}
                 signal={t.sma50 > t.sma200 ? "bullish" : "bearish"}
               />
-              <Indicator label="SMA 200" value={`$${t.sma200.toFixed(2)}`} />
+              <Indicator
+                label="SMA 200"
+                value={`$${t.sma200.toFixed(2)}`}
+                hint={t.sma200 < t.sma50 ? "Below 50-day" : "Above 50-day"}
+                signal={t.sma200 < t.sma50 ? "bearish" : "bullish"}
+              />
               <Indicator
                 label="Bollinger Bands"
                 value={`$${t.bollingerLower.toFixed(0)} – $${t.bollingerUpper.toFixed(0)}`}
