@@ -10,13 +10,34 @@ import { ArrowLeft, TrendingUp, Newspaper, BarChart3 } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
 import { cn } from "@/lib/utils";
 
-function Indicator({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
+type SignalLevel = "bullish" | "bearish" | "neutral";
+
+function getSignalColor(signal: SignalLevel) {
+  if (signal === "bullish") return "hsl(var(--signal-buy))";
+  if (signal === "bearish") return "hsl(var(--signal-sell))";
+  return "hsl(var(--signal-hold))";
+}
+
+function getSignalBg(signal: SignalLevel) {
+  if (signal === "bullish") return "hsl(var(--signal-buy-bg))";
+  if (signal === "bearish") return "hsl(var(--signal-sell-bg))";
+  return "hsl(var(--signal-hold-bg))";
+}
+
+function Indicator({ label, value, hint, signal }: { label: string; value: string | number; hint?: string; signal?: SignalLevel }) {
   return (
-    <div className="flex justify-between items-center py-2 border-b border-border last:border-0">
+    <div className="flex justify-between items-center py-3 border-b border-border last:border-0">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <div className="text-right">
-        <span className="font-medium text-sm">{value}</span>
-        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      <div className="flex items-center gap-2">
+        {signal && hint && (
+          <span
+            className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+            style={{ color: getSignalColor(signal), backgroundColor: getSignalBg(signal) }}
+          >
+            {hint}
+          </span>
+        )}
+        <span className="font-medium text-sm font-display">{value}</span>
       </div>
     </div>
   );
@@ -143,6 +164,7 @@ export default function StockDetail() {
               label="News Sentiment"
               value={s.newsScore > 0 ? `+${s.newsScore.toFixed(0)}` : s.newsScore.toFixed(0)}
               hint={s.newsScore > 30 ? "Positive" : s.newsScore > -30 ? "Mixed" : "Negative"}
+              signal={s.newsScore > 30 ? "bullish" : s.newsScore < -30 ? "bearish" : "neutral"}
             />
             <Indicator
               label="Articles Analyzed"
@@ -152,16 +174,19 @@ export default function StockDetail() {
               label="Social Sentiment"
               value={s.socialScore > 0 ? `+${s.socialScore.toFixed(0)}` : s.socialScore.toFixed(0)}
               hint={s.socialScore > 20 ? "Bullish buzz" : s.socialScore < -20 ? "Bearish chatter" : "Neutral"}
+              signal={s.socialScore > 20 ? "bullish" : s.socialScore < -20 ? "bearish" : "neutral"}
             />
             <Indicator
               label="Analyst Rating"
               value={`${s.analystRating.toFixed(1)} / 5.0`}
               hint={s.analystRating >= 4 ? "Buy consensus" : s.analystRating >= 3 ? "Hold consensus" : "Sell consensus"}
+              signal={s.analystRating >= 4 ? "bullish" : s.analystRating >= 3 ? "neutral" : "bearish"}
             />
             <Indicator
               label="Insider Activity"
               value={s.insiderActivity > 0 ? "Net Buying" : s.insiderActivity < -0.2 ? "Net Selling" : "Neutral"}
               hint={`Score: ${s.insiderActivity.toFixed(2)}`}
+              signal={s.insiderActivity > 0 ? "bullish" : s.insiderActivity < -0.2 ? "bearish" : "neutral"}
             />
           </CardContent>
         </Card>
@@ -179,41 +204,49 @@ export default function StockDetail() {
                 label="P/E Ratio"
                 value={f.peRatio.toFixed(1)}
                 hint={f.peRatio < 15 ? "Undervalued" : f.peRatio > 35 ? "Overvalued" : "Fair value"}
+                signal={f.peRatio < 15 ? "bullish" : f.peRatio > 35 ? "bearish" : "neutral"}
               />
               <Indicator
                 label="Forward P/E"
                 value={f.forwardPE.toFixed(1)}
                 hint={f.forwardPE < f.peRatio ? "Growth expected" : "Slowing growth"}
+                signal={f.forwardPE < f.peRatio ? "bullish" : "bearish"}
               />
               <Indicator
                 label="Earnings Growth"
                 value={`${f.earningsGrowth.toFixed(1)}%`}
                 hint={f.earningsGrowth > 15 ? "Strong" : f.earningsGrowth > 0 ? "Positive" : "Declining"}
+                signal={f.earningsGrowth > 15 ? "bullish" : f.earningsGrowth > 0 ? "neutral" : "bearish"}
               />
               <Indicator
                 label="Revenue Growth"
                 value={`${f.revenueGrowth.toFixed(1)}%`}
                 hint={f.revenueGrowth > 15 ? "Strong" : f.revenueGrowth > 0 ? "Positive" : "Declining"}
+                signal={f.revenueGrowth > 15 ? "bullish" : f.revenueGrowth > 0 ? "neutral" : "bearish"}
               />
               <Indicator
                 label="Profit Margin"
                 value={`${f.profitMargin.toFixed(1)}%`}
                 hint={f.profitMargin > 20 ? "Excellent" : f.profitMargin > 10 ? "Good" : "Low"}
+                signal={f.profitMargin > 20 ? "bullish" : f.profitMargin > 10 ? "neutral" : "bearish"}
               />
               <Indicator
                 label="Debt/Equity"
                 value={f.debtToEquity.toFixed(2)}
                 hint={f.debtToEquity < 0.5 ? "Low leverage" : f.debtToEquity > 2 ? "High leverage" : "Moderate"}
+                signal={f.debtToEquity < 0.5 ? "bullish" : f.debtToEquity > 2 ? "bearish" : "neutral"}
               />
               <Indicator
                 label="Return on Equity"
                 value={`${f.returnOnEquity.toFixed(1)}%`}
                 hint={f.returnOnEquity > 20 ? "Excellent" : f.returnOnEquity > 10 ? "Good" : "Below avg"}
+                signal={f.returnOnEquity > 20 ? "bullish" : f.returnOnEquity > 10 ? "neutral" : "bearish"}
               />
               <Indicator
                 label="FCF Yield"
                 value={`${f.freeCashFlowYield.toFixed(1)}%`}
                 hint={f.freeCashFlowYield > 5 ? "Attractive" : f.freeCashFlowYield > 2 ? "Fair" : "Low"}
+                signal={f.freeCashFlowYield > 5 ? "bullish" : f.freeCashFlowYield > 2 ? "neutral" : "bearish"}
               />
             </CardContent>
           </Card>
@@ -230,22 +263,26 @@ export default function StockDetail() {
                 label="RSI (14)"
                 value={t.rsi.toFixed(1)}
                 hint={t.rsi < 30 ? "Oversold" : t.rsi > 70 ? "Overbought" : "Neutral"}
+                signal={t.rsi < 30 ? "bullish" : t.rsi > 70 ? "bearish" : "neutral"}
               />
               <Indicator
                 label="MACD"
                 value={t.macd.toFixed(2)}
                 hint={t.macd > t.macdSignal ? "Bullish crossover" : "Bearish crossover"}
+                signal={t.macd > t.macdSignal ? "bullish" : "bearish"}
               />
               <Indicator label="MACD Signal" value={t.macdSignal.toFixed(2)} />
               <Indicator
                 label="EMA 20"
                 value={`$${t.ema20.toFixed(2)}`}
                 hint={t.ema20 > t.sma50 ? "Short-term bullish" : "Short-term bearish"}
+                signal={t.ema20 > t.sma50 ? "bullish" : "bearish"}
               />
               <Indicator
                 label="SMA 50"
                 value={`$${t.sma50.toFixed(2)}`}
                 hint={t.sma50 > t.sma200 ? "Above 200-day" : "Below 200-day"}
+                signal={t.sma50 > t.sma200 ? "bullish" : "bearish"}
               />
               <Indicator label="SMA 200" value={`$${t.sma200.toFixed(2)}`} />
               <Indicator
@@ -256,11 +293,13 @@ export default function StockDetail() {
                 label="ATR (Volatility)"
                 value={`$${t.atr.toFixed(2)}`}
                 hint={t.atr > stock.price * 0.04 ? "High volatility" : "Normal"}
+                signal={t.atr > stock.price * 0.04 ? "bearish" : "neutral"}
               />
               <Indicator
                 label="Volume"
                 value={`${(t.volume / 1_000_000).toFixed(1)}M`}
                 hint={t.volume > t.avgVolume ? "Above average" : "Below average"}
+                signal={t.volume > t.avgVolume ? "bullish" : "neutral"}
               />
             </CardContent>
           </Card>
