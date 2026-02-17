@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import insideRadarImg from "@/assets/inside-radar.jpeg";
+import newsSentimentImg from "@/assets/news-sentiment.jpeg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrafficLight } from "@/components/TrafficLight";
@@ -112,6 +113,31 @@ export default function LandingPage() {
             <img
               src={insideRadarImg}
               alt="StocksRadars analysis showing fundamentals, sentiment, and technicals breakdown for a stock"
+              className="w-full h-auto"
+              loading="lazy"
+            />
+          </div>
+        </motion.div>
+      </section>
+
+      {/* News & Sentiment */}
+      <section className="container mx-auto px-4 pb-20">
+        <motion.div
+          className="max-w-3xl mx-auto text-center"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          custom={0}
+          variants={fadeUp}
+        >
+          <h2 className="font-display text-3xl font-bold mb-4">News & Sentiment</h2>
+          <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
+            Real-time news analysis and market sentiment at a glance
+          </p>
+          <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
+            <img
+              src={newsSentimentImg}
+              alt="StocksRadars news and sentiment analysis showing headline, sentiment scores, analyst ratings, and insider activity"
               className="w-full h-auto"
               loading="lazy"
             />
