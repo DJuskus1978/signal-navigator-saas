@@ -155,7 +155,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
               { icon: Zap, title: "Sign Up", desc: "Create your free account in seconds with Google or email." },
-              { icon: Shield, title: "Subscribe", desc: "Unlock full access to all recommendations for just €7/month." },
+              { icon: Shield, title: "Subscribe", desc: "Unlock full access to all recommendations for just $7/month." },
               { icon: BarChart3, title: "Get Radars", desc: "See clear Buy, Hold, or Sell recommendations for every stock." },
             ].map((step, i) => (
               <motion.div
