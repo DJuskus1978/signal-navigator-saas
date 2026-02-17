@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import insideRadarImg from "@/assets/inside-radar.jpeg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrafficLight } from "@/components/TrafficLight";
@@ -91,6 +92,31 @@ export default function LandingPage() {
             Our proprietary AI-powered algorithm evaluates each stock through three phases — fundamentals, real-time news sentiment, and technical indicators — delivering a single, clear recommendation you can trust. No jargon, no complexity: just actionable radars designed for everyday investors who want professional-grade insights without the learning curve.
           </motion.p>
         </div>
+      </section>
+
+      {/* Inside Radar */}
+      <section className="container mx-auto px-4 py-20">
+        <motion.div
+          className="max-w-3xl mx-auto text-center"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          custom={0}
+          variants={fadeUp}
+        >
+          <h2 className="font-display text-3xl font-bold mb-4">Inside Radar</h2>
+          <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
+            See how our algorithm breaks down every stock into clear, actionable insights
+          </p>
+          <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
+            <img
+              src={insideRadarImg}
+              alt="StocksRadars analysis showing fundamentals, sentiment, and technicals breakdown for a stock"
+              className="w-full h-auto"
+              loading="lazy"
+            />
+          </div>
+        </motion.div>
       </section>
 
       {/* How It Works */}
