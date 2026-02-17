@@ -117,9 +117,9 @@ export default function StockDetail() {
                     </div>
                     <Progress value={normalized} className="h-2" style={{ "--progress-color": barColor } as React.CSSProperties} />
                     <div className="flex justify-between text-[10px] text-muted-foreground/60">
-                      <span>-100</span>
+                      <span>Bearish -100</span>
                       <span>0</span>
-                      <span>+100</span>
+                      <span>Bullish +100</span>
                     </div>
                   </div>
                 );
