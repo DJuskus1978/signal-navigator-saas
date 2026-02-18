@@ -166,9 +166,9 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="bg-card border-y border-border py-20" aria-label="How stock radars work">
+      <section className="bg-card border-y border-border py-20" aria-label="How StocksRadars work">
         <div className="container mx-auto px-4">
-          <h2 className="font-display text-3xl font-bold text-center mb-4">How Stock Radars Work</h2>
+          <h2 className="font-display text-3xl font-bold text-center mb-4">How StocksRadars Work</h2>
           <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
             Three simple steps to smarter stock investing decisions
           </p>
@@ -176,7 +176,7 @@ export default function LandingPage() {
             {[
               { icon: Zap, title: "Sign Up Free", desc: "Create your free stock analysis account in seconds with Google or email." },
               { icon: Shield, title: "Choose Your Plan", desc: "Unlock unlimited stock recommendations and full market coverage for just $7/month." },
-              { icon: BarChart3, title: "Get Stock Radars", desc: "See clear Buy, Hold, or Sell recommendations for every Nasdaq, Dow Jones, and S&P 500 stock." },
+              { icon: BarChart3, title: "Get StocksRadars", desc: "See clear Buy, Hold, or Sell recommendations for every Nasdaq, Dow Jones, and S&P 500 stock." },
             ].map((step, i) => (
               <motion.div
                 key={step.title}

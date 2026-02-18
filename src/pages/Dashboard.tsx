@@ -70,7 +70,7 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">Real-time stock radars across major indices</p>
+          <p className="text-muted-foreground">Real-time StocksRadars across major indices</p>
         </div>
 
         {/* Filters */}
