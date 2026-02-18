@@ -23,41 +23,41 @@ export default function LandingPage() {
       {/* Nav */}
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2" aria-label="StocksRadars — Stock Recommendations Home">
             <RadarLogo />
             <span className="font-display font-bold text-xl">StocksRadars</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <nav className="flex items-center gap-3" aria-label="Main navigation">
             <Link to="/auth">
               <Button variant="ghost" size="sm">Sign In</Button>
             </Link>
             <Link to="/auth">
               <Button size="sm">Get Started</Button>
             </Link>
-          </div>
+          </nav>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="container mx-auto px-4 py-20 md:py-32">
+      <section className="container mx-auto px-4 py-20 md:py-32" aria-label="Stock recommendations overview">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp}>
             <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              Smart investing made simple
+              AI-powered stock recommendations
             </span>
           </motion.div>
           <motion.h1
             className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
             initial="hidden" animate="visible" custom={1} variants={fadeUp}
           >
-            Simple stock radars for{" "}
+            Stock buy, hold & sell recommendations for{" "}
             <span className="text-primary">everyday investors</span>
           </motion.h1>
           <motion.p
             className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
             initial="hidden" animate="visible" custom={2} variants={fadeUp}
           >
-            Stop guessing. StocksRadars analyzes technical and fundamental data across Nasdaq, Dow Jones, and S&P 500 — and tells you exactly what to do with a simple traffic light.
+            Stop guessing which stocks to buy. StocksRadars analyzes fundamentals, news sentiment, and technical indicators across Nasdaq, Dow Jones, and S&P 500 — delivering clear buy, hold, or sell recommendations with a simple traffic light.
            </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
@@ -79,6 +79,8 @@ export default function LandingPage() {
           <motion.div
             className="mt-16 flex flex-wrap justify-center gap-4"
             initial="hidden" animate="visible" custom={4} variants={fadeUp}
+            role="img"
+            aria-label="Stock recommendation traffic lights showing buy, hold, don't buy, and sell signals"
           >
             <TrafficLight recommendation="buy" size="lg" />
             <TrafficLight recommendation="hold" size="lg" />
@@ -90,13 +92,13 @@ export default function LandingPage() {
             className="mt-10 text-base text-muted-foreground/80 mb-0 max-w-2xl mx-auto italic"
             initial="hidden" animate="visible" custom={5} variants={fadeUp}
           >
-            Our proprietary AI-powered algorithm evaluates each stock through three phases — fundamentals, real-time news sentiment, and technical indicators — delivering a single, clear recommendation you can trust. No jargon, no complexity: just actionable radars designed for everyday investors who want professional-grade insights without the learning curve.
+            Our proprietary AI-powered stock analysis algorithm evaluates each stock through three phases — fundamental analysis, real-time news sentiment, and technical indicators — delivering a single, clear stock recommendation you can trust. No jargon, no complexity: just actionable stock radars designed for beginner and everyday investors who want professional-grade stock market insights without the learning curve.
           </motion.p>
         </div>
       </section>
 
       {/* Inside Radar */}
-      <section className="container mx-auto px-4 -mt-10 pb-20">
+      <section className="container mx-auto px-4 -mt-10 pb-20" aria-label="Inside stock analysis radar">
         <motion.div
           className="max-w-3xl mx-auto text-center"
           initial="hidden"
@@ -105,23 +107,25 @@ export default function LandingPage() {
           custom={0}
           variants={fadeUp}
         >
-          <h2 className="font-display text-3xl font-bold mb-4">Inside Radar</h2>
+          <h2 className="font-display text-3xl font-bold mb-4">Inside the Stock Analysis Radar</h2>
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
-            See how our algorithm breaks down every stock into clear, actionable insights
+            See how our AI stock screener breaks down fundamentals, sentiment, and technicals into clear, actionable recommendations
           </p>
           <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
             <img
               src={insideRadarImg}
-              alt="StocksRadars analysis showing fundamentals, sentiment, and technicals breakdown for a stock"
+              alt="StocksRadars stock analysis dashboard showing fundamental analysis scores, news sentiment ratings, and technical indicator breakdown for a Nasdaq stock"
               className="w-full h-auto"
               loading="lazy"
+              width="800"
+              height="600"
             />
           </div>
         </motion.div>
       </section>
 
       {/* News & Sentiment */}
-      <section className="container mx-auto px-4 pb-20">
+      <section className="container mx-auto px-4 pb-20" aria-label="News sentiment analysis">
         <motion.div
           className="max-w-3xl mx-auto text-center"
           initial="hidden"
@@ -130,16 +134,18 @@ export default function LandingPage() {
           custom={0}
           variants={fadeUp}
         >
-          <h2 className="font-display text-3xl font-bold mb-4">News & Sentiment</h2>
+          <h2 className="font-display text-3xl font-bold mb-4">Real-Time Stock News & Sentiment Analysis</h2>
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
-            Real-time news analysis and market sentiment at a glance
+            AI-powered news analysis and market sentiment scoring to help you make informed stock trading decisions
           </p>
           <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
             <img
               src={newsSentimentImg}
-              alt="StocksRadars news and sentiment analysis showing headline, sentiment scores, analyst ratings, and insider activity"
+              alt="StocksRadars real-time stock news sentiment analysis showing headline scoring, analyst ratings, and insider trading activity for S&P 500 stocks"
               className="w-full h-auto"
               loading="lazy"
+              width="800"
+              height="600"
             />
           </div>
         </motion.div>
@@ -160,17 +166,17 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="bg-card border-y border-border py-20">
+      <section className="bg-card border-y border-border py-20" aria-label="How stock recommendations work">
         <div className="container mx-auto px-4">
-          <h2 className="font-display text-3xl font-bold text-center mb-4">How it works</h2>
+          <h2 className="font-display text-3xl font-bold text-center mb-4">How stock recommendations work</h2>
           <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
-            Three simple steps to smarter investing decisions
+            Three simple steps to smarter stock investing decisions
           </p>
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
-              { icon: Zap, title: "Sign Up", desc: "Create your free account in seconds with Google or email." },
-              { icon: Shield, title: "Subscribe", desc: "Unlock full access to all recommendations for just $7/month." },
-              { icon: BarChart3, title: "Get Radars", desc: "See clear Buy, Hold, or Sell recommendations for every stock." },
+              { icon: Zap, title: "Sign Up Free", desc: "Create your free stock analysis account in seconds with Google or email." },
+              { icon: Shield, title: "Choose Your Plan", desc: "Unlock unlimited stock recommendations and full market coverage for just $7/month." },
+              { icon: BarChart3, title: "Get Stock Radars", desc: "See clear Buy, Hold, or Sell recommendations for every Nasdaq, Dow Jones, and S&P 500 stock." },
             ].map((step, i) => (
               <motion.div
                 key={step.title}
@@ -193,10 +199,11 @@ export default function LandingPage() {
       </section>
 
       {/* Customer Radars */}
-      <section className="container mx-auto px-4 py-20">
-        <h2 className="font-display text-3xl font-bold text-center mb-4">Customer Radars</h2>
+      <section className="container mx-auto px-4 py-20" aria-label="Customer reviews">
+        <h2 className="font-display text-3xl font-bold text-center mb-4">What investors say about StocksRadars</h2>
         <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
-          See what everyday investors are saying about StocksRadars
+          Real reviews from everyday investors using our stock recommendation tool
+
         </p>
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {[
@@ -253,10 +260,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="pricing" className="container mx-auto px-4 py-20">
-        <h2 className="font-display text-3xl font-bold text-center mb-4">Simple pricing</h2>
+      <section id="pricing" className="container mx-auto px-4 py-20" aria-label="Stock analysis pricing plans">
+        <h2 className="font-display text-3xl font-bold text-center mb-4">Stock analysis pricing</h2>
         <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
-          Start free, upgrade when you're ready.
+          Start with free stock recommendations, upgrade when you're ready for unlimited access.
         </p>
         <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
           {/* Free Plan */}
@@ -324,17 +331,17 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-10">
+      <footer className="border-t border-border py-10" role="contentinfo">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground space-y-4">
           <p className="font-medium text-foreground/80">
-            StocksRadars does not serve as financial advice. The data shown is for recommendational purposes only.
+            StocksRadars does not serve as financial advice. Stock recommendations are for informational purposes only.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link to="/terms" className="hover:text-foreground underline underline-offset-4">Terms of Use</Link>
             <span>·</span>
             <Link to="/privacy" className="hover:text-foreground underline underline-offset-4">Privacy Policy</Link>
           </div>
-          <p className="text-xs">© {new Date().getFullYear()} StocksRadars. All rights reserved.</p>
+          <p className="text-xs">© {new Date().getFullYear()} StocksRadars — AI Stock Recommendations. All rights reserved.</p>
         </div>
       </footer>
     </div>
