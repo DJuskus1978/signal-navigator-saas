@@ -166,9 +166,9 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="bg-card border-y border-border py-20" aria-label="How stock recommendations work">
+      <section className="bg-card border-y border-border py-20" aria-label="How stock radars work">
         <div className="container mx-auto px-4">
-          <h2 className="font-display text-3xl font-bold text-center mb-4">How stock recommendations work</h2>
+          <h2 className="font-display text-3xl font-bold text-center mb-4">How Stock Radars Work</h2>
           <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
             Three simple steps to smarter stock investing decisions
           </p>
@@ -260,8 +260,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="pricing" className="container mx-auto px-4 py-20" aria-label="Stock analysis pricing plans">
-        <h2 className="font-display text-3xl font-bold text-center mb-4">Stock analysis pricing</h2>
+      <section id="pricing" className="container mx-auto px-4 py-20" aria-label="StocksRadars pricing plans">
+        <h2 className="font-display text-3xl font-bold text-center mb-4">StocksRadars Pricing</h2>
         <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
           Pick the plan that fits your trading style. Upgrade or downgrade anytime.
         </p>
