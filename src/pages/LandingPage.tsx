@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import insideRadarImg from "@/assets/inside-radar.jpeg";
+import founderPhoto from "@/assets/founder-photo.jpeg";
 import newsSentimentImg from "@/assets/news-sentiment.jpeg";
 import avatarSarah from "@/assets/avatar-sarah.jpg";
 import avatarJames from "@/assets/avatar-james.jpg";
@@ -200,6 +201,48 @@ export default function LandingPage() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Founder's Statement */}
+      <section className="bg-card border-y border-border py-20" aria-label="Founder's statement">
+        <div className="container mx-auto px-4">
+          <motion.div
+            className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-10"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            custom={0}
+            variants={fadeUp}
+          >
+            <div className="shrink-0">
+              <img
+                src={founderPhoto}
+                alt="Founder of StocksRadars"
+                className="w-48 h-48 md:w-56 md:h-56 rounded-2xl object-cover shadow-lg border-2 border-primary/20"
+                loading="lazy"
+              />
+            </div>
+            <div>
+              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-4 uppercase tracking-wide">
+                From the Founder
+              </span>
+              <h2 className="font-display text-2xl md:text-3xl font-bold mb-4">
+                20 Years of Trading. One Simple Tool.
+              </h2>
+              <blockquote className="text-muted-foreground text-sm md:text-base leading-relaxed space-y-3">
+                <p>
+                  I've been actively trading stocks for over 20 years, managing a seven-figure portfolio built primarily through short-term trading strategies. With a Master's in International Business and an entrepreneurial drive from a young age, I turned what started as a passion for the markets into a steady, growing income stream.
+                </p>
+                <p>
+                  Along the way, I tried it all — premium brokerages, top-tier consultants, expensive advisory services. Investment decisions are tough, and most solutions out there are built for Wall Street, not for everyday people.
+                </p>
+                <p>
+                  That's why I created <span className="text-foreground font-medium">StocksRadars</span>. I gathered two decades of hard-won knowledge and experience into one simple platform — designed for those who don't have years to spend learning or hours each day sifting through endless data. It's for everyday investors who want clear, honest, actionable stock recommendations so they can make confident investment decisions on their own.
+                </p>
+              </blockquote>
+            </div>
+          </motion.div>
         </div>
       </section>
 
