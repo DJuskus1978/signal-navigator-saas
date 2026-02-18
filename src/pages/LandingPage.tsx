@@ -43,21 +43,21 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto text-center">
           <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp}>
             <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              AI-powered stock recommendations
+              AI-powered stock radars
             </span>
           </motion.div>
           <motion.h1
             className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
             initial="hidden" animate="visible" custom={1} variants={fadeUp}
           >
-            Stock buy, hold & sell recommendations for{" "}
+            Stock buy, hold & sell radars for{" "}
             <span className="text-primary">everyday investors</span>
           </motion.h1>
           <motion.p
             className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
             initial="hidden" animate="visible" custom={2} variants={fadeUp}
           >
-            Stop guessing which stocks to buy. StocksRadars analyzes fundamentals, news sentiment, and technical indicators across Nasdaq, Dow Jones, and S&P 500 — delivering clear buy, hold, or sell recommendations with a simple traffic light.
+            Stop guessing which stocks to buy. StocksRadars analyzes fundamentals, news sentiment, and technical indicators across Nasdaq, Dow Jones, and S&P 500 — delivering clear buy, hold, or sell radars with a simple traffic light.
            </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
