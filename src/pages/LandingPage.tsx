@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import insideRadarImg from "@/assets/inside-radar.jpeg";
-import founderPhoto from "@/assets/founder-photo.jpeg";
 import newsSentimentImg from "@/assets/news-sentiment.jpeg";
 import avatarSarah from "@/assets/avatar-sarah.jpg";
 import avatarJames from "@/assets/avatar-james.jpg";
@@ -10,8 +10,8 @@ import avatarPriya from "@/assets/avatar-priya.jpg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrafficLight } from "@/components/TrafficLight";
-import { motion, type Variants } from "framer-motion";
-import { ArrowRight, BarChart3, Shield, Zap } from "lucide-react";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { ArrowRight, BarChart3, Shield, Zap, Menu, X } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
 
 const fadeUp: Variants = {
@@ -24,6 +24,8 @@ const fadeUp: Variants = {
 };
 
 export default function LandingPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
@@ -34,14 +36,48 @@ export default function LandingPage() {
             <span className="font-display font-bold text-xl">StocksRadars</span>
           </Link>
           <nav className="flex items-center gap-3" aria-label="Main navigation">
-            <Link to="/auth">
+            <Link to="/auth" className="hidden sm:inline-flex">
               <Button variant="ghost" size="sm">Sign In</Button>
             </Link>
-            <Link to="/auth">
+            <Link to="/auth" className="hidden sm:inline-flex">
               <Button size="sm">Get Started</Button>
             </Link>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="p-2 rounded-lg hover:bg-accent transition-colors"
+              aria-label="Toggle menu"
+            >
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </nav>
         </div>
+
+        {/* Dropdown menu */}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="border-t border-border bg-card overflow-hidden"
+            >
+              <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
+                <Link to="/about" className="px-3 py-2 rounded-lg hover:bg-accent transition-colors text-sm font-medium" onClick={() => setMenuOpen(false)}>
+                  About
+                </Link>
+                <a href="#pricing" className="px-3 py-2 rounded-lg hover:bg-accent transition-colors text-sm font-medium" onClick={() => setMenuOpen(false)}>
+                  Pricing
+                </a>
+                <Link to="/auth" className="px-3 py-2 rounded-lg hover:bg-accent transition-colors text-sm font-medium sm:hidden" onClick={() => setMenuOpen(false)}>
+                  Sign In
+                </Link>
+                <Link to="/auth" className="sm:hidden" onClick={() => setMenuOpen(false)}>
+                  <Button size="sm" className="w-full">Get Started</Button>
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Hero */}
@@ -201,49 +237,6 @@ export default function LandingPage() {
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Founder's Statement */}
-      <section className="bg-card border-y border-border py-20" aria-label="Founder's statement">
-        <div className="container mx-auto px-4">
-          <motion.div
-            className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-10"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            custom={0}
-            variants={fadeUp}
-          >
-            <div className="shrink-0">
-              <img
-                src={founderPhoto}
-                alt="Founder of StocksRadars"
-                className="w-48 h-48 md:w-56 md:h-56 rounded-2xl object-cover shadow-lg border-2 border-primary/20"
-                loading="lazy"
-              />
-            </div>
-            <div>
-              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-4 uppercase tracking-wide">
-                From the Founder
-              </span>
-              <h2 className="font-display text-2xl md:text-3xl font-bold mb-4">
-                20 Years of Trading. One Simple Tool.
-              </h2>
-              <blockquote className="text-muted-foreground text-sm md:text-base leading-relaxed space-y-3">
-                <p>
-                  I've been actively trading stocks for over 20 years, managing a seven-figure portfolio built primarily through short-term trading strategies. With a Master's in International Business and an entrepreneurial drive from a young age, I turned what started as a passion for the markets into a steady, growing income stream.
-                </p>
-                <p>
-                  Along the way, I tried it all — premium brokerages, top-tier consultants, expensive advisory services. Investment decisions are tough, and most solutions out there are built for Wall Street, not for everyday people.
-                </p>
-                <p>
-                  That's why I created <span className="text-foreground font-medium">StocksRadars</span>. I gathered two decades of hard-won knowledge and experience into one simple platform — designed for those who don't have years to spend learning or hours each day sifting through endless data. It's for everyday investors who want clear, honest, actionable stock recommendations so they can make confident investment decisions on their own.
-                </p>
-              </blockquote>
-              <p className="mt-4 font-display font-semibold text-foreground">— Donatas Juskus</p>
-            </div>
-          </motion.div>
         </div>
       </section>
 
