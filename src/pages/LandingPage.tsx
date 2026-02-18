@@ -267,7 +267,10 @@ export default function LandingPage() {
         </p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
           {/* Novice Trader */}
-          <Card className="border border-border">
+          <Card className="border border-border relative overflow-hidden">
+            <div className="absolute -top-1 -right-1 w-16 h-16 flex items-center justify-center">
+              <span className="text-3xl drop-shadow-md" role="img" aria-label="Seedling">🌱</span>
+            </div>
             <CardContent className="p-6 text-center">
               <p className="text-sm font-medium text-muted-foreground mb-2">NOVICE TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
@@ -295,7 +298,10 @@ export default function LandingPage() {
           </Card>
 
           {/* Day Trader */}
-          <Card className="border border-border">
+          <Card className="border border-border relative overflow-hidden">
+            <div className="absolute -top-1 -right-1 w-16 h-16 flex items-center justify-center">
+              <span className="text-3xl drop-shadow-md" role="img" aria-label="Lightning">⚡</span>
+            </div>
             <CardContent className="p-6 text-center">
               <p className="text-sm font-medium text-muted-foreground mb-2">DAY TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
@@ -323,9 +329,12 @@ export default function LandingPage() {
           </Card>
 
           {/* Pro Day Trader */}
-          <Card className="border-2 border-primary shadow-lg relative">
+          <Card className="border-2 border-primary shadow-lg relative overflow-hidden">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-primary text-primary-foreground text-xs font-semibold rounded-full">
               MOST POPULAR
+            </div>
+            <div className="absolute -top-1 -right-1 w-16 h-16 flex items-center justify-center">
+              <span className="text-3xl drop-shadow-md" role="img" aria-label="Rocket">🚀</span>
             </div>
             <CardContent className="p-6 text-center">
               <p className="text-sm font-medium text-primary mb-2">PRO DAY TRADER</p>
@@ -355,7 +364,10 @@ export default function LandingPage() {
           </Card>
 
           {/* Bull Trader */}
-          <Card className="border border-border">
+          <Card className="border border-border relative overflow-hidden">
+            <div className="absolute -top-1 -right-1 w-16 h-16 flex items-center justify-center">
+              <span className="text-3xl drop-shadow-md" role="img" aria-label="Bull">🐂</span>
+            </div>
             <CardContent className="p-6 text-center">
               <p className="text-sm font-medium text-muted-foreground mb-2">BULL TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
