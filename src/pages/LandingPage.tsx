@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
 import insideRadarImg from "@/assets/inside-radar.jpeg";
 import newsSentimentImg from "@/assets/news-sentiment.jpeg";
+import avatarSarah from "@/assets/avatar-sarah.jpg";
+import avatarJames from "@/assets/avatar-james.jpg";
+import avatarElena from "@/assets/avatar-elena.jpg";
+import avatarDavid from "@/assets/avatar-david.jpg";
+import avatarPriya from "@/assets/avatar-priya.jpg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrafficLight } from "@/components/TrafficLight";
@@ -210,26 +215,31 @@ export default function LandingPage() {
             {
               name: "Sarah M.",
               role: "Retail Investor",
+              avatar: avatarSarah,
               quote: "StocksRadars cut through all the noise. I used to spend hours reading conflicting opinions online — now I check my radars in 30 seconds and make confident decisions.",
             },
             {
               name: "James T.",
               role: "Part-time Trader",
+              avatar: avatarJames,
               quote: "The simplicity is what sold me. No jargon, no complicated charts — just a clear green, yellow, or red light. I've made smarter trades in two weeks than I did in six months on my own.",
             },
             {
               name: "Elena R.",
               role: "First-time Investor",
+              avatar: avatarElena,
               quote: "I was overwhelmed by the amount of stock information out there. StocksRadars made it so easy to understand what to buy and what to avoid. It's like having a financial advisor in my pocket.",
             },
             {
               name: "David K.",
               role: "Freelance Designer",
+              avatar: avatarDavid,
               quote: "I don't have time to research every stock. StocksRadars saves me hours every week and the recommendations have been spot-on. Fastest investing decisions I've ever made.",
             },
             {
               name: "Priya N.",
               role: "Software Engineer",
+              avatar: avatarPriya,
               quote: "I love data but hated sifting through endless financial reports. StocksRadars distills everything into one clear radar — it helped me navigate the market with real confidence.",
             },
           ].map((testimonial, i) => (
@@ -245,9 +255,11 @@ export default function LandingPage() {
                 <CardContent className="p-6">
                   <p className="text-sm text-muted-foreground mb-4 italic">"{testimonial.quote}"</p>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                      {testimonial.name.charAt(0)}
-                    </div>
+                    <img
+                      src={testimonial.avatar}
+                      alt={testimonial.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
                     <div>
                       <p className="text-sm font-medium">{testimonial.name}</p>
                       <p className="text-xs text-muted-foreground">{testimonial.role}</p>
