@@ -17,6 +17,8 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsError, setShowTermsError] = useState(false);
 
   if (loading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
@@ -32,6 +34,10 @@ export default function AuthPage() {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLogin && !termsAccepted) {
+      setShowTermsError(true);
+      return;
+    }
     setSubmitting(true);
     try {
       if (isLogin) {
@@ -120,6 +126,30 @@ export default function AuthPage() {
                   minLength={6}
                 />
               </div>
+              {!isLogin && (
+                <div className="space-y-1">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={termsAccepted}
+                      onChange={(e) => {
+                        setTermsAccepted(e.target.checked);
+                        if (e.target.checked) setShowTermsError(false);
+                      }}
+                      className="mt-1 accent-primary"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      I agree to the{" "}
+                      <Link to="/terms" className="text-primary hover:underline" target="_blank">Terms of Use</Link>
+                      {" "}and{" "}
+                      <Link to="/privacy" className="text-primary hover:underline" target="_blank">Privacy Policy</Link>
+                    </span>
+                  </label>
+                  {showTermsError && (
+                    <p className="text-xs text-destructive font-medium">You must accept the Terms & Privacy Policy to sign up.</p>
+                  )}
+                </div>
+              )}
               <Button type="submit" className="w-full" disabled={submitting}>
                 {submitting ? "Please wait..." : isLogin ? "Sign In" : "Sign Up"}
               </Button>
