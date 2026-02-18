@@ -50,7 +50,7 @@ export default function LandingPage() {
             className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
             initial="hidden" animate="visible" custom={1} variants={fadeUp}
           >
-            Simple stock recommendations for{" "}
+            Simple stock radars for{" "}
             <span className="text-primary">everyday investors</span>
           </motion.h1>
           <motion.p
