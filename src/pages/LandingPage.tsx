@@ -145,6 +145,20 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
+      {/* Advanced investors callout */}
+      <section className="container mx-auto px-4 pb-20">
+        <motion.p
+          className="text-center text-lg md:text-xl text-muted-foreground italic max-w-2xl mx-auto"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          custom={0}
+          variants={fadeUp}
+        >
+          For the more advanced investor, dive deeper into detailed fundamental and technical radars — all the data you need to make informed decisions, in one place.
+        </motion.p>
+      </section>
+
       {/* How It Works */}
       <section className="bg-card border-y border-border py-20">
         <div className="container mx-auto px-4">
