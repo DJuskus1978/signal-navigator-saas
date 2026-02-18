@@ -98,7 +98,7 @@ export default function LandingPage() {
       </section>
 
       {/* Inside Radar */}
-      <section className="container mx-auto px-4 -mt-10 pb-20" aria-label="Inside stock analysis radar">
+      <section className="container mx-auto px-4 -mt-10 pb-20" aria-label="Inside StocksRadars">
         <motion.div
           className="max-w-3xl mx-auto text-center"
           initial="hidden"
@@ -107,7 +107,7 @@ export default function LandingPage() {
           custom={0}
           variants={fadeUp}
         >
-          <h2 className="font-display text-3xl font-bold mb-4">Inside the Stock Analysis Radar</h2>
+          <h2 className="font-display text-3xl font-bold mb-4">Inside the StocksRadars</h2>
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
             See how our AI stock screener breaks down fundamentals, sentiment, and technicals into clear, actionable recommendations
           </p>
