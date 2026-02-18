@@ -268,9 +268,6 @@ export default function LandingPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
           {/* Novice Trader */}
           <Card className="border border-border relative overflow-hidden">
-            <div className="absolute -top-1 -right-1 w-16 h-16 flex items-center justify-center">
-              <span className="text-3xl drop-shadow-md" role="img" aria-label="Money">💵</span>
-            </div>
             <CardContent className="p-6 text-center">
               <p className="text-sm font-medium text-muted-foreground mb-2">NOVICE TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
@@ -329,14 +326,14 @@ export default function LandingPage() {
           </Card>
 
           {/* Pro Day Trader */}
-          <Card className="border-2 border-primary shadow-lg relative overflow-hidden">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-0.5 bg-primary text-primary-foreground text-xs font-semibold rounded-full whitespace-nowrap">
+          <Card className="border-2 border-primary shadow-lg relative overflow-hidden pt-4">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 translate-y-0 px-4 py-1 bg-primary text-primary-foreground text-xs font-semibold rounded-b-lg whitespace-nowrap z-10">
               MOST POPULAR
             </div>
-            <div className="absolute -top-1 -right-1 w-16 h-16 flex items-center justify-center">
-              <span className="text-3xl drop-shadow-md" role="img" aria-label="Rocket">🚀</span>
+            <div className="absolute top-2 right-2 w-12 h-12 flex items-center justify-center">
+              <span className="text-2xl drop-shadow-md" role="img" aria-label="Rocket">🚀</span>
             </div>
-            <CardContent className="p-6 pt-8 text-center">
+            <CardContent className="p-6 pt-6 text-center">
               <p className="text-sm font-semibold text-muted-foreground mb-2">PRO DAY TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
                 <span className="font-display text-4xl font-bold">$14</span>
@@ -366,7 +363,7 @@ export default function LandingPage() {
           {/* Bull Trader */}
           <Card className="border border-border relative overflow-hidden">
             <div className="absolute -top-1 -right-1 w-16 h-16 flex items-center justify-center">
-              <span className="text-3xl drop-shadow-md" role="img" aria-label="Bull">🦬</span>
+              <span className="text-3xl drop-shadow-md" role="img" aria-label="Money">💵</span>
             </div>
             <CardContent className="p-6 text-center">
               <p className="text-sm font-medium text-muted-foreground mb-2">BULL TRADER</p>
