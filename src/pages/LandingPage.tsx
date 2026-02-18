@@ -36,7 +36,7 @@ export default function LandingPage() {
             <span className="font-display font-bold text-xl">StocksRadars</span>
           </Link>
           <nav className="flex items-center gap-3" aria-label="Main navigation">
-            <Link to="/auth" className="hidden sm:inline-flex">
+            <Link to="/auth">
               <Button variant="ghost" size="sm">Sign In</Button>
             </Link>
             <Link to="/auth" className="hidden sm:inline-flex">
@@ -44,10 +44,10 @@ export default function LandingPage() {
             </Link>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2 rounded-lg hover:bg-accent transition-colors"
+              className="p-2.5 rounded-xl hover:bg-accent transition-colors border border-border"
               aria-label="Toggle menu"
             >
-              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </nav>
         </div>
