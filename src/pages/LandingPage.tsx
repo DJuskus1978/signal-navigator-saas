@@ -241,6 +241,7 @@ export default function LandingPage() {
                   That's why I created <span className="text-foreground font-medium">StocksRadars</span>. I gathered two decades of hard-won knowledge and experience into one simple platform — designed for those who don't have years to spend learning or hours each day sifting through endless data. It's for everyday investors who want clear, honest, actionable stock recommendations so they can make confident investment decisions on their own.
                 </p>
               </blockquote>
+              <p className="mt-4 font-display font-semibold text-foreground">— Donatas Juskus</p>
             </div>
           </motion.div>
         </div>
