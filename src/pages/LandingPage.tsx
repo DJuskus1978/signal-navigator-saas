@@ -263,25 +263,24 @@ export default function LandingPage() {
       <section id="pricing" className="container mx-auto px-4 py-20" aria-label="Stock analysis pricing plans">
         <h2 className="font-display text-3xl font-bold text-center mb-4">Stock analysis pricing</h2>
         <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
-          Start with free stock recommendations, upgrade when you're ready for unlimited access.
+          Pick the plan that fits your trading style. Upgrade or downgrade anytime.
         </p>
-        <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-          {/* Free Plan */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          {/* Novice Trader */}
           <Card className="border border-border">
-            <CardContent className="p-8 text-center">
-              <p className="text-sm font-medium text-muted-foreground mb-2">FREE</p>
+            <CardContent className="p-6 text-center">
+              <p className="text-sm font-medium text-muted-foreground mb-2">NOVICE TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="font-display text-5xl font-bold">$0</span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="font-display text-4xl font-bold">$0</span>
+                <span className="text-muted-foreground text-sm">/month</span>
               </div>
-              <p className="text-muted-foreground text-sm mb-8">7-day free trial</p>
-              <ul className="text-sm text-left space-y-3 mb-8">
+              <p className="text-muted-foreground text-sm mb-6">7-day free trial</p>
+              <ul className="text-sm text-left space-y-3 mb-6">
                 {[
                   "2 stock checks per day",
-                  "Nasdaq, Dow & S&P 500 coverage",
+                  "Nasdaq, Dow & S&P 500",
                   "Buy/Hold/Sell radars",
                   "Basic technical analysis",
-                  "Mobile-friendly dashboard",
                 ].map((f) => (
                   <li key={f} className="flex items-start gap-2">
                     <span className="text-signal-buy mt-0.5">✓</span>
@@ -290,31 +289,88 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Link to="/auth">
-                <Button className="w-full bg-signal-buy hover:bg-signal-buy/90 text-white" size="lg">Start Free Trial</Button>
+                <Button className="w-full bg-signal-buy hover:bg-signal-buy/90 text-white" size="lg">Start Free</Button>
               </Link>
             </CardContent>
           </Card>
 
-          {/* Pro Plan */}
+          {/* Day Trader */}
+          <Card className="border border-border">
+            <CardContent className="p-6 text-center">
+              <p className="text-sm font-medium text-muted-foreground mb-2">DAY TRADER</p>
+              <div className="flex items-baseline justify-center gap-1 mb-2">
+                <span className="font-display text-4xl font-bold">$7</span>
+                <span className="text-muted-foreground text-sm">/month</span>
+              </div>
+              <p className="text-muted-foreground text-sm mb-6">Cancel anytime</p>
+              <ul className="text-sm text-left space-y-3 mb-6">
+                {[
+                  "25 real-time stock checks/day",
+                  "All Nasdaq, Dow & S&P 500",
+                  "Real-time Buy/Hold/Sell radars",
+                  "Technical & fundamental analysis",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <span className="text-signal-buy mt-0.5">✓</span>
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link to="/auth">
+                <Button className="w-full" size="lg">Get Started</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Pro Day Trader */}
           <Card className="border-2 border-primary shadow-lg relative">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-primary text-primary-foreground text-xs font-semibold rounded-full">
               MOST POPULAR
             </div>
-            <CardContent className="p-8 text-center">
-              <p className="text-sm font-medium text-primary mb-2">PRO</p>
+            <CardContent className="p-6 text-center">
+              <p className="text-sm font-medium text-primary mb-2">PRO DAY TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="font-display text-5xl font-bold">$7</span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="font-display text-4xl font-bold">$14</span>
+                <span className="text-muted-foreground text-sm">/month</span>
               </div>
-              <p className="text-muted-foreground text-sm mb-8">Cancel anytime</p>
-              <ul className="text-sm text-left space-y-3 mb-8">
+              <p className="text-muted-foreground text-sm mb-6">Cancel anytime</p>
+              <ul className="text-sm text-left space-y-3 mb-6">
                 {[
-                  "Unlimited stock checks",
-                  "All Nasdaq, Dow & S&P 500 stocks",
+                  "50 real-time stock checks/day",
+                  "All Nasdaq, Dow & S&P 500",
                   "Real-time Buy/Hold/Sell radars",
                   "Technical & fundamental analysis",
                   "Confidence indicators",
-                  "Mobile-friendly dashboard",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <span className="text-signal-buy mt-0.5">✓</span>
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link to="/auth">
+                <Button className="w-full" size="lg">Get Started</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Bull Trader */}
+          <Card className="border border-border">
+            <CardContent className="p-6 text-center">
+              <p className="text-sm font-medium text-muted-foreground mb-2">BULL TRADER</p>
+              <div className="flex items-baseline justify-center gap-1 mb-2">
+                <span className="font-display text-4xl font-bold">$20</span>
+                <span className="text-muted-foreground text-sm">/month</span>
+              </div>
+              <p className="text-muted-foreground text-sm mb-6">Cancel anytime</p>
+              <ul className="text-sm text-left space-y-3 mb-6">
+                {[
+                  "Unlimited real-time stock checks",
+                  "All Nasdaq, Dow & S&P 500",
+                  "Real-time Buy/Hold/Sell radars",
+                  "Technical & fundamental analysis",
+                  "Confidence indicators",
+                  "Priority support",
                 ].map((f) => (
                   <li key={f} className="flex items-start gap-2">
                     <span className="text-signal-buy mt-0.5">✓</span>
