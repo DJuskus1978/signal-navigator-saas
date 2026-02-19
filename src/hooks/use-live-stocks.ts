@@ -1,14 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Stock, Exchange, TechnicalIndicators } from "@/lib/types";
+import type { Stock, Exchange, TechnicalIndicators, FundamentalIndicators, SentimentIndicators } from "@/lib/types";
 import { calculatePhaseScores, getRecommendation, getConfidence } from "@/lib/recommendation-engine";
-import { mockStocks } from "@/lib/mock-data";
 
 // Tickers grouped by our exchange categories
 const EXCHANGE_TICKERS: Record<Exchange, string[]> = {
   nasdaq: ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "NFLX"],
   dow: ["UNH", "GS", "HD", "CAT", "CRM", "V", "JPM", "WMT"],
-  sp500: ["BRK.B", "XOM", "LLY", "MA", "ABBV", "PFE", "COST", "T"],
+  sp500: ["BRK-B", "XOM", "LLY", "MA", "ABBV", "PFE", "COST", "T"],
 };
 
 interface QuoteResponse {
@@ -35,147 +34,130 @@ interface DetailResponse extends QuoteResponse {
     bollingerLower: number | null;
     atr: number | null;
   };
+  fundamental: {
+    peRatio: number | null;
+    forwardPE: number | null;
+    earningsGrowth: number | null;
+    debtToEquity: number | null;
+    revenueGrowth: number | null;
+    profitMargin: number | null;
+    returnOnEquity: number | null;
+    freeCashFlowYield: number | null;
+  };
+}
+
+// ─── API helpers ─────────────────────────────────────────────────────────────
+
+async function getAuthHeaders() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error("Not authenticated");
+  return {
+    Authorization: `Bearer ${session.access_token}`,
+    "Content-Type": "application/json",
+  };
+}
+
+function edgeFnUrl(path: string) {
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  return `https://${projectId}.supabase.co/functions/v1/fetch-stocks${path}`;
 }
 
 async function fetchBatchQuotes(symbols: string[]): Promise<QuoteResponse[]> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error("Not authenticated");
-
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  const url = `https://${projectId}.supabase.co/functions/v1/fetch-stocks?symbols=${symbols.join(",")}`;
-
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-      "Content-Type": "application/json",
-    },
-  });
-
+  const headers = await getAuthHeaders();
+  const res = await fetch(edgeFnUrl(`?symbols=${symbols.join(",")}`), { headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || `HTTP ${res.status}`);
   }
-
   const data = await res.json();
   return data.stocks || [];
 }
 
 async function fetchStockDetail(symbol: string): Promise<DetailResponse> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error("Not authenticated");
-
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  const url = `https://${projectId}.supabase.co/functions/v1/fetch-stocks?symbol=${symbol}`;
-
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-      "Content-Type": "application/json",
-    },
-  });
-
+  const headers = await getAuthHeaders();
+  const res = await fetch(edgeFnUrl(`?symbol=${symbol}`), { headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || `HTTP ${res.status}`);
   }
-
   return res.json();
 }
 
-/**
- * Merge live quote data with mock fundamental/sentiment data to produce a full Stock object.
- * Technical data from the API replaces mock technicals when available.
- */
-function mergeQuoteWithMock(quote: QuoteResponse, exchange: Exchange): Stock {
-  // Find the matching mock stock for its fundamental & sentiment data
-  const mock = mockStocks.find((s) => s.ticker === quote.symbol);
-  if (!mock) {
-    // Fallback: create a minimal stock
-    const fundamental = mock?.fundamental || {
-      peRatio: 20, forwardPE: 18, earningsGrowth: 10, debtToEquity: 0.8,
-      revenueGrowth: 8, profitMargin: 15, returnOnEquity: 18, freeCashFlowYield: 4,
-    };
-    const sentiment = mock?.sentiment || {
-      newsScore: 0, newsCount: 5, socialScore: 0, analystRating: 3,
-      insiderActivity: 0, headline: `${quote.name} trades at $${quote.price.toFixed(2)}`,
-      sentimentRating: "neutral" as const,
-    };
-    const technical: TechnicalIndicators = {
-      rsi: 50, macd: 0, macdSignal: 0, sma50: quote.price, sma200: quote.price,
-      ema20: quote.price, volume: quote.volume, avgVolume: quote.avgVolume,
-      bollingerUpper: quote.price * 1.05, bollingerLower: quote.price * 0.95, atr: quote.price * 0.02,
-    };
-    const phaseScores = calculatePhaseScores(fundamental, sentiment, technical);
-    return {
-      ticker: quote.symbol,
-      name: quote.name,
-      exchange,
-      price: quote.price,
-      change: quote.change,
-      changePercent: quote.changePercent,
-      recommendation: getRecommendation(phaseScores.combined),
-      confidence: getConfidence(phaseScores.combined),
-      score: phaseScores.combined,
-      phaseScores,
-      technical,
-      fundamental,
-      sentiment,
-    };
-  }
+// ─── Data mapping ────────────────────────────────────────────────────────────
 
-  // Use live price data, keep mock fundamentals & sentiment
-  const technical: TechnicalIndicators = {
-    ...mock.technical,
-    volume: quote.volume || mock.technical.volume,
-    avgVolume: quote.avgVolume || mock.technical.avgVolume,
-  };
+const DEFAULT_FUNDAMENTAL: FundamentalIndicators = {
+  peRatio: 20, forwardPE: 18, earningsGrowth: 10, debtToEquity: 0.8,
+  revenueGrowth: 8, profitMargin: 15, returnOnEquity: 18, freeCashFlowYield: 4,
+};
 
-  const phaseScores = calculatePhaseScores(mock.fundamental, mock.sentiment, technical);
+const DEFAULT_SENTIMENT: SentimentIndicators = {
+  newsScore: 0, newsCount: 5, socialScore: 0, analystRating: 3,
+  insiderActivity: 0, headline: "", sentimentRating: "neutral",
+};
 
+function buildTechnicals(price: number, volume: number, avgVolume: number, tech?: DetailResponse["technical"]): TechnicalIndicators {
   return {
-    ...mock,
-    price: quote.price,
-    change: quote.change,
-    changePercent: quote.changePercent,
-    technical,
-    phaseScores,
-    recommendation: getRecommendation(phaseScores.combined),
-    confidence: getConfidence(phaseScores.combined),
-    score: phaseScores.combined,
+    rsi: tech?.rsi ?? 50,
+    macd: tech?.macd ?? 0,
+    macdSignal: tech?.macdSignal ?? 0,
+    sma50: tech?.sma50 ?? price,
+    sma200: tech?.sma200 ?? price,
+    ema20: tech?.ema20 ?? price,
+    volume,
+    avgVolume,
+    bollingerUpper: tech?.bollingerUpper ?? price * 1.05,
+    bollingerLower: tech?.bollingerLower ?? price * 0.95,
+    atr: tech?.atr ?? price * 0.02,
   };
 }
 
-function mergeDetailWithMock(detail: DetailResponse, exchange: Exchange): Stock {
-  const mock = mockStocks.find((s) => s.ticker === detail.symbol);
-  const fallbackTech = mock?.technical;
-
-  const technical: TechnicalIndicators = {
-    rsi: detail.technical.rsi ?? fallbackTech?.rsi ?? 50,
-    macd: detail.technical.macd ?? fallbackTech?.macd ?? 0,
-    macdSignal: detail.technical.macdSignal ?? fallbackTech?.macdSignal ?? 0,
-    sma50: detail.technical.sma50 ?? fallbackTech?.sma50 ?? detail.price,
-    sma200: detail.technical.sma200 ?? fallbackTech?.sma200 ?? detail.price,
-    ema20: detail.technical.ema20 ?? fallbackTech?.ema20 ?? detail.price,
-    volume: detail.volume || fallbackTech?.volume || 0,
-    avgVolume: detail.avgVolume || fallbackTech?.avgVolume || 0,
-    bollingerUpper: detail.technical.bollingerUpper ?? fallbackTech?.bollingerUpper ?? detail.price * 1.05,
-    bollingerLower: detail.technical.bollingerLower ?? fallbackTech?.bollingerLower ?? detail.price * 0.95,
-    atr: detail.technical.atr ?? fallbackTech?.atr ?? detail.price * 0.02,
+function buildFundamentals(f?: DetailResponse["fundamental"]): FundamentalIndicators {
+  if (!f) return DEFAULT_FUNDAMENTAL;
+  return {
+    peRatio: f.peRatio ?? DEFAULT_FUNDAMENTAL.peRatio,
+    forwardPE: f.forwardPE ?? DEFAULT_FUNDAMENTAL.forwardPE,
+    earningsGrowth: f.earningsGrowth ?? DEFAULT_FUNDAMENTAL.earningsGrowth,
+    debtToEquity: f.debtToEquity ?? DEFAULT_FUNDAMENTAL.debtToEquity,
+    revenueGrowth: f.revenueGrowth ?? DEFAULT_FUNDAMENTAL.revenueGrowth,
+    profitMargin: f.profitMargin ?? DEFAULT_FUNDAMENTAL.profitMargin,
+    returnOnEquity: f.returnOnEquity ?? DEFAULT_FUNDAMENTAL.returnOnEquity,
+    freeCashFlowYield: f.freeCashFlowYield ?? DEFAULT_FUNDAMENTAL.freeCashFlowYield,
   };
+}
 
-  const fundamental = mock?.fundamental || {
-    peRatio: 20, forwardPE: 18, earningsGrowth: 10, debtToEquity: 0.8,
-    revenueGrowth: 8, profitMargin: 15, returnOnEquity: 18, freeCashFlowYield: 4,
+function quoteToStock(quote: QuoteResponse, exchange: Exchange): Stock {
+  const technical = buildTechnicals(quote.price, quote.volume, quote.avgVolume);
+  const fundamental = DEFAULT_FUNDAMENTAL;
+  const sentiment: SentimentIndicators = {
+    ...DEFAULT_SENTIMENT,
+    headline: `${quote.name} trades at $${quote.price.toFixed(2)}`,
   };
-
-  const sentiment = mock?.sentiment || {
-    newsScore: 0, newsCount: 5, socialScore: 0, analystRating: 3,
-    insiderActivity: 0, headline: `${detail.name} trades at $${detail.price.toFixed(2)}`,
-    sentimentRating: "neutral" as const,
-  };
-
   const phaseScores = calculatePhaseScores(fundamental, sentiment, technical);
+  return {
+    ticker: quote.symbol,
+    name: quote.name,
+    exchange,
+    price: quote.price,
+    change: quote.change,
+    changePercent: quote.changePercent,
+    recommendation: getRecommendation(phaseScores.combined),
+    confidence: getConfidence(phaseScores.combined),
+    score: phaseScores.combined,
+    phaseScores,
+    technical,
+    fundamental,
+    sentiment,
+  };
+}
 
+function detailToStock(detail: DetailResponse, exchange: Exchange): Stock {
+  const technical = buildTechnicals(detail.price, detail.volume, detail.avgVolume, detail.technical);
+  const fundamental = buildFundamentals(detail.fundamental);
+  const sentiment: SentimentIndicators = {
+    ...DEFAULT_SENTIMENT,
+    headline: `${detail.name} trades at $${detail.price.toFixed(2)}`,
+  };
+  const phaseScores = calculatePhaseScores(fundamental, sentiment, technical);
   return {
     ticker: detail.symbol,
     name: detail.name,
@@ -208,9 +190,9 @@ export function useLiveStocks(exchange: Exchange) {
     queryFn: async () => {
       const symbols = EXCHANGE_TICKERS[exchange];
       const quotes = await fetchBatchQuotes(symbols);
-      return quotes.map((q) => mergeQuoteWithMock(q, exchange));
+      return quotes.map((q) => quoteToStock(q, exchange));
     },
-    staleTime: 5 * 60_000, // 5 minutes (free tier: 8 credits/min)
+    staleTime: 5 * 60_000,
     refetchInterval: 5 * 60_000,
     retry: 1,
   });
@@ -222,7 +204,7 @@ export function useLiveStockDetail(ticker: string) {
     queryKey: ["live-stock-detail", ticker],
     queryFn: async () => {
       const detail = await fetchStockDetail(ticker);
-      return mergeDetailWithMock(detail, exchange);
+      return detailToStock(detail, exchange);
     },
     staleTime: 30_000,
     retry: 2,

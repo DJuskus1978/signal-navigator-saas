@@ -5,22 +5,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const TWELVE_DATA_BASE = "https://api.twelvedata.com";
+const FMP_BASE = "https://financialmodelingprep.com";
 
-async function fetchJSON(url: string) {
+async function fmpFetch(path: string, apiKey: string) {
+  const separator = path.includes("?") ? "&" : "?";
+  const url = `${FMP_BASE}${path}${separator}apikey=${apiKey}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  if (!res.ok) throw new Error(`FMP ${res.status}: ${path}`);
   return res.json();
-}
-
-async function fetchTechnicalIndicator(symbol: string, indicator: string, apiKey: string, params = ""): Promise<any> {
-  const url = `${TWELVE_DATA_BASE}/${indicator}?symbol=${symbol}&interval=1day&outputsize=1${params}&apikey=${apiKey}`;
-  const data = await fetchJSON(url);
-  if (data.status === "error") {
-    console.error(`Error fetching ${indicator} for ${symbol}:`, data.message);
-    return null;
-  }
-  return data;
 }
 
 Deno.serve(async (req) => {
@@ -47,129 +39,109 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const apiKey = Deno.env.get('TWELVE_DATA_API_KEY');
+    const apiKey = Deno.env.get('FMP_API_KEY');
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'API key not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'FMP API key not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const { searchParams } = new URL(req.url);
     const symbolsParam = searchParams.get('symbols');
     const singleSymbol = searchParams.get('symbol');
 
-    // Single stock detail mode
+    // ─── Single stock detail: quote + technicals + fundamentals ───
     if (singleSymbol) {
       const symbol = singleSymbol.toUpperCase();
-      
-      // Fetch quote + technicals in parallel
-      const [quoteData, rsiData, macdData, sma50Data, sma200Data, ema20Data, bbandsData, atrData] = await Promise.all([
-        fetchJSON(`${TWELVE_DATA_BASE}/quote?symbol=${symbol}&apikey=${apiKey}`),
-        fetchTechnicalIndicator(symbol, 'rsi', apiKey),
-        fetchTechnicalIndicator(symbol, 'macd', apiKey),
-        fetchTechnicalIndicator(symbol, 'sma', apiKey, '&time_period=50'),
-        fetchTechnicalIndicator(symbol, 'sma', apiKey, '&time_period=200'),
-        fetchTechnicalIndicator(symbol, 'ema', apiKey, '&time_period=20'),
-        fetchTechnicalIndicator(symbol, 'bbands', apiKey),
-        fetchTechnicalIndicator(symbol, 'atr', apiKey),
+
+      const [quoteArr, rsiArr, macdArr, sma50Arr, sma200Arr, ema20Arr, keyMetricsArr, growthArr] = await Promise.all([
+        fmpFetch(`/stable/quote?symbol=${symbol}`, apiKey),
+        fmpFetch(`/stable/technical-indicators/rsi?symbol=${symbol}&periodLength=14&timeframe=1day`, apiKey).catch(() => []),
+        fmpFetch(`/stable/technical-indicators/macd?symbol=${symbol}&timeframe=1day`, apiKey).catch(() => []),
+        fmpFetch(`/stable/technical-indicators/sma?symbol=${symbol}&periodLength=50&timeframe=1day`, apiKey).catch(() => []),
+        fmpFetch(`/stable/technical-indicators/sma?symbol=${symbol}&periodLength=200&timeframe=1day`, apiKey).catch(() => []),
+        fmpFetch(`/stable/technical-indicators/ema?symbol=${symbol}&periodLength=20&timeframe=1day`, apiKey).catch(() => []),
+        fmpFetch(`/stable/key-metrics?symbol=${symbol}&limit=1`, apiKey).catch(() => []),
+        fmpFetch(`/stable/income-statement-growth?symbol=${symbol}&limit=1`, apiKey).catch(() => []),
       ]);
 
-      if (quoteData.status === 'error') {
-        return new Response(JSON.stringify({ error: quoteData.message || 'Failed to fetch quote' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const q = Array.isArray(quoteArr) ? quoteArr[0] : quoteArr;
+      if (!q || q.error) {
+        return new Response(JSON.stringify({ error: q?.error || 'No quote data' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
+
+      const rsi0 = rsiArr?.[0];
+      const macd0 = macdArr?.[0];
+      const sma50_0 = sma50Arr?.[0];
+      const sma200_0 = sma200Arr?.[0];
+      const ema20_0 = ema20Arr?.[0];
+      const km = keyMetricsArr?.[0];
+      const gr = growthArr?.[0];
 
       const result = {
         symbol,
-        name: quoteData.name,
-        exchange: quoteData.exchange,
-        price: parseFloat(quoteData.close),
-        previousClose: parseFloat(quoteData.previous_close),
-        change: parseFloat(quoteData.change),
-        changePercent: parseFloat(quoteData.percent_change),
-        volume: parseInt(quoteData.volume) || 0,
-        avgVolume: parseInt(quoteData.average_volume) || 0,
+        name: q.name || symbol,
+        exchange: q.exchange || '',
+        price: q.price ?? 0,
+        previousClose: q.previousClose ?? 0,
+        change: q.change ?? 0,
+        changePercent: q.changesPercentage ?? 0,
+        volume: q.volume ?? 0,
+        avgVolume: q.avgVolume ?? 0,
         technical: {
-          rsi: rsiData?.values?.[0]?.rsi ? parseFloat(rsiData.values[0].rsi) : null,
-          macd: macdData?.values?.[0]?.macd ? parseFloat(macdData.values[0].macd) : null,
-          macdSignal: macdData?.values?.[0]?.macd_signal ? parseFloat(macdData.values[0].macd_signal) : null,
-          sma50: sma50Data?.values?.[0]?.sma ? parseFloat(sma50Data.values[0].sma) : null,
-          sma200: sma200Data?.values?.[0]?.sma ? parseFloat(sma200Data.values[0].sma) : null,
-          ema20: ema20Data?.values?.[0]?.ema ? parseFloat(ema20Data.values[0].ema) : null,
-          bollingerUpper: bbandsData?.values?.[0]?.upper_band ? parseFloat(bbandsData.values[0].upper_band) : null,
-          bollingerLower: bbandsData?.values?.[0]?.lower_band ? parseFloat(bbandsData.values[0].lower_band) : null,
-          atr: atrData?.values?.[0]?.atr ? parseFloat(atrData.values[0].atr) : null,
+          rsi: rsi0?.rsi ?? null,
+          macd: macd0?.macd ?? null,
+          macdSignal: macd0?.signal ?? null,
+          sma50: sma50_0?.sma ?? null,
+          sma200: sma200_0?.sma ?? null,
+          ema20: ema20_0?.ema ?? null,
+          bollingerUpper: null, // will compute client-side or add later
+          bollingerLower: null,
+          atr: null,
+        },
+        fundamental: {
+          peRatio: q.pe ?? km?.peRatio ?? null,
+          forwardPE: km?.forwardPeRatio ?? null,
+          earningsGrowth: gr?.growthNetIncome != null ? (gr.growthNetIncome * 100) : null,
+          debtToEquity: km?.debtToEquity ?? null,
+          revenueGrowth: gr?.growthRevenue != null ? (gr.growthRevenue * 100) : null,
+          profitMargin: km?.netIncomePerRevenue != null ? (km.netIncomePerRevenue * 100) : null,
+          returnOnEquity: km?.roe != null ? (km.roe * 100) : null,
+          freeCashFlowYield: km?.freeCashFlowYield != null ? (km.freeCashFlowYield * 100) : null,
         },
       };
 
       return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Batch quote mode for dashboard — respect free tier limit of 8 credits/min
+    // ─── Batch quote mode for dashboard ───
     if (symbolsParam) {
-      const allSymbols = symbolsParam.split(',').slice(0, 12);
-      const results: any[] = [];
+      const allSymbols = symbolsParam.split(',').slice(0, 24);
+      // FMP /stable/quote supports comma-separated batch
+      const batchSymbols = allSymbols.join(',');
 
-      // Twelve Data free tier: max 8 symbols per batch request
-      // Split into chunks of 8 to stay within API credit limits
-      const chunkSize = 8;
-      const chunks = [];
-      for (let i = 0; i < allSymbols.length; i += chunkSize) {
-        chunks.push(allSymbols.slice(i, i + chunkSize));
+      let quoteData;
+      try {
+        quoteData = await fmpFetch(`/stable/quote?symbol=${batchSymbols}`, apiKey);
+      } catch (err) {
+        console.error('FMP batch quote error:', err.message);
+        return new Response(JSON.stringify({ error: err.message, stocks: [] }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
-      for (const chunk of chunks) {
-        const batchSymbols = chunk.join(',');
-        const quoteUrl = `${TWELVE_DATA_BASE}/quote?symbol=${batchSymbols}&apikey=${apiKey}`;
-        
-        let quoteData;
-        try {
-          quoteData = await fetchJSON(quoteUrl);
-        } catch (err) {
-          console.error('Fetch error for chunk:', batchSymbols, err.message);
-          continue;
-        }
+      const quotes = Array.isArray(quoteData) ? quoteData : [quoteData];
+      const stocks = quotes
+        .filter((q: any) => q && !q.error && q.symbol)
+        .map((q: any) => ({
+          symbol: q.symbol,
+          name: q.name || q.symbol,
+          exchange: q.exchange || '',
+          price: q.price ?? 0,
+          previousClose: q.previousClose ?? 0,
+          change: q.change ?? 0,
+          changePercent: q.changesPercentage ?? 0,
+          volume: q.volume ?? 0,
+          avgVolume: q.avgVolume ?? 0,
+        }));
 
-        // Check for API-level error (rate limit, etc.)
-        if (quoteData.code === 429 || quoteData.status === 'error') {
-          console.error('Twelve Data API error:', quoteData.message || JSON.stringify(quoteData));
-          // If rate limited on first chunk, return error
-          if (results.length === 0) {
-            return new Response(JSON.stringify({ 
-              error: quoteData.message || 'API rate limit exceeded', 
-              stocks: [] 
-            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-          }
-          // Otherwise return what we have so far
-          break;
-        }
-
-        // Handle both single and batch responses
-        const quotes = chunk.length === 1 ? { [chunk[0]]: quoteData } : quoteData;
-
-        for (const sym of chunk) {
-          const q = quotes[sym];
-          if (!q || q.status === 'error' || q.code) {
-            console.error(`Quote error for ${sym}:`, q?.message || q?.code || 'no data');
-            continue;
-          }
-          results.push({
-            symbol: sym,
-            name: q.name || sym,
-            exchange: q.exchange || '',
-            price: parseFloat(q.close) || 0,
-            previousClose: parseFloat(q.previous_close) || 0,
-            change: parseFloat(q.change) || 0,
-            changePercent: parseFloat(q.percent_change) || 0,
-            volume: parseInt(q.volume) || 0,
-            avgVolume: parseInt(q.average_volume) || 0,
-          });
-        }
-
-        // Wait 60s between chunks to avoid rate limit on free tier
-        if (chunks.indexOf(chunk) < chunks.length - 1) {
-          await new Promise(r => setTimeout(r, 60_000));
-        }
-      }
-
-      return new Response(JSON.stringify({ stocks: results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ stocks }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     return new Response(JSON.stringify({ error: 'Provide ?symbols=AAPL,MSFT or ?symbol=AAPL' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
