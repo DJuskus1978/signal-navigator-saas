@@ -84,7 +84,7 @@ export default function Dashboard() {
           {subscription && subscription.tier === "novice" && (
             <p className="text-sm text-muted-foreground mt-1">
               Free trial — {subscription.dailyLimit} stock searches/day, {maxPreloaded} preloaded radars.{" "}
-              <Link to="/#pricing" className="text-primary underline underline-offset-2">Upgrade for more</Link>
+              <Link to="/#pricing" className="text-green-600 hover:text-green-700 font-semibold underline underline-offset-2">Upgrade for more</Link>
             </p>
           )}
         </div>
@@ -193,10 +193,10 @@ export default function Dashboard() {
                 {isLimited && (
                   <div className="text-center py-6 border border-dashed border-border rounded-xl">
                     <p className="text-muted-foreground text-sm mb-2">
-                      You can see {maxPreloaded} of {filteredStocks.length} stocks on your current plan
+                      You can see, open, search and get full radars of only {maxPreloaded} Stocks/Tickers per day
                     </p>
                     <Link to="/#pricing">
-                      <Button variant="outline" size="sm">Upgrade to see all</Button>
+                      <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white border-0">Upgrade to see all</Button>
                     </Link>
                   </div>
                 )}
