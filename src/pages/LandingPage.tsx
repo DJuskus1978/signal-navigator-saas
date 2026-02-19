@@ -427,6 +427,7 @@ export default function LandingPage() {
                   "All Nasdaq, Dow & S&P 500",
                   "Real-time Buy/Hold/Sell radars",
                   "Technical & fundamental analysis",
+                  "Crypto radars (BTC, ETH & more)",
                   "Confidence indicators",
                   "Priority support",
                 ].map((f) => (
