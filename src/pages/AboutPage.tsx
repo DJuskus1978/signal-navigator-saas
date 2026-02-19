@@ -63,7 +63,10 @@ export default function AboutPage() {
                 Along the way, I tried it all — premium brokerages, top-tier consultants, expensive advisory services. Investment decisions are tough, and most solutions out there are built for Wall Street, not for everyday people.
               </p>
               <p>
-                That's why I created <span className="text-foreground font-medium">StocksRadars</span>. I gathered two decades of hard-won knowledge and experience into one simple platform — designed for those who don't have years to spend learning or hours each day sifting through endless data. It's for everyday investors who want clear, honest, actionable stock recommendations so they can make confident investment decisions on their own.
+                That's why I created <span className="text-foreground font-medium">StocksRadars</span>. I gathered two decades of hard-won knowledge and experience into one simple platform — designed for those who don't have years to spend learning or hours each day sifting through endless data.
+              </p>
+              <p>
+                It's for everyday investors who want clear, honest, actionable stock recommendations so they can make confident investment decisions on their own.
               </p>
             </blockquote>
             <p className="mt-4 font-display font-semibold text-foreground">— Donatas Juskus</p>
