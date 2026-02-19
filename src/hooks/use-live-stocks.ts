@@ -6,9 +6,9 @@ import { mockStocks } from "@/lib/mock-data";
 
 // Tickers grouped by our exchange categories
 const EXCHANGE_TICKERS: Record<Exchange, string[]> = {
-  nasdaq: ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "AVGO", "NFLX", "AMD", "INTC", "CSCO"],
-  dow: ["UNH", "GS", "HD", "CAT", "CRM", "V", "JPM", "WMT", "PG", "JNJ", "KO", "DIS"],
-  sp500: ["BRK.B", "XOM", "LLY", "MA", "ABBV", "PFE", "COST", "T", "BAC", "NEE", "ADBE", "COP"],
+  nasdaq: ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "NFLX"],
+  dow: ["UNH", "GS", "HD", "CAT", "CRM", "V", "JPM", "WMT"],
+  sp500: ["BRK.B", "XOM", "LLY", "MA", "ABBV", "PFE", "COST", "T"],
 };
 
 interface QuoteResponse {
@@ -210,9 +210,9 @@ export function useLiveStocks(exchange: Exchange) {
       const quotes = await fetchBatchQuotes(symbols);
       return quotes.map((q) => mergeQuoteWithMock(q, exchange));
     },
-    staleTime: 60_000, // 1 minute
-    refetchInterval: 60_000,
-    retry: 2,
+    staleTime: 5 * 60_000, // 5 minutes (free tier: 8 credits/min)
+    refetchInterval: 5 * 60_000,
+    retry: 1,
   });
 }
 
