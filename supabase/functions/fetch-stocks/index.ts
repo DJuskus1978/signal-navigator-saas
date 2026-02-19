@@ -211,9 +211,22 @@ Deno.serve(async (req) => {
     // ─── Search mode: find tickers by query string ───
     const searchQuery = searchParams.get('search');
     if (searchQuery && searchQuery.length >= 1) {
-      const results = await fmpFetch(`/stable/search?query=${encodeURIComponent(searchQuery)}&limit=10`, apiKey).catch(() => []);
-      const items = Array.isArray(results) ? results : [];
+      // Try both symbol search and name search in parallel for best coverage
+      const [symbolResults, nameResults] = await Promise.all([
+        fmpFetch(`/stable/search-symbol?query=${encodeURIComponent(searchQuery)}&limit=10`, apiKey).catch(() => []),
+        fmpFetch(`/stable/search-name?query=${encodeURIComponent(searchQuery)}&limit=10`, apiKey).catch(() => []),
+      ]);
       
+      // Merge and deduplicate by symbol
+      const allItems = [...(Array.isArray(symbolResults) ? symbolResults : []), ...(Array.isArray(nameResults) ? nameResults : [])];
+      const seen = new Set<string>();
+      const items: any[] = [];
+      for (const item of allItems) {
+        if (item?.symbol && !seen.has(item.symbol)) {
+          seen.add(item.symbol);
+          items.push(item);
+        }
+      }
       // Filter to stocks only and get quotes for top matches
       const stockItems = items
         .filter((item: any) => item.type === "stock" || !item.type)
