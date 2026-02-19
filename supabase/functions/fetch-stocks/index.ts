@@ -7,34 +7,6 @@ const corsHeaders = {
 
 const TWELVE_DATA_BASE = "https://api.twelvedata.com";
 
-interface QuoteData {
-  symbol: string;
-  name: string;
-  exchange: string;
-  close: string;
-  previous_close: string;
-  change: string;
-  percent_change: string;
-  volume: string;
-  average_volume: string;
-  fifty_two_week: {
-    low: string;
-    high: string;
-  };
-}
-
-interface TechnicalData {
-  rsi?: number;
-  macd?: number;
-  macd_signal?: number;
-  sma50?: number;
-  sma200?: number;
-  ema20?: number;
-  bbands_upper?: number;
-  bbands_lower?: number;
-  atr?: number;
-}
-
 async function fetchJSON(url: string) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -130,36 +102,71 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Batch quote mode for dashboard
+    // Batch quote mode for dashboard — respect free tier limit of 8 credits/min
     if (symbolsParam) {
-      const symbols = symbolsParam.split(',').slice(0, 12); // limit to 12 per call
-      const batchSymbols = symbols.join(',');
-      
-      const quoteUrl = `${TWELVE_DATA_BASE}/quote?symbol=${batchSymbols}&apikey=${apiKey}`;
-      const quoteData = await fetchJSON(quoteUrl);
-
+      const allSymbols = symbolsParam.split(',').slice(0, 12);
       const results: any[] = [];
 
-      // Handle both single and batch responses
-      const quotes = symbols.length === 1 ? { [symbols[0]]: quoteData } : quoteData;
+      // Twelve Data free tier: max 8 symbols per batch request
+      // Split into chunks of 8 to stay within API credit limits
+      const chunkSize = 8;
+      const chunks = [];
+      for (let i = 0; i < allSymbols.length; i += chunkSize) {
+        chunks.push(allSymbols.slice(i, i + chunkSize));
+      }
 
-      for (const sym of symbols) {
-        const q = quotes[sym];
-        if (!q || q.status === 'error') {
-          console.error(`Quote error for ${sym}:`, q?.message);
+      for (const chunk of chunks) {
+        const batchSymbols = chunk.join(',');
+        const quoteUrl = `${TWELVE_DATA_BASE}/quote?symbol=${batchSymbols}&apikey=${apiKey}`;
+        
+        let quoteData;
+        try {
+          quoteData = await fetchJSON(quoteUrl);
+        } catch (err) {
+          console.error('Fetch error for chunk:', batchSymbols, err.message);
           continue;
         }
-        results.push({
-          symbol: sym,
-          name: q.name || sym,
-          exchange: q.exchange || '',
-          price: parseFloat(q.close) || 0,
-          previousClose: parseFloat(q.previous_close) || 0,
-          change: parseFloat(q.change) || 0,
-          changePercent: parseFloat(q.percent_change) || 0,
-          volume: parseInt(q.volume) || 0,
-          avgVolume: parseInt(q.average_volume) || 0,
-        });
+
+        // Check for API-level error (rate limit, etc.)
+        if (quoteData.code === 429 || quoteData.status === 'error') {
+          console.error('Twelve Data API error:', quoteData.message || JSON.stringify(quoteData));
+          // If rate limited on first chunk, return error
+          if (results.length === 0) {
+            return new Response(JSON.stringify({ 
+              error: quoteData.message || 'API rate limit exceeded', 
+              stocks: [] 
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+          // Otherwise return what we have so far
+          break;
+        }
+
+        // Handle both single and batch responses
+        const quotes = chunk.length === 1 ? { [chunk[0]]: quoteData } : quoteData;
+
+        for (const sym of chunk) {
+          const q = quotes[sym];
+          if (!q || q.status === 'error' || q.code) {
+            console.error(`Quote error for ${sym}:`, q?.message || q?.code || 'no data');
+            continue;
+          }
+          results.push({
+            symbol: sym,
+            name: q.name || sym,
+            exchange: q.exchange || '',
+            price: parseFloat(q.close) || 0,
+            previousClose: parseFloat(q.previous_close) || 0,
+            change: parseFloat(q.change) || 0,
+            changePercent: parseFloat(q.percent_change) || 0,
+            volume: parseInt(q.volume) || 0,
+            avgVolume: parseInt(q.average_volume) || 0,
+          });
+        }
+
+        // Wait 60s between chunks to avoid rate limit on free tier
+        if (chunks.indexOf(chunk) < chunks.length - 1) {
+          await new Promise(r => setTimeout(r, 60_000));
+        }
       }
 
       return new Response(JSON.stringify({ stocks: results }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
