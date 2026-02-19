@@ -128,6 +128,7 @@ export default function Dashboard() {
             <TabsTrigger value="nasdaq">Nasdaq</TabsTrigger>
             <TabsTrigger value="dow">Dow Jones</TabsTrigger>
             <TabsTrigger value="sp500">S&P 500</TabsTrigger>
+            <TabsTrigger value="crypto">Crypto</TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab}>

@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Stock, Exchange, TechnicalIndicators, FundamentalIndicators, SentimentIndicators, SentimentRating } from "@/lib/types";
+import type { Stock, Exchange, TechnicalIndicators, FundamentalIndicators, SentimentIndicators, SentimentRating, CryptoMarketIndicators } from "@/lib/types";
 import { calculatePhaseScores, getRecommendation, getConfidence } from "@/lib/recommendation-engine";
+import { calculateCryptoPhaseScores } from "@/lib/crypto-scoring-engine";
 
 // Tickers grouped by our exchange categories
 const EXCHANGE_TICKERS: Record<Exchange, string[]> = {
@@ -19,6 +20,10 @@ const EXCHANGE_TICKERS: Record<Exchange, string[]> = {
     "BRK-B", "XOM", "LLY", "MA", "ABBV", "PFE", "COST", "T",
     "CVX", "BAC", "WFC", "ORCL", "TMO", "ACN", "LIN", "DHR",
     "PM", "NEE", "UPS", "RTX", "LOW", "SPGI", "INTU", "SYK",
+  ],
+  crypto: [
+    "BTCUSD", "ETHUSD", "BNBUSD", "SOLUSD", "XRPUSD",
+    "ADAUSD", "DOGEUSD", "AVAXUSD", "DOTUSD", "MATICUSD",
   ],
 };
 
@@ -174,7 +179,106 @@ function buildSentiment(s?: DetailSentiment): SentimentIndicators {
   };
 }
 
+// ─── Crypto helpers ──────────────────────────────────────────────────────────
+
+const CRYPTO_NAMES: Record<string, string> = {
+  BTCUSD: "Bitcoin", ETHUSD: "Ethereum", BNBUSD: "BNB", SOLUSD: "Solana",
+  XRPUSD: "XRP", ADAUSD: "Cardano", DOGEUSD: "Dogecoin", AVAXUSD: "Avalanche",
+  DOTUSD: "Polkadot", MATICUSD: "Polygon",
+};
+
+function isCryptoSymbol(symbol: string): boolean {
+  return symbol.endsWith("USD") && EXCHANGE_TICKERS.crypto.includes(symbol);
+}
+
+const DEFAULT_CRYPTO_MARKET: CryptoMarketIndicators = {
+  marketCap: 0, marketCapRank: 50, volumeToMarketCap: 0.05,
+  circulatingSupplyPercent: 80, priceChange24h: 0, priceChange7d: 0,
+  priceChange30d: 0, volatility30d: 60,
+};
+
+function buildCryptoMarket(quote: QuoteResponse): CryptoMarketIndicators {
+  const rankMap: Record<string, number> = {
+    BTCUSD: 1, ETHUSD: 2, BNBUSD: 4, SOLUSD: 5, XRPUSD: 6,
+    ADAUSD: 9, DOGEUSD: 8, AVAXUSD: 12, DOTUSD: 14, MATICUSD: 15,
+  };
+  return {
+    ...DEFAULT_CRYPTO_MARKET,
+    marketCapRank: rankMap[quote.symbol] ?? 50,
+    priceChange24h: quote.changePercent,
+    volumeToMarketCap: 0.05, // approximation from batch quote
+  };
+}
+
+function cryptoQuoteToStock(quote: QuoteResponse): Stock {
+  const technical = buildTechnicals(quote.price, quote.volume, quote.avgVolume);
+  const sentiment: SentimentIndicators = {
+    ...DEFAULT_SENTIMENT,
+    headline: `${CRYPTO_NAMES[quote.symbol] || quote.name} trades at $${quote.price.toFixed(2)}`,
+  };
+  const cryptoMarket = buildCryptoMarket(quote);
+  const phaseScores = calculateCryptoPhaseScores(cryptoMarket, sentiment, technical);
+  const displayTicker = quote.symbol.replace("USD", "");
+  return {
+    ticker: quote.symbol,
+    name: CRYPTO_NAMES[quote.symbol] || quote.name,
+    exchange: "crypto" as Exchange,
+    assetType: "crypto",
+    price: quote.price,
+    change: quote.change,
+    changePercent: quote.changePercent,
+    recommendation: getRecommendation(phaseScores.combined),
+    confidence: getConfidence(phaseScores.combined),
+    score: phaseScores.combined,
+    phaseScores,
+    technical,
+    fundamental: DEFAULT_FUNDAMENTAL,
+    sentiment,
+    cryptoMarket,
+  };
+}
+
+function cryptoDetailToStock(detail: DetailResponse): Stock {
+  const technical = buildTechnicals(detail.price, detail.volume, detail.avgVolume, detail.technical);
+  const sentiment = buildSentiment(detail.sentiment);
+  
+  // Build crypto market indicators from detail data
+  const cryptoMarket: CryptoMarketIndicators = {
+    ...DEFAULT_CRYPTO_MARKET,
+    priceChange24h: detail.changePercent,
+  };
+  // Use crypto fundamental data if available
+  if (detail.fundamental) {
+    const f = detail.fundamental;
+    // Map FMP crypto fields
+    cryptoMarket.priceChange7d = f.revenueGrowth ?? 0; // reused field from edge fn
+    cryptoMarket.priceChange30d = f.earningsGrowth ?? 0; // reused field from edge fn
+  }
+  
+  const phaseScores = calculateCryptoPhaseScores(cryptoMarket, sentiment, technical);
+  return {
+    ticker: detail.symbol,
+    name: CRYPTO_NAMES[detail.symbol] || detail.name,
+    exchange: "crypto" as Exchange,
+    assetType: "crypto",
+    price: detail.price,
+    change: detail.change,
+    changePercent: detail.changePercent,
+    recommendation: getRecommendation(phaseScores.combined),
+    confidence: getConfidence(phaseScores.combined),
+    score: phaseScores.combined,
+    phaseScores,
+    technical,
+    fundamental: DEFAULT_FUNDAMENTAL,
+    sentiment,
+    cryptoMarket,
+  };
+}
+
+// ─── Stock helpers ───────────────────────────────────────────────────────────
+
 function quoteToStock(quote: QuoteResponse, exchange: Exchange): Stock {
+  if (isCryptoSymbol(quote.symbol)) return cryptoQuoteToStock(quote);
   const technical = buildTechnicals(quote.price, quote.volume, quote.avgVolume);
   const fundamental = DEFAULT_FUNDAMENTAL;
   const sentiment: SentimentIndicators = {
@@ -186,6 +290,7 @@ function quoteToStock(quote: QuoteResponse, exchange: Exchange): Stock {
     ticker: quote.symbol,
     name: quote.name,
     exchange,
+    assetType: "stock",
     price: quote.price,
     change: quote.change,
     changePercent: quote.changePercent,
@@ -200,6 +305,7 @@ function quoteToStock(quote: QuoteResponse, exchange: Exchange): Stock {
 }
 
 function detailToStock(detail: DetailResponse, exchange: Exchange): Stock {
+  if (isCryptoSymbol(detail.symbol)) return cryptoDetailToStock(detail);
   const technical = buildTechnicals(detail.price, detail.volume, detail.avgVolume, detail.technical);
   const fundamental = buildFundamentals(detail.fundamental);
   const sentiment = buildSentiment(detail.sentiment);
@@ -208,6 +314,7 @@ function detailToStock(detail: DetailResponse, exchange: Exchange): Stock {
     ticker: detail.symbol,
     name: detail.name,
     exchange,
+    assetType: "stock",
     price: detail.price,
     change: detail.change,
     changePercent: detail.changePercent,

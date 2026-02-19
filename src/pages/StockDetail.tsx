@@ -72,9 +72,17 @@ export default function StockDetail() {
   }
 
   const isPositive = stock.change >= 0;
+  const isCrypto = stock.assetType === "crypto";
+  const displayTicker = isCrypto ? stock.ticker.replace("USD", "") : stock.ticker;
   const { technical: t, fundamental: f, sentiment: s, phaseScores } = stock;
 
-  const explanations: Record<string, string> = {
+  const explanations: Record<string, string> = isCrypto ? {
+    "strong-buy": `${stock.name} shows exceptional market structure, strongly positive sentiment, and bullish technical radars. High-conviction entry opportunity.`,
+    buy: `${stock.name} has solid market positioning with positive sentiment momentum. Technical indicators support upward movement — a good time to consider entering.`,
+    hold: `${stock.name} shows mixed radars. Market structure is stable but sentiment and technicals don't provide clear direction. Hold and monitor.`,
+    "dont-buy": `${stock.name} shows concerning radars — weak sentiment or deteriorating market structure. Wait for conditions to improve before entering.`,
+    sell: `${stock.name} is flagged across all phases — bearish sentiment, weak market structure, and negative technicals. Consider reducing exposure.`,
+  } : {
     "strong-buy": `${stock.name} scores exceptionally across all three phases — strong fundamentals, positive market sentiment, and bullish technical radars. This is a high-conviction entry opportunity.`,
     buy: `${stock.name} shows solid fundamentals reinforced by positive news sentiment. Technical indicators confirm the upward momentum — a good time to consider entering.`,
     hold: `${stock.name} has decent fundamentals but mixed radars from news and technicals. Hold existing positions and monitor for stronger directional cues.`,
@@ -102,8 +110,8 @@ export default function StockDetail() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="font-display text-3xl font-bold">{stock.ticker}</h1>
-              <Badge variant="secondary">{stock.exchange.toUpperCase()}</Badge>
+              <h1 className="font-display text-3xl font-bold">{displayTicker}</h1>
+              <Badge variant="secondary">{isCrypto ? "CRYPTO" : stock.exchange.toUpperCase()}</Badge>
             </div>
             <p className="text-muted-foreground">{stock.name}</p>
           </div>
@@ -127,7 +135,7 @@ export default function StockDetail() {
             {/* 3-Phase Score Breakdown */}
             <div className="space-y-4">
               {[
-                { label: "Fundamentals", value: phaseScores.fundamental, icon: <BarChart3 className="w-4 h-4" /> },
+                { label: isCrypto ? "Market Structure" : "Fundamentals", value: phaseScores.fundamental, icon: <BarChart3 className="w-4 h-4" /> },
                 { label: "Sentiment", value: phaseScores.sentiment, icon: <Newspaper className="w-4 h-4" /> },
                 { label: "Technicals", value: phaseScores.technical, icon: <TrendingUp className="w-4 h-4" /> },
               ].map((phase) => {
@@ -204,22 +212,36 @@ export default function StockDetail() {
         </Card>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Fundamental */}
+          {/* Fundamental / Market Structure */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" /> Fundamentals
+                <BarChart3 className="w-5 h-5" /> {isCrypto ? "Market Structure" : "Fundamentals"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-0">
-              <Indicator label="P/E Ratio" value={f.peRatio.toFixed(1)} hint={f.peRatio < 15 ? "Undervalued" : f.peRatio > 35 ? "Overvalued" : "Fair value"} signal={f.peRatio < 15 ? "bullish" : f.peRatio > 35 ? "bearish" : "neutral"} />
-              <Indicator label="Forward P/E" value={f.forwardPE.toFixed(1)} hint={f.forwardPE < f.peRatio ? "Growth expected" : "Slowing growth"} signal={f.forwardPE < f.peRatio ? "bullish" : "bearish"} />
-              <Indicator label="Earnings Growth" value={`${f.earningsGrowth.toFixed(1)}%`} hint={f.earningsGrowth > 15 ? "Strong" : f.earningsGrowth > 0 ? "Positive" : "Declining"} signal={f.earningsGrowth > 15 ? "bullish" : f.earningsGrowth > 0 ? "neutral" : "bearish"} />
-              <Indicator label="Revenue Growth" value={`${f.revenueGrowth.toFixed(1)}%`} hint={f.revenueGrowth > 15 ? "Strong" : f.revenueGrowth > 0 ? "Positive" : "Declining"} signal={f.revenueGrowth > 15 ? "bullish" : f.revenueGrowth > 0 ? "neutral" : "bearish"} />
-              <Indicator label="Profit Margin" value={`${f.profitMargin.toFixed(1)}%`} hint={f.profitMargin > 20 ? "Excellent" : f.profitMargin > 10 ? "Good" : "Low"} signal={f.profitMargin > 20 ? "bullish" : f.profitMargin > 10 ? "neutral" : "bearish"} />
-              <Indicator label="Debt/Equity" value={f.debtToEquity.toFixed(2)} hint={f.debtToEquity < 0.5 ? "Low leverage" : f.debtToEquity > 2 ? "High leverage" : "Moderate"} signal={f.debtToEquity < 0.5 ? "bullish" : f.debtToEquity > 2 ? "bearish" : "neutral"} />
-              <Indicator label="Return on Equity" value={`${f.returnOnEquity.toFixed(1)}%`} hint={f.returnOnEquity > 20 ? "Excellent" : f.returnOnEquity > 10 ? "Good" : "Below avg"} signal={f.returnOnEquity > 20 ? "bullish" : f.returnOnEquity > 10 ? "neutral" : "bearish"} />
-              <Indicator label="FCF Yield" value={`${f.freeCashFlowYield.toFixed(1)}%`} hint={f.freeCashFlowYield > 5 ? "Attractive" : f.freeCashFlowYield > 2 ? "Fair" : "Low"} signal={f.freeCashFlowYield > 5 ? "bullish" : f.freeCashFlowYield > 2 ? "neutral" : "bearish"} />
+              {isCrypto && stock.cryptoMarket ? (
+                <>
+                  <Indicator label="Market Cap Rank" value={`#${stock.cryptoMarket.marketCapRank}`} hint={stock.cryptoMarket.marketCapRank <= 5 ? "Top tier" : stock.cryptoMarket.marketCapRank <= 15 ? "Major" : "Mid-cap"} signal={stock.cryptoMarket.marketCapRank <= 5 ? "bullish" : stock.cryptoMarket.marketCapRank <= 15 ? "neutral" : "bearish"} />
+                  <Indicator label="24h Change" value={`${stock.cryptoMarket.priceChange24h > 0 ? "+" : ""}${stock.cryptoMarket.priceChange24h.toFixed(2)}%`} hint={stock.cryptoMarket.priceChange24h > 3 ? "Strong up" : stock.cryptoMarket.priceChange24h > 0 ? "Up" : stock.cryptoMarket.priceChange24h > -3 ? "Down" : "Sharp drop"} signal={stock.cryptoMarket.priceChange24h > 1 ? "bullish" : stock.cryptoMarket.priceChange24h < -1 ? "bearish" : "neutral"} />
+                  <Indicator label="7d Change" value={`${stock.cryptoMarket.priceChange7d > 0 ? "+" : ""}${stock.cryptoMarket.priceChange7d.toFixed(2)}%`} hint={stock.cryptoMarket.priceChange7d > 5 ? "Strong trend" : stock.cryptoMarket.priceChange7d > 0 ? "Positive" : "Negative"} signal={stock.cryptoMarket.priceChange7d > 3 ? "bullish" : stock.cryptoMarket.priceChange7d < -3 ? "bearish" : "neutral"} />
+                  <Indicator label="30d Change" value={`${stock.cryptoMarket.priceChange30d > 0 ? "+" : ""}${stock.cryptoMarket.priceChange30d.toFixed(2)}%`} hint={stock.cryptoMarket.priceChange30d > 10 ? "Strong rally" : stock.cryptoMarket.priceChange30d > 0 ? "Uptrend" : "Downtrend"} signal={stock.cryptoMarket.priceChange30d > 5 ? "bullish" : stock.cryptoMarket.priceChange30d < -5 ? "bearish" : "neutral"} />
+                  <Indicator label="Vol/MCap Ratio" value={stock.cryptoMarket.volumeToMarketCap.toFixed(3)} hint={stock.cryptoMarket.volumeToMarketCap > 0.1 ? "High activity" : stock.cryptoMarket.volumeToMarketCap > 0.03 ? "Normal" : "Low"} signal={stock.cryptoMarket.volumeToMarketCap > 0.1 ? "bullish" : stock.cryptoMarket.volumeToMarketCap < 0.02 ? "bearish" : "neutral"} />
+                  <Indicator label="Circulating Supply" value={`${stock.cryptoMarket.circulatingSupplyPercent.toFixed(0)}%`} hint={stock.cryptoMarket.circulatingSupplyPercent > 80 ? "Mostly circulating" : "Dilution risk"} signal={stock.cryptoMarket.circulatingSupplyPercent > 80 ? "bullish" : stock.cryptoMarket.circulatingSupplyPercent > 50 ? "neutral" : "bearish"} />
+                  <Indicator label="30d Volatility" value={`${stock.cryptoMarket.volatility30d.toFixed(0)}%`} hint={stock.cryptoMarket.volatility30d > 80 ? "Very high" : stock.cryptoMarket.volatility30d > 50 ? "High" : "Moderate"} signal={stock.cryptoMarket.volatility30d > 80 ? "bearish" : "neutral"} />
+                </>
+              ) : (
+                <>
+                  <Indicator label="P/E Ratio" value={f.peRatio.toFixed(1)} hint={f.peRatio < 15 ? "Undervalued" : f.peRatio > 35 ? "Overvalued" : "Fair value"} signal={f.peRatio < 15 ? "bullish" : f.peRatio > 35 ? "bearish" : "neutral"} />
+                  <Indicator label="Forward P/E" value={f.forwardPE.toFixed(1)} hint={f.forwardPE < f.peRatio ? "Growth expected" : "Slowing growth"} signal={f.forwardPE < f.peRatio ? "bullish" : "bearish"} />
+                  <Indicator label="Earnings Growth" value={`${f.earningsGrowth.toFixed(1)}%`} hint={f.earningsGrowth > 15 ? "Strong" : f.earningsGrowth > 0 ? "Positive" : "Declining"} signal={f.earningsGrowth > 15 ? "bullish" : f.earningsGrowth > 0 ? "neutral" : "bearish"} />
+                  <Indicator label="Revenue Growth" value={`${f.revenueGrowth.toFixed(1)}%`} hint={f.revenueGrowth > 15 ? "Strong" : f.revenueGrowth > 0 ? "Positive" : "Declining"} signal={f.revenueGrowth > 15 ? "bullish" : f.revenueGrowth > 0 ? "neutral" : "bearish"} />
+                  <Indicator label="Profit Margin" value={`${f.profitMargin.toFixed(1)}%`} hint={f.profitMargin > 20 ? "Excellent" : f.profitMargin > 10 ? "Good" : "Low"} signal={f.profitMargin > 20 ? "bullish" : f.profitMargin > 10 ? "neutral" : "bearish"} />
+                  <Indicator label="Debt/Equity" value={f.debtToEquity.toFixed(2)} hint={f.debtToEquity < 0.5 ? "Low leverage" : f.debtToEquity > 2 ? "High leverage" : "Moderate"} signal={f.debtToEquity < 0.5 ? "bullish" : f.debtToEquity > 2 ? "bearish" : "neutral"} />
+                  <Indicator label="Return on Equity" value={`${f.returnOnEquity.toFixed(1)}%`} hint={f.returnOnEquity > 20 ? "Excellent" : f.returnOnEquity > 10 ? "Good" : "Below avg"} signal={f.returnOnEquity > 20 ? "bullish" : f.returnOnEquity > 10 ? "neutral" : "bearish"} />
+                  <Indicator label="FCF Yield" value={`${f.freeCashFlowYield.toFixed(1)}%`} hint={f.freeCashFlowYield > 5 ? "Attractive" : f.freeCashFlowYield > 2 ? "Fair" : "Low"} signal={f.freeCashFlowYield > 5 ? "bullish" : f.freeCashFlowYield > 2 ? "neutral" : "bearish"} />
+                </>
+              )}
             </CardContent>
           </Card>
 
