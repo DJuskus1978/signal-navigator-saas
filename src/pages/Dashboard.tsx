@@ -8,7 +8,7 @@ import { Exchange } from "@/lib/types";
 import { Search, Filter, LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { RadarLogo } from "@/components/RadarLogo";
-import { useLiveStocks } from "@/hooks/use-live-stocks";
+import { useLiveStocks, useSearchStocks } from "@/hooks/use-live-stocks";
 import {
   Select,
   SelectContent,
@@ -22,8 +22,12 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<Exchange>("nasdaq");
+  const [globalSearch, setGlobalSearch] = useState("");
 
   const { data: stocks = [], isLoading, error } = useLiveStocks(activeTab);
+  const { data: searchResults = [], isLoading: isSearching } = useSearchStocks(globalSearch);
+
+  const isGlobalSearchActive = globalSearch.length >= 2;
 
   const filteredStocks = stocks.filter((s) => {
     const q = search.toLowerCase();
@@ -58,7 +62,41 @@ export default function Dashboard() {
           <p className="text-muted-foreground">Real-time StocksRadars across major indices</p>
         </div>
 
-        {/* Filters */}
+        {/* Global Search */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search any stock (e.g. MCD, Disney, Tesla...)"
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          {isGlobalSearchActive && (
+            <div className="mt-3">
+              {isSearching ? (
+                <div className="flex items-center gap-2 py-4">
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Searching...</span>
+                </div>
+              ) : searchResults.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4">No results for "{globalSearch}"</p>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
+                  {searchResults.map((stock) => (
+                    <StockCard key={stock.ticker} stock={stock} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {!isGlobalSearchActive && (
+        <>
+        {/* Local Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -114,6 +152,8 @@ export default function Dashboard() {
             )}
           </TabsContent>
         </Tabs>
+        </>
+        )}
       </main>
     </div>
   );
