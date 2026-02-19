@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StockCard } from "@/components/StockCard";
 import { Exchange } from "@/lib/types";
-import { Search, Filter, LogOut, Loader2 } from "lucide-react";
+import { Search, Filter, LogOut, Loader2, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { RadarLogo } from "@/components/RadarLogo";
 import { useLiveStocks, useSearchStocks } from "@/hooks/use-live-stocks";
+import { useSubscription } from "@/hooks/use-subscription";
 import {
   Select,
   SelectContent,
@@ -17,6 +18,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+const TIER_LABELS: Record<string, string> = {
+  novice: "Novice Trader",
+  day_trader: "Day Trader",
+  pro_day_trader: "Pro Day Trader",
+  bull_trader: "Bull Trader",
+};
+
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const [search, setSearch] = useState("");
@@ -24,10 +32,15 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<Exchange>("nasdaq");
   const [globalSearch, setGlobalSearch] = useState("");
 
+  const { data: subscription } = useSubscription();
   const { data: stocks = [], isLoading, error } = useLiveStocks(activeTab);
   const { data: searchResults = [], isLoading: isSearching } = useSearchStocks(globalSearch);
 
   const isGlobalSearchActive = globalSearch.length >= 2;
+  const hasCrypto = subscription?.hasCryptoAccess ?? false;
+
+  // For novice users, limit visible preloaded stocks to 2
+  const maxPreloaded = subscription?.tier === "novice" ? 2 : Infinity;
 
   const filteredStocks = stocks.filter((s) => {
     const q = search.toLowerCase();
@@ -35,6 +48,9 @@ export default function Dashboard() {
     const matchesFilter = filter === "all" || s.recommendation === filter;
     return matchesSearch && matchesFilter;
   });
+
+  const visibleStocks = filteredStocks.slice(0, maxPreloaded);
+  const isLimited = filteredStocks.length > visibleStocks.length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,6 +62,11 @@ export default function Dashboard() {
             <span className="font-display font-bold text-xl">StocksRadars</span>
           </Link>
           <div className="flex items-center gap-3">
+            {subscription && (
+              <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium hidden sm:inline">
+                {TIER_LABELS[subscription.tier]}
+              </span>
+            )}
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {user?.email}
             </span>
@@ -60,6 +81,12 @@ export default function Dashboard() {
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold mb-2">Dashboard</h1>
           <p className="text-muted-foreground">Real-time StocksRadars across major indices</p>
+          {subscription && subscription.tier === "novice" && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Free trial — {subscription.dailyLimit} stock searches/day, {maxPreloaded} preloaded radars.{" "}
+              <Link to="/#pricing" className="text-primary underline underline-offset-2">Upgrade for more</Link>
+            </p>
+          )}
         </div>
 
         {/* Global Search */}
@@ -128,11 +155,25 @@ export default function Dashboard() {
             <TabsTrigger value="nasdaq">Nasdaq</TabsTrigger>
             <TabsTrigger value="dow">Dow Jones</TabsTrigger>
             <TabsTrigger value="sp500">S&P 500</TabsTrigger>
-            <TabsTrigger value="crypto">Crypto</TabsTrigger>
+            {hasCrypto ? (
+              <TabsTrigger value="crypto">Crypto</TabsTrigger>
+            ) : (
+              <TabsTrigger value="crypto" disabled className="gap-1.5 opacity-50">
+                <Lock className="w-3 h-3" /> Crypto
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value={activeTab}>
-            {isLoading ? (
+            {activeTab === "crypto" && !hasCrypto ? (
+              <div className="text-center py-16 space-y-3">
+                <Lock className="w-8 h-8 text-muted-foreground mx-auto" />
+                <p className="text-muted-foreground font-medium">Crypto radars are exclusive to the Bull Trader plan</p>
+                <Link to="/#pricing">
+                  <Button size="sm">Upgrade to Bull Trader</Button>
+                </Link>
+              </div>
+            ) : isLoading ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                 <span className="ml-2 text-muted-foreground">Fetching live data...</span>
@@ -142,13 +183,23 @@ export default function Dashboard() {
                 <p className="text-destructive mb-2">Failed to load live data</p>
                 <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
               </div>
-            ) : filteredStocks.length === 0 ? (
+            ) : visibleStocks.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No stocks match your filters.</p>
             ) : (
               <div className="space-y-3">
-                {filteredStocks.map((stock) => (
+                {visibleStocks.map((stock) => (
                   <StockCard key={stock.ticker} stock={stock} />
                 ))}
+                {isLimited && (
+                  <div className="text-center py-6 border border-dashed border-border rounded-xl">
+                    <p className="text-muted-foreground text-sm mb-2">
+                      You can see {maxPreloaded} of {filteredStocks.length} stocks on your current plan
+                    </p>
+                    <Link to="/#pricing">
+                      <Button variant="outline" size="sm">Upgrade to see all</Button>
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </TabsContent>

@@ -49,6 +49,8 @@ export type Database = {
           id: string
           is_subscribed: boolean
           stripe_customer_id: string | null
+          subscription_tier: Database["public"]["Enums"]["subscription_tier"]
+          trial_started_at: string | null
           updated_at: string
           user_id: string
         }
@@ -59,6 +61,8 @@ export type Database = {
           id?: string
           is_subscribed?: boolean
           stripe_customer_id?: string | null
+          subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
+          trial_started_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -69,6 +73,8 @@ export type Database = {
           id?: string
           is_subscribed?: boolean
           stripe_customer_id?: string | null
+          subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
+          trial_started_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -124,6 +130,11 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      subscription_tier:
+        | "novice"
+        | "day_trader"
+        | "pro_day_trader"
+        | "bull_trader"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -252,6 +263,12 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      subscription_tier: [
+        "novice",
+        "day_trader",
+        "pro_day_trader",
+        "bull_trader",
+      ],
     },
   },
 } as const
