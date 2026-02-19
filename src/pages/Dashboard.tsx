@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,13 @@ const TIER_LABELS: Record<string, string> = {
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const goToPricing = () => {
+    navigate("/");
+    setTimeout(() => {
+      document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<Exchange>("nasdaq");
@@ -84,7 +91,7 @@ export default function Dashboard() {
           {subscription && subscription.tier === "novice" && (
             <p className="text-sm text-muted-foreground mt-1">
               Free trial — {subscription.dailyLimit} stock searches/day, {maxPreloaded} preloaded radars.{" "}
-              <Link to="/#pricing" className="text-primary font-semibold underline underline-offset-2">Upgrade for more</Link>
+              <button onClick={goToPricing} className="text-primary font-semibold underline underline-offset-2">Upgrade for more</button>
             </p>
           )}
         </div>
@@ -195,9 +202,7 @@ export default function Dashboard() {
                     <p className="text-muted-foreground text-sm mb-2">
                       You can see, open, search and get full radars of only {maxPreloaded} Stocks/Tickers per day
                     </p>
-                    <Link to="/#pricing">
-                      <Button size="sm">Upgrade to see all</Button>
-                    </Link>
+                    <Button size="sm" onClick={goToPricing}>Upgrade to see all</Button>
                   </div>
                 )}
               </div>
