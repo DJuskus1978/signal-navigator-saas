@@ -110,14 +110,27 @@ Deno.serve(async (req) => {
       const ema20_0 = Array.isArray(ema20Arr) ? ema20Arr[0] : null;
       const km = Array.isArray(keyMetricsArr) ? keyMetricsArr[0] : null;
       const gr = Array.isArray(growthArr) ? growthArr[0] : null;
-      const news = Array.isArray(newsArr) ? newsArr : [];
+      const rawNews = Array.isArray(newsArr) ? newsArr : [];
       const grades = Array.isArray(gradesArr) ? gradesArr : [];
+
+      // Filter news to only articles relevant to this specific symbol
+      const news = rawNews.filter((n: any) => {
+        const sym = symbol.toUpperCase();
+        // Check if this article's symbol/ticker field matches
+        if (n.symbol && n.symbol.toUpperCase() === sym) return true;
+        // Some FMP responses have a tickers string like "AAPL,MCD"
+        if (n.tickers && n.tickers.toUpperCase().split(',').map((t: string) => t.trim()).includes(sym)) return true;
+        // Check title contains the symbol or company name
+        const title = (n.title || '').toUpperCase();
+        if (title.includes(sym) || (q.name && title.includes(q.name.toUpperCase()))) return true;
+        return false;
+      });
 
       // Compute analyst rating from grades
       const analystRating = computeAnalystRating(grades);
       const gradeActivity = computeGradeAction(grades);
 
-      // Get top headline
+      // Get top headline — only use filtered relevant news
       const topHeadline = news.length > 0 ? news[0].title : `${q.name || symbol} trades at $${q.price?.toFixed(2)}`;
 
       const result = {
