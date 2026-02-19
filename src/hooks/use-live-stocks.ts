@@ -256,7 +256,10 @@ export function useSearchStocks(query: string) {
       }
       const data = await res.json();
       const quotes: QuoteResponse[] = data.stocks || [];
-      return quotes.map((q) => quoteToStock(q, "nasdaq"));
+      return quotes.map((q) => {
+        const exchange = findExchangeForTicker(q.symbol);
+        return quoteToStock(q, exchange);
+      });
     },
     staleTime: 60_000,
     retry: 1,
