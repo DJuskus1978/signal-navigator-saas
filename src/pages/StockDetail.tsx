@@ -1,12 +1,12 @@
 import { useParams, Link } from "react-router-dom";
-import { getStockByTicker } from "@/lib/mock-data";
+import { useLiveStockDetail } from "@/hooks/use-live-stocks";
 import { getRecommendationLabel } from "@/lib/recommendation-engine";
 import { TrafficLight } from "@/components/TrafficLight";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, TrendingUp, Newspaper, BarChart3 } from "lucide-react";
+import { ArrowLeft, TrendingUp, Newspaper, BarChart3, Loader2 } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
 import { cn } from "@/lib/utils";
 
@@ -46,13 +46,25 @@ function Indicator({ label, value, hint, signal }: { label: string; value: strin
 
 export default function StockDetail() {
   const { ticker } = useParams<{ ticker: string }>();
-  const stock = getStockByTicker(ticker || "");
+  const { data: stock, isLoading, error } = useLiveStockDetail(ticker || "");
 
-  if (!stock) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Loading live data...</span>
+      </div>
+    );
+  }
+
+  if (error || !stock) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <h1 className="font-display text-2xl font-bold mb-4">Stock not found</h1>
+          <h1 className="font-display text-2xl font-bold mb-4">
+            {error ? "Failed to load stock data" : "Stock not found"}
+          </h1>
+          {error && <p className="text-sm text-muted-foreground mb-4">{(error as Error).message}</p>}
           <Link to="/dashboard"><Button>Back to Dashboard</Button></Link>
         </div>
       </div>
@@ -169,10 +181,7 @@ export default function StockDetail() {
               hint={s.newsScore > 30 ? "Positive" : s.newsScore > -30 ? "Mixed" : "Negative"}
               signal={s.newsScore > 30 ? "bullish" : s.newsScore < -30 ? "bearish" : "neutral"}
             />
-            <Indicator
-              label="Articles Analyzed"
-              value={s.newsCount}
-            />
+            <Indicator label="Articles Analyzed" value={s.newsCount} />
             <Indicator
               label="Social Sentiment"
               value={s.socialScore > 0 ? `+${s.socialScore.toFixed(0)}` : s.socialScore.toFixed(0)}
@@ -203,54 +212,14 @@ export default function StockDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-0">
-              <Indicator
-                label="P/E Ratio"
-                value={f.peRatio.toFixed(1)}
-                hint={f.peRatio < 15 ? "Undervalued" : f.peRatio > 35 ? "Overvalued" : "Fair value"}
-                signal={f.peRatio < 15 ? "bullish" : f.peRatio > 35 ? "bearish" : "neutral"}
-              />
-              <Indicator
-                label="Forward P/E"
-                value={f.forwardPE.toFixed(1)}
-                hint={f.forwardPE < f.peRatio ? "Growth expected" : "Slowing growth"}
-                signal={f.forwardPE < f.peRatio ? "bullish" : "bearish"}
-              />
-              <Indicator
-                label="Earnings Growth"
-                value={`${f.earningsGrowth.toFixed(1)}%`}
-                hint={f.earningsGrowth > 15 ? "Strong" : f.earningsGrowth > 0 ? "Positive" : "Declining"}
-                signal={f.earningsGrowth > 15 ? "bullish" : f.earningsGrowth > 0 ? "neutral" : "bearish"}
-              />
-              <Indicator
-                label="Revenue Growth"
-                value={`${f.revenueGrowth.toFixed(1)}%`}
-                hint={f.revenueGrowth > 15 ? "Strong" : f.revenueGrowth > 0 ? "Positive" : "Declining"}
-                signal={f.revenueGrowth > 15 ? "bullish" : f.revenueGrowth > 0 ? "neutral" : "bearish"}
-              />
-              <Indicator
-                label="Profit Margin"
-                value={`${f.profitMargin.toFixed(1)}%`}
-                hint={f.profitMargin > 20 ? "Excellent" : f.profitMargin > 10 ? "Good" : "Low"}
-                signal={f.profitMargin > 20 ? "bullish" : f.profitMargin > 10 ? "neutral" : "bearish"}
-              />
-              <Indicator
-                label="Debt/Equity"
-                value={f.debtToEquity.toFixed(2)}
-                hint={f.debtToEquity < 0.5 ? "Low leverage" : f.debtToEquity > 2 ? "High leverage" : "Moderate"}
-                signal={f.debtToEquity < 0.5 ? "bullish" : f.debtToEquity > 2 ? "bearish" : "neutral"}
-              />
-              <Indicator
-                label="Return on Equity"
-                value={`${f.returnOnEquity.toFixed(1)}%`}
-                hint={f.returnOnEquity > 20 ? "Excellent" : f.returnOnEquity > 10 ? "Good" : "Below avg"}
-                signal={f.returnOnEquity > 20 ? "bullish" : f.returnOnEquity > 10 ? "neutral" : "bearish"}
-              />
-              <Indicator
-                label="FCF Yield"
-                value={`${f.freeCashFlowYield.toFixed(1)}%`}
-                hint={f.freeCashFlowYield > 5 ? "Attractive" : f.freeCashFlowYield > 2 ? "Fair" : "Low"}
-                signal={f.freeCashFlowYield > 5 ? "bullish" : f.freeCashFlowYield > 2 ? "neutral" : "bearish"}
-              />
+              <Indicator label="P/E Ratio" value={f.peRatio.toFixed(1)} hint={f.peRatio < 15 ? "Undervalued" : f.peRatio > 35 ? "Overvalued" : "Fair value"} signal={f.peRatio < 15 ? "bullish" : f.peRatio > 35 ? "bearish" : "neutral"} />
+              <Indicator label="Forward P/E" value={f.forwardPE.toFixed(1)} hint={f.forwardPE < f.peRatio ? "Growth expected" : "Slowing growth"} signal={f.forwardPE < f.peRatio ? "bullish" : "bearish"} />
+              <Indicator label="Earnings Growth" value={`${f.earningsGrowth.toFixed(1)}%`} hint={f.earningsGrowth > 15 ? "Strong" : f.earningsGrowth > 0 ? "Positive" : "Declining"} signal={f.earningsGrowth > 15 ? "bullish" : f.earningsGrowth > 0 ? "neutral" : "bearish"} />
+              <Indicator label="Revenue Growth" value={`${f.revenueGrowth.toFixed(1)}%`} hint={f.revenueGrowth > 15 ? "Strong" : f.revenueGrowth > 0 ? "Positive" : "Declining"} signal={f.revenueGrowth > 15 ? "bullish" : f.revenueGrowth > 0 ? "neutral" : "bearish"} />
+              <Indicator label="Profit Margin" value={`${f.profitMargin.toFixed(1)}%`} hint={f.profitMargin > 20 ? "Excellent" : f.profitMargin > 10 ? "Good" : "Low"} signal={f.profitMargin > 20 ? "bullish" : f.profitMargin > 10 ? "neutral" : "bearish"} />
+              <Indicator label="Debt/Equity" value={f.debtToEquity.toFixed(2)} hint={f.debtToEquity < 0.5 ? "Low leverage" : f.debtToEquity > 2 ? "High leverage" : "Moderate"} signal={f.debtToEquity < 0.5 ? "bullish" : f.debtToEquity > 2 ? "bearish" : "neutral"} />
+              <Indicator label="Return on Equity" value={`${f.returnOnEquity.toFixed(1)}%`} hint={f.returnOnEquity > 20 ? "Excellent" : f.returnOnEquity > 10 ? "Good" : "Below avg"} signal={f.returnOnEquity > 20 ? "bullish" : f.returnOnEquity > 10 ? "neutral" : "bearish"} />
+              <Indicator label="FCF Yield" value={`${f.freeCashFlowYield.toFixed(1)}%`} hint={f.freeCashFlowYield > 5 ? "Attractive" : f.freeCashFlowYield > 2 ? "Fair" : "Low"} signal={f.freeCashFlowYield > 5 ? "bullish" : f.freeCashFlowYield > 2 ? "neutral" : "bearish"} />
             </CardContent>
           </Card>
 
@@ -262,66 +231,15 @@ export default function StockDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-0">
-              <Indicator
-                label="RSI (14)"
-                value={t.rsi.toFixed(1)}
-                hint={t.rsi < 30 ? "Oversold" : t.rsi > 70 ? "Overbought" : "Neutral"}
-                signal={t.rsi < 30 ? "bullish" : t.rsi > 70 ? "bearish" : "neutral"}
-              />
-              <Indicator
-                label="MACD"
-                value={t.macd.toFixed(2)}
-                hint={t.macd > t.macdSignal ? "Bullish crossover" : "Bearish crossover"}
-                signal={t.macd > t.macdSignal ? "bullish" : "bearish"}
-              />
-              <Indicator
-                label="MACD Signal"
-                value={t.macdSignal.toFixed(2)}
-                hint={t.macdSignal > 0 ? "Bullish" : t.macdSignal < 0 ? "Bearish" : "Neutral"}
-                signal={t.macdSignal > 0 ? "bullish" : t.macdSignal < 0 ? "bearish" : "neutral"}
-              />
-              <Indicator
-                label="EMA 20"
-                value={`$${t.ema20.toFixed(2)}`}
-                hint={t.ema20 > t.sma50 ? "Short-term bullish" : "Short-term bearish"}
-                signal={t.ema20 > t.sma50 ? "bullish" : "bearish"}
-              />
-              <Indicator
-                label="SMA 50"
-                value={`$${t.sma50.toFixed(2)}`}
-                hint={t.sma50 > t.sma200 ? "Above 200-day" : "Below 200-day"}
-                signal={t.sma50 > t.sma200 ? "bullish" : "bearish"}
-              />
-              <Indicator
-                label="SMA 200"
-                value={`$${t.sma200.toFixed(2)}`}
-                hint={t.sma200 < t.sma50 ? "Below 50-day" : "Above 50-day"}
-                signal={t.sma200 < t.sma50 ? "bearish" : "bullish"}
-              />
-              <Indicator
-                label="Bollinger Bands"
-                value={`$${t.bollingerLower.toFixed(0)} – $${t.bollingerUpper.toFixed(0)}`}
-                hint={
-                  stock.price < t.bollingerLower ? "Near lower band" :
-                  stock.price > t.bollingerUpper ? "Near upper band" : "Within range"
-                }
-                signal={
-                  stock.price < t.bollingerLower ? "bullish" :
-                  stock.price > t.bollingerUpper ? "bearish" : "neutral"
-                }
-              />
-              <Indicator
-                label="ATR (Volatility)"
-                value={`$${t.atr.toFixed(2)}`}
-                hint={t.atr > stock.price * 0.04 ? "High volatility" : "Normal"}
-                signal={t.atr > stock.price * 0.04 ? "bearish" : "neutral"}
-              />
-              <Indicator
-                label="Volume"
-                value={`${(t.volume / 1_000_000).toFixed(1)}M`}
-                hint={t.volume > t.avgVolume ? "Above average" : "Below average"}
-                signal={t.volume > t.avgVolume ? "bullish" : "neutral"}
-              />
+              <Indicator label="RSI (14)" value={t.rsi.toFixed(1)} hint={t.rsi < 30 ? "Oversold" : t.rsi > 70 ? "Overbought" : "Neutral"} signal={t.rsi < 30 ? "bullish" : t.rsi > 70 ? "bearish" : "neutral"} />
+              <Indicator label="MACD" value={t.macd.toFixed(2)} hint={t.macd > t.macdSignal ? "Bullish crossover" : "Bearish crossover"} signal={t.macd > t.macdSignal ? "bullish" : "bearish"} />
+              <Indicator label="MACD Signal" value={t.macdSignal.toFixed(2)} hint={t.macdSignal > 0 ? "Bullish" : t.macdSignal < 0 ? "Bearish" : "Neutral"} signal={t.macdSignal > 0 ? "bullish" : t.macdSignal < 0 ? "bearish" : "neutral"} />
+              <Indicator label="EMA 20" value={`$${t.ema20.toFixed(2)}`} hint={t.ema20 > t.sma50 ? "Short-term bullish" : "Short-term bearish"} signal={t.ema20 > t.sma50 ? "bullish" : "bearish"} />
+              <Indicator label="SMA 50" value={`$${t.sma50.toFixed(2)}`} hint={t.sma50 > t.sma200 ? "Above 200-day" : "Below 200-day"} signal={t.sma50 > t.sma200 ? "bullish" : "bearish"} />
+              <Indicator label="SMA 200" value={`$${t.sma200.toFixed(2)}`} hint={t.sma200 < t.sma50 ? "Below 50-day" : "Above 50-day"} signal={t.sma200 < t.sma50 ? "bearish" : "bullish"} />
+              <Indicator label="Bollinger Bands" value={`$${t.bollingerLower.toFixed(0)} – $${t.bollingerUpper.toFixed(0)}`} hint={stock.price < t.bollingerLower ? "Near lower band" : stock.price > t.bollingerUpper ? "Near upper band" : "Within range"} signal={stock.price < t.bollingerLower ? "bullish" : stock.price > t.bollingerUpper ? "bearish" : "neutral"} />
+              <Indicator label="ATR (Volatility)" value={`$${t.atr.toFixed(2)}`} hint={t.atr > stock.price * 0.04 ? "High volatility" : "Normal"} signal={t.atr > stock.price * 0.04 ? "bearish" : "neutral"} />
+              <Indicator label="Volume" value={`${(t.volume / 1_000_000).toFixed(1)}M`} hint={t.volume > t.avgVolume ? "Above average" : "Below average"} signal={t.volume > t.avgVolume ? "bullish" : "neutral"} />
             </CardContent>
           </Card>
         </div>

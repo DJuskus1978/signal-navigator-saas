@@ -4,11 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StockCard } from "@/components/StockCard";
-import { getStocksByExchange } from "@/lib/mock-data";
-import { Exchange, Recommendation } from "@/lib/types";
-import { Search, Filter, LogOut } from "lucide-react";
+import { Exchange } from "@/lib/types";
+import { Search, Filter, LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { RadarLogo } from "@/components/RadarLogo";
+import { useLiveStocks } from "@/hooks/use-live-stocks";
 import {
   Select,
   SelectContent,
@@ -21,31 +21,16 @@ export default function Dashboard() {
   const { user, signOut } = useAuth();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<Exchange>("nasdaq");
 
-  const renderStockList = (exchange: Exchange) => {
-    let stocks = getStocksByExchange(exchange);
+  const { data: stocks = [], isLoading, error } = useLiveStocks(activeTab);
 
-    if (search) {
-      const q = search.toLowerCase();
-      stocks = stocks.filter(
-        (s) => s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
-      );
-    }
-
-    if (filter !== "all") {
-      stocks = stocks.filter((s) => s.recommendation === filter);
-    }
-
-    return (
-      <div className="space-y-3">
-        {stocks.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">No stocks match your filters.</p>
-        ) : (
-          stocks.map((stock) => <StockCard key={stock.ticker} stock={stock} />)
-        )}
-      </div>
-    );
-  };
+  const filteredStocks = stocks.filter((s) => {
+    const q = search.toLowerCase();
+    const matchesSearch = !search || s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q);
+    const matchesFilter = filter === "all" || s.recommendation === filter;
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,15 +85,34 @@ export default function Dashboard() {
           </Select>
         </div>
 
-        <Tabs defaultValue="nasdaq">
+        <Tabs defaultValue="nasdaq" onValueChange={(v) => setActiveTab(v as Exchange)}>
           <TabsList className="mb-6">
             <TabsTrigger value="nasdaq">Nasdaq</TabsTrigger>
             <TabsTrigger value="dow">Dow Jones</TabsTrigger>
             <TabsTrigger value="sp500">S&P 500</TabsTrigger>
           </TabsList>
-          <TabsContent value="nasdaq">{renderStockList("nasdaq")}</TabsContent>
-          <TabsContent value="dow">{renderStockList("dow")}</TabsContent>
-          <TabsContent value="sp500">{renderStockList("sp500")}</TabsContent>
+
+          <TabsContent value={activeTab}>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">Fetching live data...</span>
+              </div>
+            ) : error ? (
+              <div className="text-center py-16">
+                <p className="text-destructive mb-2">Failed to load live data</p>
+                <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
+              </div>
+            ) : filteredStocks.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No stocks match your filters.</p>
+            ) : (
+              <div className="space-y-3">
+                {filteredStocks.map((stock) => (
+                  <StockCard key={stock.ticker} stock={stock} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </main>
     </div>
