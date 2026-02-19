@@ -25,7 +25,9 @@ export function StockCard({ stock, blurred = false }: StockCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3">
             <div>
-              <p className="font-display font-bold text-lg leading-tight">{stock.ticker}</p>
+              <p className="font-display font-bold text-lg leading-tight">
+                {stock.assetType === "crypto" ? stock.ticker.replace("USD", "") : stock.ticker}
+              </p>
               <p className="text-sm text-muted-foreground truncate">{stock.name}</p>
             </div>
           </div>

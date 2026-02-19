@@ -81,21 +81,28 @@ Deno.serve(async (req) => {
     const symbolsParam = searchParams.get('symbols');
     const singleSymbol = searchParams.get('symbol');
 
-    // ─── Single stock detail: quote + technicals + fundamentals + sentiment ───
+    // ─── Single stock/crypto detail: quote + technicals + fundamentals + sentiment ───
     if (singleSymbol) {
       const symbol = singleSymbol.toUpperCase();
+      const isCrypto = symbol.endsWith("USD") && symbol.length <= 10;
 
-      const [quoteArr, rsiArr, macdArr, sma50Arr, sma200Arr, ema20Arr, keyMetricsArr, growthArr, newsArr, gradesArr] = await Promise.all([
+      const [quoteArr, rsiArr, sma50Arr, sma200Arr, ema20Arr] = await Promise.all([
         fmpFetch(`/stable/quote?symbol=${symbol}`, apiKey),
         fmpFetch(`/stable/technical-indicators/rsi?symbol=${symbol}&periodLength=14&timeframe=1day`, apiKey).catch(() => []),
-        fmpFetch(`/stable/technical-indicators/macd?symbol=${symbol}&timeframe=1day`, apiKey).catch(() => []),
         fmpFetch(`/stable/technical-indicators/sma?symbol=${symbol}&periodLength=50&timeframe=1day`, apiKey).catch(() => []),
         fmpFetch(`/stable/technical-indicators/sma?symbol=${symbol}&periodLength=200&timeframe=1day`, apiKey).catch(() => []),
         fmpFetch(`/stable/technical-indicators/ema?symbol=${symbol}&periodLength=20&timeframe=1day`, apiKey).catch(() => []),
-        fmpFetch(`/stable/key-metrics?symbol=${symbol}&limit=1`, apiKey).catch(() => []),
-        fmpFetch(`/stable/income-statement-growth?symbol=${symbol}&limit=1`, apiKey).catch(() => []),
-        fmpFetch(`/stable/news/stock?symbol=${symbol}&limit=10`, apiKey).catch(() => []),
-        fmpFetch(`/stable/grades?symbol=${symbol}&limit=10`, apiKey).catch(() => []),
+      ]);
+
+      // Fetch stock-specific or crypto-specific data in parallel
+      const [macdArr, keyMetricsArr, growthArr, newsArr, gradesArr] = await Promise.all([
+        fmpFetch(`/stable/technical-indicators/macd?symbol=${symbol}&timeframe=1day`, apiKey).catch(() => []),
+        isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/key-metrics?symbol=${symbol}&limit=1`, apiKey).catch(() => []),
+        isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/income-statement-growth?symbol=${symbol}&limit=1`, apiKey).catch(() => []),
+        isCrypto
+          ? fmpFetch(`/stable/news/crypto?symbol=${symbol}&limit=10`, apiKey).catch(() => [])
+          : fmpFetch(`/stable/news/stock?symbol=${symbol}&limit=10`, apiKey).catch(() => []),
+        isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/grades?symbol=${symbol}&limit=10`, apiKey).catch(() => []),
       ]);
 
       const q = Array.isArray(quoteArr) ? quoteArr[0] : quoteArr;
@@ -240,9 +247,9 @@ Deno.serve(async (req) => {
           items.push(item);
         }
       }
-      // Filter to stocks only and get quotes for top matches
+      // Filter to stocks and crypto
       const stockItems = items
-        .filter((item: any) => item.type === "stock" || !item.type)
+        .filter((item: any) => item.type === "stock" || item.type === "crypto" || !item.type)
         .slice(0, 8);
       
       if (stockItems.length === 0) {
