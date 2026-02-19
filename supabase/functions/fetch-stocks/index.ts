@@ -15,6 +15,39 @@ async function fmpFetch(path: string, apiKey: string) {
   return res.json();
 }
 
+// Convert analyst grade strings to a 1-5 numeric scale
+function gradeToScore(grade: string): number {
+  const g = grade.toLowerCase();
+  if (g.includes("strong buy") || g.includes("top pick")) return 5;
+  if (g.includes("outperform") || g.includes("overweight") || g.includes("buy")) return 4;
+  if (g.includes("hold") || g.includes("neutral") || g.includes("equal") || g.includes("market perform") || g.includes("peer perform") || g.includes("sector perform") || g.includes("in-line")) return 3;
+  if (g.includes("underperform") || g.includes("underweight") || g.includes("reduce")) return 2;
+  if (g.includes("sell") || g.includes("strong sell")) return 1;
+  return 3; // default neutral
+}
+
+// Compute an analyst consensus rating from recent grades (1-5 scale)
+function computeAnalystRating(grades: any[]): number {
+  if (!grades || grades.length === 0) return 3;
+  // Take up to 10 most recent grades
+  const recent = grades.slice(0, 10);
+  const sum = recent.reduce((acc: number, g: any) => acc + gradeToScore(g.newGrade || ""), 0);
+  return Math.round((sum / recent.length) * 10) / 10;
+}
+
+// Compute insider-like activity from grade actions
+function computeGradeAction(grades: any[]): number {
+  if (!grades || grades.length === 0) return 0;
+  const recent = grades.slice(0, 10);
+  let score = 0;
+  for (const g of recent) {
+    if (g.action === "upgrade") score += 1;
+    else if (g.action === "downgrade") score -= 1;
+    // maintain = 0
+  }
+  return Math.max(-1, Math.min(1, score / recent.length));
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -48,11 +81,11 @@ Deno.serve(async (req) => {
     const symbolsParam = searchParams.get('symbols');
     const singleSymbol = searchParams.get('symbol');
 
-    // ─── Single stock detail: quote + technicals + fundamentals ───
+    // ─── Single stock detail: quote + technicals + fundamentals + sentiment ───
     if (singleSymbol) {
       const symbol = singleSymbol.toUpperCase();
 
-      const [quoteArr, rsiArr, macdArr, sma50Arr, sma200Arr, ema20Arr, keyMetricsArr, growthArr] = await Promise.all([
+      const [quoteArr, rsiArr, macdArr, sma50Arr, sma200Arr, ema20Arr, keyMetricsArr, growthArr, newsArr, gradesArr] = await Promise.all([
         fmpFetch(`/stable/quote?symbol=${symbol}`, apiKey),
         fmpFetch(`/stable/technical-indicators/rsi?symbol=${symbol}&periodLength=14&timeframe=1day`, apiKey).catch(() => []),
         fmpFetch(`/stable/technical-indicators/macd?symbol=${symbol}&timeframe=1day`, apiKey).catch(() => []),
@@ -61,6 +94,8 @@ Deno.serve(async (req) => {
         fmpFetch(`/stable/technical-indicators/ema?symbol=${symbol}&periodLength=20&timeframe=1day`, apiKey).catch(() => []),
         fmpFetch(`/stable/key-metrics?symbol=${symbol}&limit=1`, apiKey).catch(() => []),
         fmpFetch(`/stable/income-statement-growth?symbol=${symbol}&limit=1`, apiKey).catch(() => []),
+        fmpFetch(`/stable/news/stock?symbol=${symbol}&limit=10`, apiKey).catch(() => []),
+        fmpFetch(`/stable/grades?symbol=${symbol}&limit=10`, apiKey).catch(() => []),
       ]);
 
       const q = Array.isArray(quoteArr) ? quoteArr[0] : quoteArr;
@@ -68,13 +103,22 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: q?.error || 'No quote data' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
-      const rsi0 = rsiArr?.[0];
-      const macd0 = macdArr?.[0];
-      const sma50_0 = sma50Arr?.[0];
-      const sma200_0 = sma200Arr?.[0];
-      const ema20_0 = ema20Arr?.[0];
-      const km = keyMetricsArr?.[0];
-      const gr = growthArr?.[0];
+      const rsi0 = Array.isArray(rsiArr) ? rsiArr[0] : null;
+      const macd0 = Array.isArray(macdArr) ? macdArr[0] : null;
+      const sma50_0 = Array.isArray(sma50Arr) ? sma50Arr[0] : null;
+      const sma200_0 = Array.isArray(sma200Arr) ? sma200Arr[0] : null;
+      const ema20_0 = Array.isArray(ema20Arr) ? ema20Arr[0] : null;
+      const km = Array.isArray(keyMetricsArr) ? keyMetricsArr[0] : null;
+      const gr = Array.isArray(growthArr) ? growthArr[0] : null;
+      const news = Array.isArray(newsArr) ? newsArr : [];
+      const grades = Array.isArray(gradesArr) ? gradesArr : [];
+
+      // Compute analyst rating from grades
+      const analystRating = computeAnalystRating(grades);
+      const gradeActivity = computeGradeAction(grades);
+
+      // Get top headline
+      const topHeadline = news.length > 0 ? news[0].title : `${q.name || symbol} trades at $${q.price?.toFixed(2)}`;
 
       const result = {
         symbol,
@@ -83,9 +127,9 @@ Deno.serve(async (req) => {
         price: q.price ?? 0,
         previousClose: q.previousClose ?? 0,
         change: q.change ?? 0,
-        changePercent: q.changesPercentage ?? 0,
+        changePercent: q.changePercentage ?? 0,
         volume: q.volume ?? 0,
-        avgVolume: q.avgVolume ?? 0,
+        avgVolume: q.avgVolume ?? q.volume ?? 0,
         technical: {
           rsi: rsi0?.rsi ?? null,
           macd: macd0?.macd ?? null,
@@ -93,7 +137,7 @@ Deno.serve(async (req) => {
           sma50: sma50_0?.sma ?? null,
           sma200: sma200_0?.sma ?? null,
           ema20: ema20_0?.ema ?? null,
-          bollingerUpper: null, // will compute client-side or add later
+          bollingerUpper: null,
           bollingerLower: null,
           atr: null,
         },
@@ -107,6 +151,24 @@ Deno.serve(async (req) => {
           returnOnEquity: km?.roe != null ? (km.roe * 100) : null,
           freeCashFlowYield: km?.freeCashFlowYield != null ? (km.freeCashFlowYield * 100) : null,
         },
+        sentiment: {
+          newsCount: news.length,
+          analystRating,
+          insiderActivity: gradeActivity,
+          headline: topHeadline,
+          // News headlines for AI sentiment analysis on client
+          recentNews: news.slice(0, 5).map((n: any) => ({
+            title: n.title,
+            publisher: n.publisher,
+            date: n.publishedDate,
+          })),
+          grades: grades.slice(0, 5).map((g: any) => ({
+            company: g.gradingCompany,
+            grade: g.newGrade,
+            action: g.action,
+            date: g.date,
+          })),
+        },
       };
 
       return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -115,7 +177,6 @@ Deno.serve(async (req) => {
     // ─── Batch quote mode for dashboard ───
     if (symbolsParam) {
       const allSymbols = symbolsParam.split(',').slice(0, 24);
-      // FMP /stable/quote supports comma-separated batch
       const batchSymbols = allSymbols.join(',');
 
       let quoteData;
@@ -136,9 +197,9 @@ Deno.serve(async (req) => {
           price: q.price ?? 0,
           previousClose: q.previousClose ?? 0,
           change: q.change ?? 0,
-          changePercent: q.changesPercentage ?? 0,
+          changePercent: q.changePercentage ?? 0,
           volume: q.volume ?? 0,
-          avgVolume: q.avgVolume ?? 0,
+          avgVolume: q.avgVolume ?? q.volume ?? 0,
         }));
 
       return new Response(JSON.stringify({ stocks }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
