@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Stock, Exchange, TechnicalIndicators, FundamentalIndicators, SentimentIndicators } from "@/lib/types";
+import type { Stock, Exchange, TechnicalIndicators, FundamentalIndicators, SentimentIndicators, SentimentRating } from "@/lib/types";
 import { calculatePhaseScores, getRecommendation, getConfidence } from "@/lib/recommendation-engine";
 
 // Tickers grouped by our exchange categories
@@ -20,6 +20,15 @@ interface QuoteResponse {
   changePercent: number;
   volume: number;
   avgVolume: number;
+}
+
+interface DetailSentiment {
+  newsCount: number;
+  analystRating: number;
+  insiderActivity: number;
+  headline: string;
+  recentNews: { title: string; publisher: string; date: string }[];
+  grades: { company: string; grade: string; action: string; date: string }[];
 }
 
 interface DetailResponse extends QuoteResponse {
@@ -44,6 +53,7 @@ interface DetailResponse extends QuoteResponse {
     returnOnEquity: number | null;
     freeCashFlowYield: number | null;
   };
+  sentiment: DetailSentiment;
 }
 
 // ─── API helpers ─────────────────────────────────────────────────────────────
@@ -125,6 +135,33 @@ function buildFundamentals(f?: DetailResponse["fundamental"]): FundamentalIndica
   };
 }
 
+function deriveSentimentRating(analystRating: number): SentimentRating {
+  if (analystRating >= 4.3) return "very-positive";
+  if (analystRating >= 3.7) return "positive";
+  if (analystRating >= 2.8) return "neutral";
+  if (analystRating >= 2.0) return "negative";
+  return "very-negative";
+}
+
+function buildSentiment(s?: DetailSentiment): SentimentIndicators {
+  if (!s) return { ...DEFAULT_SENTIMENT };
+  
+  // Derive a news score from analyst rating + grade activity
+  // analystRating: 1-5 → map to -100 to +100
+  const analystRating = s.analystRating ?? 3;
+  const newsScore = Math.round((analystRating - 3) * 50); // 1→-100, 3→0, 5→+100
+  
+  return {
+    newsScore,
+    newsCount: s.newsCount ?? 0,
+    socialScore: 0, // Not available on this plan
+    analystRating,
+    insiderActivity: s.insiderActivity ?? 0,
+    headline: s.headline ?? "",
+    sentimentRating: deriveSentimentRating(analystRating),
+  };
+}
+
 function quoteToStock(quote: QuoteResponse, exchange: Exchange): Stock {
   const technical = buildTechnicals(quote.price, quote.volume, quote.avgVolume);
   const fundamental = DEFAULT_FUNDAMENTAL;
@@ -153,10 +190,7 @@ function quoteToStock(quote: QuoteResponse, exchange: Exchange): Stock {
 function detailToStock(detail: DetailResponse, exchange: Exchange): Stock {
   const technical = buildTechnicals(detail.price, detail.volume, detail.avgVolume, detail.technical);
   const fundamental = buildFundamentals(detail.fundamental);
-  const sentiment: SentimentIndicators = {
-    ...DEFAULT_SENTIMENT,
-    headline: `${detail.name} trades at $${detail.price.toFixed(2)}`,
-  };
+  const sentiment = buildSentiment(detail.sentiment);
   const phaseScores = calculatePhaseScores(fundamental, sentiment, technical);
   return {
     ticker: detail.symbol,
