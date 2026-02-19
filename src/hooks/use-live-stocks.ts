@@ -5,9 +5,21 @@ import { calculatePhaseScores, getRecommendation, getConfidence } from "@/lib/re
 
 // Tickers grouped by our exchange categories
 const EXCHANGE_TICKERS: Record<Exchange, string[]> = {
-  nasdaq: ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "NFLX"],
-  dow: ["UNH", "GS", "HD", "CAT", "CRM", "V", "JPM", "WMT"],
-  sp500: ["BRK-B", "XOM", "LLY", "MA", "ABBV", "PFE", "COST", "T"],
+  nasdaq: [
+    "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "NFLX",
+    "AMD", "INTC", "ADBE", "PYPL", "QCOM", "AVGO", "CSCO", "PEP",
+    "COST", "SBUX", "MDLZ", "GILD", "ISRG", "REGN", "ADP", "LRCX",
+  ],
+  dow: [
+    "UNH", "GS", "HD", "CAT", "CRM", "V", "JPM", "WMT",
+    "MCD", "DIS", "NKE", "BA", "IBM", "AXP", "MMM", "JNJ",
+    "PG", "KO", "MRK", "TRV", "DOW", "AMGN", "HON", "CSCO",
+  ],
+  sp500: [
+    "BRK-B", "XOM", "LLY", "MA", "ABBV", "PFE", "COST", "T",
+    "CVX", "BAC", "WFC", "ORCL", "TMO", "ACN", "LIN", "DHR",
+    "PM", "NEE", "UPS", "RTX", "LOW", "SPGI", "INTU", "SYK",
+  ],
 };
 
 interface QuoteResponse {
@@ -229,6 +241,26 @@ export function useLiveStocks(exchange: Exchange) {
     staleTime: 5 * 60_000,
     refetchInterval: 5 * 60_000,
     retry: 1,
+  });
+}
+
+export function useSearchStocks(query: string) {
+  return useQuery<Stock[]>({
+    queryKey: ["search-stocks", query],
+    queryFn: async () => {
+      const headers = await getAuthHeaders();
+      const res = await fetch(edgeFnUrl(`?search=${encodeURIComponent(query)}`), { headers });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      const quotes: QuoteResponse[] = data.stocks || [];
+      return quotes.map((q) => quoteToStock(q, "nasdaq"));
+    },
+    staleTime: 60_000,
+    retry: 1,
+    enabled: query.length >= 2,
   });
 }
 

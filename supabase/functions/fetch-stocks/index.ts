@@ -208,7 +208,48 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ stocks }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    return new Response(JSON.stringify({ error: 'Provide ?symbols=AAPL,MSFT or ?symbol=AAPL' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // ─── Search mode: find tickers by query string ───
+    const searchQuery = searchParams.get('search');
+    if (searchQuery && searchQuery.length >= 1) {
+      const results = await fmpFetch(`/stable/search?query=${encodeURIComponent(searchQuery)}&limit=10`, apiKey).catch(() => []);
+      const items = Array.isArray(results) ? results : [];
+      
+      // Filter to stocks only and get quotes for top matches
+      const stockItems = items
+        .filter((item: any) => item.type === "stock" || !item.type)
+        .slice(0, 8);
+      
+      if (stockItems.length === 0) {
+        return new Response(JSON.stringify({ stocks: [] }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const quotePromises = stockItems.map((item: any) =>
+        fmpFetch(`/stable/quote?symbol=${item.symbol}`, apiKey)
+          .then((data: any) => {
+            const q = Array.isArray(data) ? data[0] : data;
+            if (!q || q.error || !q.symbol) return null;
+            return {
+              symbol: q.symbol,
+              name: q.name || item.name || q.symbol,
+              exchange: q.exchange || item.exchangeShortName || '',
+              price: q.price ?? 0,
+              previousClose: q.previousClose ?? 0,
+              change: q.change ?? 0,
+              changePercent: q.changePercentage ?? 0,
+              volume: q.volume ?? 0,
+              avgVolume: q.volume ?? 0,
+            };
+          })
+          .catch(() => null)
+      );
+
+      const quoteResults = await Promise.all(quotePromises);
+      const stocks = quoteResults.filter(Boolean);
+
+      return new Response(JSON.stringify({ stocks }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    return new Response(JSON.stringify({ error: 'Provide ?symbols=AAPL,MSFT or ?symbol=AAPL or ?search=query' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (err) {
     console.error('Edge function error:', err);
