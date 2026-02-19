@@ -177,30 +177,33 @@ Deno.serve(async (req) => {
     // ─── Batch quote mode for dashboard ───
     if (symbolsParam) {
       const allSymbols = symbolsParam.split(',').slice(0, 24);
-      const batchSymbols = allSymbols.join(',');
 
-      let quoteData;
-      try {
-        quoteData = await fmpFetch(`/stable/quote?symbol=${batchSymbols}`, apiKey);
-      } catch (err) {
-        console.error('FMP batch quote error:', err.message);
-        return new Response(JSON.stringify({ error: err.message, stocks: [] }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
+      // Batch endpoint not available on this plan — fetch individual quotes in parallel
+      const quotePromises = allSymbols.map(sym =>
+        fmpFetch(`/stable/quote?symbol=${sym.trim()}`, apiKey)
+          .then((data: any) => {
+            const q = Array.isArray(data) ? data[0] : data;
+            if (!q || q.error || !q.symbol) return null;
+            return {
+              symbol: q.symbol,
+              name: q.name || q.symbol,
+              exchange: q.exchange || '',
+              price: q.price ?? 0,
+              previousClose: q.previousClose ?? 0,
+              change: q.change ?? 0,
+              changePercent: q.changePercentage ?? 0,
+              volume: q.volume ?? 0,
+              avgVolume: q.volume ?? 0,
+            };
+          })
+          .catch((err: Error) => {
+            console.error(`FMP quote error for ${sym}:`, err.message);
+            return null;
+          })
+      );
 
-      const quotes = Array.isArray(quoteData) ? quoteData : [quoteData];
-      const stocks = quotes
-        .filter((q: any) => q && !q.error && q.symbol)
-        .map((q: any) => ({
-          symbol: q.symbol,
-          name: q.name || q.symbol,
-          exchange: q.exchange || '',
-          price: q.price ?? 0,
-          previousClose: q.previousClose ?? 0,
-          change: q.change ?? 0,
-          changePercent: q.changePercentage ?? 0,
-          volume: q.volume ?? 0,
-          avgVolume: q.avgVolume ?? q.volume ?? 0,
-        }));
+      const results = await Promise.all(quotePromises);
+      const stocks = results.filter(Boolean);
 
       return new Response(JSON.stringify({ stocks }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
