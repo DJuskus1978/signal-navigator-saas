@@ -116,6 +116,7 @@ export type Database = {
           email: string
           is_subscribed: boolean
           stripe_customer_id: string
+          subscription_tier: string
           updated_at: string
           user_id: string
         }[]
