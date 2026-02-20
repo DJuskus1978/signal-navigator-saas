@@ -351,7 +351,7 @@ export default function LandingPage() {
             <CardContent className="p-6 text-center">
               <p className="text-sm font-medium text-muted-foreground mb-2">DAY TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="font-display text-4xl font-bold">$7</span>
+                <span className="font-display text-4xl font-bold">$9</span>
                 <span className="text-muted-foreground text-sm">/month</span>
               </div>
               <p className="text-muted-foreground text-sm mb-6">Cancel anytime</p>
@@ -385,7 +385,7 @@ export default function LandingPage() {
             <CardContent className="p-6 pt-6 text-center">
               <p className="text-sm font-semibold text-muted-foreground mb-2">PRO DAY TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="font-display text-4xl font-bold">$14</span>
+                <span className="font-display text-4xl font-bold">$19</span>
                 <span className="text-muted-foreground text-sm">/month</span>
               </div>
               <p className="text-muted-foreground text-sm mb-6">Cancel anytime</p>
@@ -417,7 +417,7 @@ export default function LandingPage() {
             <CardContent className="p-6 text-center">
               <p className="text-sm font-medium text-muted-foreground mb-2">BULL TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="font-display text-4xl font-bold">$20</span>
+                <span className="font-display text-4xl font-bold">$29</span>
                 <span className="text-muted-foreground text-sm">/month</span>
               </div>
               <p className="text-muted-foreground text-sm mb-6">Cancel anytime</p>
