@@ -78,8 +78,8 @@ export default function Dashboard() {
           </Link>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="w-5 h-5" />
+              <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-border bg-card shadow-sm hover:bg-accent">
+                <Menu className="w-6 h-6" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-72">
