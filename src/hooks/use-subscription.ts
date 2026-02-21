@@ -59,6 +59,7 @@ export function useSubscription() {
       };
     },
     enabled: !!user,
-    staleTime: 5 * 60_000,
+    staleTime: 30_000, // 30s so post-checkout refresh picks up changes quickly
+    refetchOnWindowFocus: true,
   });
 }
