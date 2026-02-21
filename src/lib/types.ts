@@ -74,4 +74,5 @@ export interface Stock {
   fundamental: FundamentalIndicators;
   sentiment: SentimentIndicators;
   cryptoMarket?: CryptoMarketIndicators;
+  hasDetailData?: boolean;
 }

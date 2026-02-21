@@ -235,6 +235,7 @@ function cryptoQuoteToStock(quote: QuoteResponse): Stock {
     fundamental: DEFAULT_FUNDAMENTAL,
     sentiment,
     cryptoMarket,
+    hasDetailData: false,
   };
 }
 
@@ -272,6 +273,7 @@ function cryptoDetailToStock(detail: DetailResponse): Stock {
     fundamental: DEFAULT_FUNDAMENTAL,
     sentiment,
     cryptoMarket,
+    hasDetailData: true,
   };
 }
 
@@ -301,6 +303,7 @@ function quoteToStock(quote: QuoteResponse, exchange: Exchange): Stock {
     technical,
     fundamental,
     sentiment,
+    hasDetailData: false,
   };
 }
 
@@ -325,6 +328,7 @@ function detailToStock(detail: DetailResponse, exchange: Exchange): Stock {
     technical,
     fundamental,
     sentiment,
+    hasDetailData: true,
   };
 }
 
