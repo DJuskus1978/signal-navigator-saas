@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { startCheckout } from "@/lib/stripe-helpers";
 import insideRadarImg from "@/assets/inside-radar.jpeg";
 import newsSentimentImg from "@/assets/news-sentiment.jpeg";
+import fmpLogo from "@/assets/fmp-logo.png";
 import avatarSarah from "@/assets/avatar-sarah.jpg";
 import avatarJames from "@/assets/avatar-james.jpg";
 import avatarElena from "@/assets/avatar-elena.jpg";
@@ -152,6 +153,16 @@ export default function LandingPage() {
             <TrafficLight recommendation="hold" size="lg" />
             <TrafficLight recommendation="dont-buy" size="lg" />
             <TrafficLight recommendation="sell" size="lg" />
+          </motion.div>
+
+          <motion.div
+            className="mt-10 flex items-center justify-center gap-3"
+            initial="hidden" animate="visible" custom={6} variants={fadeUp}
+          >
+            <img src={fmpLogo} alt="Financial Modeling Prep logo" className="w-8 h-8 rounded" />
+            <p className="text-sm text-muted-foreground">
+              Our global partner for financial & stocks data — <a href="https://financialmodelingprep.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-foreground hover:underline">Financial Modeling Prep</a>
+            </p>
           </motion.div>
 
           <motion.p
