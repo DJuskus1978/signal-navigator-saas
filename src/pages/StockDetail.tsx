@@ -1,52 +1,21 @@
+import { useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useLiveStockDetail } from "@/hooks/use-live-stocks";
-import { getRecommendationLabel } from "@/lib/recommendation-engine";
-import { TrafficLight } from "@/components/TrafficLight";
-import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, TrendingUp, Newspaper, BarChart3, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, BarChart3, Newspaper, TrendingUp, Loader2 } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
 import { cn } from "@/lib/utils";
 
-type SignalLevel = "bullish" | "bearish" | "neutral";
-
-function getSignalColor(signal: SignalLevel) {
-  if (signal === "bullish") return "hsl(var(--signal-buy))";
-  if (signal === "bearish") return "hsl(var(--signal-sell))";
-  return "hsl(var(--signal-hold))";
-}
-
-function getSignalBg(signal: SignalLevel) {
-  if (signal === "bullish") return "hsl(var(--signal-buy-bg))";
-  if (signal === "bearish") return "hsl(var(--signal-sell-bg))";
-  return "hsl(var(--signal-hold-bg))";
-}
-
-function Indicator({ label, value, hint, signal }: { label: string; value: string | number; hint?: string; signal?: SignalLevel }) {
-  return (
-    <div className="flex justify-between items-center py-3 border-b border-border last:border-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <div className="flex items-center gap-2">
-        {signal && hint && (
-          <span
-            className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-            style={{ color: getSignalColor(signal), backgroundColor: getSignalBg(signal) }}
-          >
-            {hint}
-          </span>
-        )}
-        <span className="font-medium text-sm font-display">{value}</span>
-      </div>
-    </div>
-  );
-}
-
+import { AIRadarSignalCard } from "@/components/stock-detail/AIRadarSignalCard";
+import { PhaseCard } from "@/components/stock-detail/PhaseCard";
+import { AIDecisionGuidance } from "@/components/stock-detail/AIDecisionGuidance";
+import { getFundamentalPhase, getSentimentPhase, getTechnicalPhase } from "@/components/stock-detail/phase-data";
 
 export default function StockDetail() {
   const { ticker } = useParams<{ ticker: string }>();
   const { data: stock, isLoading, error } = useLiveStockDetail(ticker || "");
+  const breakdownRef = useRef<HTMLDivElement>(null);
 
   if (isLoading) {
     return (
@@ -74,20 +43,13 @@ export default function StockDetail() {
   const isPositive = stock.change >= 0;
   const isCrypto = stock.assetType === "crypto";
   const displayTicker = isCrypto ? stock.ticker.replace("USD", "") : stock.ticker;
-  const { technical: t, fundamental: f, sentiment: s, phaseScores } = stock;
 
-  const explanations: Record<string, string> = isCrypto ? {
-    "strong-buy": `${stock.name} shows exceptional market structure, strongly positive sentiment, and bullish technical radars. High-conviction entry opportunity.`,
-    buy: `${stock.name} has solid market positioning with positive sentiment momentum. Technical indicators support upward movement — a good time to consider entering.`,
-    hold: `${stock.name} shows mixed radars. Market structure is stable but sentiment and technicals don't provide clear direction. Hold and monitor.`,
-    "dont-buy": `${stock.name} shows concerning radars — weak sentiment or deteriorating market structure. Wait for conditions to improve before entering.`,
-    sell: `${stock.name} is flagged across all phases — bearish sentiment, weak market structure, and negative technicals. Consider reducing exposure.`,
-  } : {
-    "strong-buy": `${stock.name} scores exceptionally across all three phases — strong fundamentals, positive market sentiment, and bullish technical radars. This is a high-conviction entry opportunity.`,
-    buy: `${stock.name} shows solid fundamentals reinforced by positive news sentiment. Technical indicators confirm the upward momentum — a good time to consider entering.`,
-    hold: `${stock.name} has decent fundamentals but mixed radars from news and technicals. Hold existing positions and monitor for stronger directional cues.`,
-    "dont-buy": `${stock.name} shows concerning radars across our analysis phases. Fundamentals or sentiment are weak, and technicals don't support entry. Wait for conditions to improve.`,
-    sell: `${stock.name} is flagged across all phases — deteriorating fundamentals, negative sentiment, and bearish technicals. Consider reducing exposure.`,
+  const fundamentalPhase = getFundamentalPhase(stock);
+  const sentimentPhase = getSentimentPhase(stock);
+  const technicalPhase = getTechnicalPhase(stock);
+
+  const handleViewBreakdown = () => {
+    breakdownRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -106,7 +68,7 @@ export default function StockDetail() {
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
 
-        {/* Header */}
+        {/* Price Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -123,152 +85,35 @@ export default function StockDetail() {
           </div>
         </div>
 
-        {/* Recommendation */}
-        <Card className="mb-6 border-2">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <TrafficLight recommendation={stock.recommendation} size="lg" />
-              <Badge variant="outline">{stock.confidence} confidence</Badge>
-            </div>
-            <p className="text-muted-foreground mb-6">{explanations[stock.recommendation]}</p>
+        {/* 1️⃣ AI Radar Signal Card */}
+        <AIRadarSignalCard stock={stock} isCrypto={isCrypto} onViewBreakdown={handleViewBreakdown} />
 
-            {/* 3-Phase Score Breakdown */}
-            <div className="space-y-4">
-              {[
-                { label: isCrypto ? "Market Structure" : "Fundamentals", value: phaseScores.fundamental, icon: <BarChart3 className="w-4 h-4" /> },
-                { label: "Sentiment", value: phaseScores.sentiment, icon: <Newspaper className="w-4 h-4" /> },
-                { label: "Technicals", value: phaseScores.technical, icon: <TrendingUp className="w-4 h-4" /> },
-              ].map((phase) => {
-                const normalized = Math.max(0, Math.min(100, (phase.value + 100) / 2));
-                const barColor = phase.value > 0
-                  ? "hsl(var(--signal-buy))"
-                  : phase.value < 0
-                    ? "hsl(var(--signal-sell))"
-                    : "hsl(var(--signal-hold))";
-                return (
-                  <div key={phase.label} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        {phase.icon}
-                        <span className="font-medium">{phase.label}</span>
-                      </div>
-                      <span className={cn(
-                        "font-display font-bold",
-                        phase.value > 0 ? "text-signal-buy" : phase.value < 0 ? "text-signal-sell" : "text-muted-foreground"
-                      )}>
-                        {phase.value > 0 ? "+" : ""}{phase.value}
-                      </span>
-                    </div>
-                    <Progress value={normalized} className="h-2" style={{ "--progress-color": barColor } as React.CSSProperties} />
-                    <div className="flex justify-between text-[10px] text-muted-foreground/60">
-                      <span>Bearish -100</span>
-                      <span>0</span>
-                      <span>Bullish +100</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Sentiment / News */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Newspaper className="w-5 h-5" /> News & Sentiment
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-0">
-            <div className="bg-muted/50 rounded-lg p-3 mb-10">
-              <p className="text-sm font-medium italic">"{s.headline}"</p>
-            </div>
-            <Indicator
-              label="News Sentiment"
-              value={s.newsScore > 0 ? `+${s.newsScore.toFixed(0)}` : s.newsScore.toFixed(0)}
-              hint={s.newsScore > 30 ? "Positive" : s.newsScore > -30 ? "Mixed" : "Negative"}
-              signal={s.newsScore > 30 ? "bullish" : s.newsScore < -30 ? "bearish" : "neutral"}
-            />
-            <Indicator label="Articles Analyzed" value={s.newsCount} />
-            <Indicator
-              label="Social Sentiment"
-              value={s.socialScore > 0 ? `+${s.socialScore.toFixed(0)}` : s.socialScore.toFixed(0)}
-              hint={s.socialScore > 20 ? "Bullish buzz" : s.socialScore < -20 ? "Bearish chatter" : "Neutral"}
-              signal={s.socialScore > 20 ? "bullish" : s.socialScore < -20 ? "bearish" : "neutral"}
-            />
-            <Indicator
-              label="Analyst Rating"
-              value={`${s.analystRating.toFixed(1)} / 5.0`}
-              hint={s.analystRating >= 4 ? "Buy consensus" : s.analystRating >= 3 ? "Hold consensus" : "Sell consensus"}
-              signal={s.analystRating >= 4 ? "bullish" : s.analystRating >= 3 ? "neutral" : "bearish"}
-            />
-            <Indicator
-              label="Insider Activity"
-              value={s.insiderActivity > 0 ? "Net Buying" : s.insiderActivity < -0.2 ? "Net Selling" : "Neutral"}
-              hint={`Score: ${s.insiderActivity.toFixed(2)}`}
-              signal={s.insiderActivity > 0 ? "bullish" : s.insiderActivity < -0.2 ? "bearish" : "neutral"}
-            />
-          </CardContent>
-        </Card>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Fundamental / Market Structure */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" /> {isCrypto ? "Market Structure" : "Fundamentals"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-0">
-              {isCrypto && stock.cryptoMarket ? (
-                <>
-                  <Indicator label="Market Cap Rank" value={`#${stock.cryptoMarket.marketCapRank}`} hint={stock.cryptoMarket.marketCapRank <= 5 ? "Top tier" : stock.cryptoMarket.marketCapRank <= 15 ? "Major" : "Mid-cap"} signal={stock.cryptoMarket.marketCapRank <= 5 ? "bullish" : stock.cryptoMarket.marketCapRank <= 15 ? "neutral" : "bearish"} />
-                  <Indicator label="24h Change" value={`${stock.cryptoMarket.priceChange24h > 0 ? "+" : ""}${stock.cryptoMarket.priceChange24h.toFixed(2)}%`} hint={stock.cryptoMarket.priceChange24h > 3 ? "Strong up" : stock.cryptoMarket.priceChange24h > 0 ? "Up" : stock.cryptoMarket.priceChange24h > -3 ? "Down" : "Sharp drop"} signal={stock.cryptoMarket.priceChange24h > 1 ? "bullish" : stock.cryptoMarket.priceChange24h < -1 ? "bearish" : "neutral"} />
-                  <Indicator label="7d Change" value={`${stock.cryptoMarket.priceChange7d > 0 ? "+" : ""}${stock.cryptoMarket.priceChange7d.toFixed(2)}%`} hint={stock.cryptoMarket.priceChange7d > 5 ? "Strong trend" : stock.cryptoMarket.priceChange7d > 0 ? "Positive" : "Negative"} signal={stock.cryptoMarket.priceChange7d > 3 ? "bullish" : stock.cryptoMarket.priceChange7d < -3 ? "bearish" : "neutral"} />
-                  <Indicator label="30d Change" value={`${stock.cryptoMarket.priceChange30d > 0 ? "+" : ""}${stock.cryptoMarket.priceChange30d.toFixed(2)}%`} hint={stock.cryptoMarket.priceChange30d > 10 ? "Strong rally" : stock.cryptoMarket.priceChange30d > 0 ? "Uptrend" : "Downtrend"} signal={stock.cryptoMarket.priceChange30d > 5 ? "bullish" : stock.cryptoMarket.priceChange30d < -5 ? "bearish" : "neutral"} />
-                  <Indicator label="Vol/MCap Ratio" value={stock.cryptoMarket.volumeToMarketCap.toFixed(3)} hint={stock.cryptoMarket.volumeToMarketCap > 0.1 ? "High activity" : stock.cryptoMarket.volumeToMarketCap > 0.03 ? "Normal" : "Low"} signal={stock.cryptoMarket.volumeToMarketCap > 0.1 ? "bullish" : stock.cryptoMarket.volumeToMarketCap < 0.02 ? "bearish" : "neutral"} />
-                  <Indicator label="Circulating Supply" value={`${stock.cryptoMarket.circulatingSupplyPercent.toFixed(0)}%`} hint={stock.cryptoMarket.circulatingSupplyPercent > 80 ? "Mostly circulating" : "Dilution risk"} signal={stock.cryptoMarket.circulatingSupplyPercent > 80 ? "bullish" : stock.cryptoMarket.circulatingSupplyPercent > 50 ? "neutral" : "bearish"} />
-                  <Indicator label="30d Volatility" value={`${stock.cryptoMarket.volatility30d.toFixed(0)}%`} hint={stock.cryptoMarket.volatility30d > 80 ? "Very high" : stock.cryptoMarket.volatility30d > 50 ? "High" : "Moderate"} signal={stock.cryptoMarket.volatility30d > 80 ? "bearish" : "neutral"} />
-                </>
-              ) : (
-                <>
-                  <Indicator label="P/E Ratio" value={f.peRatio.toFixed(1)} hint={f.peRatio < 15 ? "Undervalued" : f.peRatio > 35 ? "Overvalued" : "Fair value"} signal={f.peRatio < 15 ? "bullish" : f.peRatio > 35 ? "bearish" : "neutral"} />
-                  <Indicator label="Forward P/E" value={f.forwardPE.toFixed(1)} hint={f.forwardPE < f.peRatio ? "Growth expected" : "Slowing growth"} signal={f.forwardPE < f.peRatio ? "bullish" : "bearish"} />
-                  <Indicator label="Earnings Growth" value={`${f.earningsGrowth.toFixed(1)}%`} hint={f.earningsGrowth > 15 ? "Strong" : f.earningsGrowth > 0 ? "Positive" : "Declining"} signal={f.earningsGrowth > 15 ? "bullish" : f.earningsGrowth > 0 ? "neutral" : "bearish"} />
-                  <Indicator label="Revenue Growth" value={`${f.revenueGrowth.toFixed(1)}%`} hint={f.revenueGrowth > 15 ? "Strong" : f.revenueGrowth > 0 ? "Positive" : "Declining"} signal={f.revenueGrowth > 15 ? "bullish" : f.revenueGrowth > 0 ? "neutral" : "bearish"} />
-                  <Indicator label="Profit Margin" value={`${f.profitMargin.toFixed(1)}%`} hint={f.profitMargin > 20 ? "Excellent" : f.profitMargin > 10 ? "Good" : "Low"} signal={f.profitMargin > 20 ? "bullish" : f.profitMargin > 10 ? "neutral" : "bearish"} />
-                  <Indicator label="Debt/Equity" value={f.debtToEquity.toFixed(2)} hint={f.debtToEquity < 0.5 ? "Low leverage" : f.debtToEquity > 2 ? "High leverage" : "Moderate"} signal={f.debtToEquity < 0.5 ? "bullish" : f.debtToEquity > 2 ? "bearish" : "neutral"} />
-                  <Indicator label="Return on Equity" value={`${f.returnOnEquity.toFixed(1)}%`} hint={f.returnOnEquity > 20 ? "Excellent" : f.returnOnEquity > 10 ? "Good" : "Below avg"} signal={f.returnOnEquity > 20 ? "bullish" : f.returnOnEquity > 10 ? "neutral" : "bearish"} />
-                  <Indicator label="FCF Yield" value={`${f.freeCashFlowYield.toFixed(1)}%`} hint={f.freeCashFlowYield > 5 ? "Attractive" : f.freeCashFlowYield > 2 ? "Fair" : "Low"} signal={f.freeCashFlowYield > 5 ? "bullish" : f.freeCashFlowYield > 2 ? "neutral" : "bearish"} />
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Technical */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" /> Technical Analysis
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-0">
-              <Indicator label="RSI (14)" value={t.rsi.toFixed(1)} hint={t.rsi < 30 ? "Oversold" : t.rsi > 70 ? "Overbought" : "Neutral"} signal={t.rsi < 30 ? "bullish" : t.rsi > 70 ? "bearish" : "neutral"} />
-              <Indicator label="MACD" value={t.macd.toFixed(2)} hint={t.macd > t.macdSignal ? "Bullish crossover" : "Bearish crossover"} signal={t.macd > t.macdSignal ? "bullish" : "bearish"} />
-              <Indicator label="MACD Signal" value={t.macdSignal.toFixed(2)} hint={t.macdSignal > 0 ? "Bullish" : t.macdSignal < 0 ? "Bearish" : "Neutral"} signal={t.macdSignal > 0 ? "bullish" : t.macdSignal < 0 ? "bearish" : "neutral"} />
-              <Indicator label="EMA 20" value={`$${t.ema20.toFixed(2)}`} hint={t.ema20 > t.sma50 ? "Short-term bullish" : "Short-term bearish"} signal={t.ema20 > t.sma50 ? "bullish" : "bearish"} />
-              <Indicator label="SMA 50" value={`$${t.sma50.toFixed(2)}`} hint={t.sma50 > t.sma200 ? "Above 200-day" : "Below 200-day"} signal={t.sma50 > t.sma200 ? "bullish" : "bearish"} />
-              <Indicator label="SMA 200" value={`$${t.sma200.toFixed(2)}`} hint={t.sma200 < t.sma50 ? "Below 50-day" : "Above 50-day"} signal={t.sma200 < t.sma50 ? "bullish" : "bearish"} />
-              <Indicator label="Bollinger Bands" value={`$${t.bollingerLower.toFixed(0)} – $${t.bollingerUpper.toFixed(0)}`} hint={stock.price < t.bollingerLower ? "Near lower band" : stock.price > t.bollingerUpper ? "Near upper band" : "Within range"} signal={stock.price < t.bollingerLower ? "bullish" : stock.price > t.bollingerUpper ? "bearish" : "neutral"} />
-              <Indicator label="ATR (Volatility)" value={`$${t.atr.toFixed(2)}`} hint={t.atr > stock.price * 0.04 ? "High volatility" : "Normal"} signal={t.atr > stock.price * 0.04 ? "bearish" : "neutral"} />
-              <Indicator label="Volume" value={`${(t.volume / 1_000_000).toFixed(1)}M`} hint={t.volume > t.avgVolume ? "Above average" : "Below average"} signal={t.volume > t.avgVolume ? "bullish" : "neutral"} />
-            </CardContent>
-          </Card>
+        {/* 2️⃣ 3-Phase Breakdown */}
+        <div ref={breakdownRef} className="mt-8 space-y-6">
+          <PhaseCard
+            icon={<BarChart3 className="w-5 h-5" />}
+            title={isCrypto ? "Market Structure" : "Fundamental Strength"}
+            score={stock.phaseScores.fundamental}
+            {...fundamentalPhase}
+          />
+          <PhaseCard
+            icon={<Newspaper className="w-5 h-5" />}
+            title="News & Sentiment"
+            score={stock.phaseScores.sentiment}
+            {...sentimentPhase}
+          />
+          <PhaseCard
+            icon={<TrendingUp className="w-5 h-5" />}
+            title="Technical Momentum"
+            score={stock.phaseScores.technical}
+            {...technicalPhase}
+          />
         </div>
 
-        <p className="text-xs text-muted-foreground text-center mt-8">
-          StocksRadars does not serve as financial advice. The data shown is for recommendational purposes only.
-        </p>
+        {/* 3️⃣ AI Decision Guidance */}
+        <div className="mt-8 mb-8">
+          <AIDecisionGuidance stock={stock} isCrypto={isCrypto} />
+        </div>
       </main>
     </div>
   );
