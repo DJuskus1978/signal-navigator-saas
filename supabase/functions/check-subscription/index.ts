@@ -83,27 +83,59 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
-    // Check for active OR trialing subscriptions (trialing = upgraded during free trial)
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      limit: 5,
-    });
-
-    const activeSub = subscriptions.data.find(s => s.status === "active" || s.status === "trialing");
-    const hasActiveSub = !!activeSub;
+    let hasActiveSub = false;
     let tier = "novice";
     let subscriptionEnd: string | null = null;
 
-    logStep("Subscriptions listed", { count: subscriptions.data.length, statuses: subscriptions.data.map(s => s.status), hasActiveSub });
+    try {
+      // Check for active OR trialing subscriptions (trialing = upgraded during free trial)
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 1,
+      });
 
-    if (hasActiveSub && activeSub) {
-      if (activeSub.current_period_end) {
-        subscriptionEnd = new Date(activeSub.current_period_end * 1000).toISOString();
+      logStep("Subscriptions listed", { count: subscriptions.data.length });
+
+      if (subscriptions.data.length > 0) {
+        hasActiveSub = true;
+        const sub = subscriptions.data[0];
+        if (sub.current_period_end) {
+          try {
+            subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
+          } catch { /* ignore date parse error */ }
+        }
+        const productId = sub.items?.data?.[0]?.price?.product as string;
+        tier = PRODUCT_TO_TIER[productId] || "novice";
+        logStep("Active subscription found", { tier, subscriptionEnd });
       }
-      const productId = activeSub.items.data[0]?.price?.product as string;
-      tier = PRODUCT_TO_TIER[productId] || "novice";
-      logStep("Active/trialing subscription", { tier, status: activeSub.status, subscriptionEnd });
-    } else {
+
+      // Also check for trialing subscriptions
+      if (!hasActiveSub) {
+        const trialingSubs = await stripe.subscriptions.list({
+          customer: customerId,
+          status: "trialing",
+          limit: 1,
+        });
+        if (trialingSubs.data.length > 0) {
+          hasActiveSub = true;
+          const sub = trialingSubs.data[0];
+          if (sub.current_period_end) {
+            try {
+              subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
+            } catch { /* ignore */ }
+          }
+          const productId = sub.items?.data?.[0]?.price?.product as string;
+          tier = PRODUCT_TO_TIER[productId] || "novice";
+          logStep("Trialing subscription found", { tier });
+        }
+      }
+    } catch (stripeErr) {
+      logStep("Stripe subscriptions.list error, falling back", { message: String(stripeErr) });
+      // Fall back: no subscription detected
+    }
+
+    if (!hasActiveSub) {
       logStep("No active subscription");
     }
 
