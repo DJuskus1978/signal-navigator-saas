@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StockCard } from "@/components/StockCard";
 import { Exchange } from "@/lib/types";
-import { Search, Filter, LogOut, Loader2, Lock, CreditCard } from "lucide-react";
+import { Search, Filter, LogOut, Loader2, Lock, CreditCard, ArrowRight } from "lucide-react";
 import { openCustomerPortal } from "@/lib/stripe-helpers";
 import { useAuth } from "@/contexts/AuthContext";
 import { RadarLogo } from "@/components/RadarLogo";
@@ -91,12 +91,25 @@ export default function Dashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Trial expired overlay */}
+        {subscription?.isTrialExpired && subscription.tier === "novice" && (
+          <div className="mb-8 p-8 rounded-2xl border-2 border-destructive/30 bg-destructive/5 text-center">
+            <h2 className="font-display text-2xl font-bold mb-2">Your free trial has ended</h2>
+            <p className="text-muted-foreground mb-4">
+              Upgrade to a paid plan to continue getting real-time stock radars and recommendations.
+            </p>
+            <Button size="lg" onClick={goToPricing} className="gap-2">
+              View Plans & Upgrade <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold mb-2">Dashboard</h1>
           <p className="text-muted-foreground">Real-time StocksRadars across major indices</p>
-          {subscription && subscription.tier === "novice" && (
+          {subscription && subscription.tier === "novice" && !subscription.isTrialExpired && (
             <p className="text-sm text-muted-foreground mt-1">
-              Free trial — {subscription.dailyLimit} stock searches/day, {maxPreloaded} preloaded radars.{" "}
+              Free trial — {subscription.trialDaysLeft} day{subscription.trialDaysLeft !== 1 ? "s" : ""} left, {subscription.dailyLimit} stock checks/day.{" "}
               <button onClick={goToPricing} className="text-primary font-semibold underline underline-offset-2">Upgrade for more</button>
             </p>
           )}
