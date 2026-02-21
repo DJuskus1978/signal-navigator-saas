@@ -50,11 +50,10 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<Exchange>("nasdaq");
-  const [globalSearch, setGlobalSearch] = useState("");
 
   const { data: subscription } = useSubscription();
   const { data: stocks = [], isLoading, error } = useLiveStocks(activeTab);
-  const { data: searchResults = [], isLoading: isSearching } = useSearchStocks(globalSearch);
+  const { data: searchResults = [], isLoading: isSearching } = useSearchStocks(search);
 
   // Detect return from Stripe checkout and refresh subscription
   const hasHandledCheckout = useRef(false);
@@ -83,17 +82,19 @@ export default function Dashboard() {
     }
   }, [searchParams, setSearchParams, queryClient, user]);
 
-  const isGlobalSearchActive = globalSearch.length >= 2;
+  const isSearchActive = search.length >= 2;
   const hasCrypto = subscription?.hasCryptoAccess ?? false;
-
-  // For novice users, limit visible preloaded stocks to 2
   const maxPreloaded = subscription?.tier === "novice" ? 2 : Infinity;
 
+  // Apply radar filter to both tab stocks and search results
   const filteredStocks = stocks.filter((s) => {
-    const q = search.toLowerCase();
-    const matchesSearch = !search || s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q);
     const matchesFilter = filter === "all" || s.recommendation === filter;
-    return matchesSearch && matchesFilter;
+    return matchesFilter;
+  });
+
+  const filteredSearchResults = searchResults.filter((s) => {
+    const matchesFilter = filter === "all" || s.recommendation === filter;
+    return matchesFilter;
   });
 
   const visibleStocks = filteredStocks.slice(0, maxPreloaded);
@@ -173,46 +174,12 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Global Search */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
+        {/* Unified Search + Radar Filter */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search any stock (e.g. MCD, Disney, Tesla...)"
-              value={globalSearch}
-              onChange={(e) => setGlobalSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          {isGlobalSearchActive && (
-            <div className="mt-3">
-              {isSearching ? (
-                <div className="flex items-center gap-2 py-4">
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Searching...</span>
-                </div>
-              ) : searchResults.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4">No results for "{globalSearch}"</p>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
-                  {searchResults.map((stock) => (
-                    <StockCard key={stock.ticker} stock={stock} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {!isGlobalSearchActive && (
-        <>
-        {/* Local Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search ticker or company..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
@@ -234,59 +201,81 @@ export default function Dashboard() {
           </Select>
         </div>
 
-        <Tabs defaultValue="nasdaq" onValueChange={(v) => setActiveTab(v as Exchange)}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="nasdaq">Nasdaq</TabsTrigger>
-            <TabsTrigger value="dow">Dow Jones</TabsTrigger>
-            <TabsTrigger value="sp500">S&P 500</TabsTrigger>
-            {hasCrypto ? (
-              <TabsTrigger value="crypto">Crypto</TabsTrigger>
-            ) : (
-              <TabsTrigger value="crypto" disabled className="gap-1.5 opacity-50">
-                <Lock className="w-3 h-3" /> Crypto
-              </TabsTrigger>
-            )}
-          </TabsList>
-
-          <TabsContent value={activeTab}>
-            {activeTab === "crypto" && !hasCrypto ? (
-              <div className="text-center py-16 space-y-3">
-                <Lock className="w-8 h-8 text-muted-foreground mx-auto" />
-                <p className="text-muted-foreground font-medium">Crypto radars are exclusive to the Bull Trader plan</p>
-                <Link to="/#pricing">
-                  <Button size="sm">Upgrade to Bull Trader</Button>
-                </Link>
+        {/* Search Results */}
+        {isSearchActive && (
+          <div className="mb-6">
+            {isSearching ? (
+              <div className="flex items-center gap-2 py-4">
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Searching...</span>
               </div>
-            ) : isLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-muted-foreground">Fetching live data...</span>
-              </div>
-            ) : error ? (
-              <div className="text-center py-16">
-                <p className="text-destructive mb-2">Failed to load live data</p>
-                <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
-              </div>
-            ) : visibleStocks.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No stocks match your filters.</p>
+            ) : filteredSearchResults.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">No results for "{search}"{filter !== "all" ? ` with selected filter` : ""}</p>
             ) : (
               <div className="space-y-3">
-                {visibleStocks.map((stock) => (
+                <p className="text-sm text-muted-foreground">{filteredSearchResults.length} result{filteredSearchResults.length !== 1 ? "s" : ""}</p>
+                {filteredSearchResults.map((stock) => (
                   <StockCard key={stock.ticker} stock={stock} />
                 ))}
-                {isLimited && (
-                  <div className="text-center py-6 border border-dashed border-border rounded-xl">
-                    <p className="text-muted-foreground text-sm mb-2">
-                      You can see, open, search and get full radars of only {maxPreloaded} Stocks/Tickers per day
-                    </p>
-                    <Button size="sm" onClick={goToPricing}>Upgrade to see all</Button>
-                  </div>
-                )}
               </div>
             )}
-          </TabsContent>
-        </Tabs>
-        </>
+          </div>
+        )}
+
+        {/* Tab view (hidden while searching) */}
+        {!isSearchActive && (
+          <Tabs defaultValue="nasdaq" onValueChange={(v) => setActiveTab(v as Exchange)}>
+            <TabsList className="mb-6">
+              <TabsTrigger value="nasdaq">Nasdaq</TabsTrigger>
+              <TabsTrigger value="dow">Dow Jones</TabsTrigger>
+              <TabsTrigger value="sp500">S&P 500</TabsTrigger>
+              {hasCrypto ? (
+                <TabsTrigger value="crypto">Crypto</TabsTrigger>
+              ) : (
+                <TabsTrigger value="crypto" disabled className="gap-1.5 opacity-50">
+                  <Lock className="w-3 h-3" /> Crypto
+                </TabsTrigger>
+              )}
+            </TabsList>
+
+            <TabsContent value={activeTab}>
+              {activeTab === "crypto" && !hasCrypto ? (
+                <div className="text-center py-16 space-y-3">
+                  <Lock className="w-8 h-8 text-muted-foreground mx-auto" />
+                  <p className="text-muted-foreground font-medium">Crypto radars are exclusive to the Bull Trader plan</p>
+                  <Link to="/#pricing">
+                    <Button size="sm">Upgrade to Bull Trader</Button>
+                  </Link>
+                </div>
+              ) : isLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-muted-foreground">Fetching live data...</span>
+                </div>
+              ) : error ? (
+                <div className="text-center py-16">
+                  <p className="text-destructive mb-2">Failed to load live data</p>
+                  <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
+                </div>
+              ) : visibleStocks.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No stocks match your filters.</p>
+              ) : (
+                <div className="space-y-3">
+                  {visibleStocks.map((stock) => (
+                    <StockCard key={stock.ticker} stock={stock} />
+                  ))}
+                  {isLimited && (
+                    <div className="text-center py-6 border border-dashed border-border rounded-xl">
+                      <p className="text-muted-foreground text-sm mb-2">
+                        You can see, open, search and get full radars of only {maxPreloaded} Stocks/Tickers per day
+                      </p>
+                      <Button size="sm" onClick={goToPricing}>Upgrade to see all</Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </main>
     </div>
