@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { startCheckout } from "@/lib/stripe-helpers";
 import insideRadarImg from "@/assets/inside-radar.jpeg";
 import newsSentimentImg from "@/assets/news-sentiment.jpeg";
-import fmpLogo from "@/assets/fmp-logo.png";
+import fmpLogo from "@/assets/fmp-logo-full.svg";
 import avatarSarah from "@/assets/avatar-sarah.jpg";
 import avatarJames from "@/assets/avatar-james.jpg";
 import avatarElena from "@/assets/avatar-elena.jpg";
@@ -162,12 +162,10 @@ export default function LandingPage() {
             <p className="font-display text-2xl md:text-3xl font-bold text-foreground">
               Our global partner for financial & stocks data
             </p>
-            <div className="flex items-center gap-2">
-              <img src={fmpLogo} alt="Financial Modeling Prep logo" className="w-7 h-7 rounded" />
-              <a href="https://financialmodelingprep.com" target="_blank" rel="noopener noreferrer" className="font-display text-xl font-semibold text-foreground hover:underline">
-                Financial Modeling Prep
-              </a>
-            </div>
+            <a href="https://financialmodelingprep.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <img src={fmpLogo} alt="Financial Modeling Prep logo" className="h-10" />
+              <span className="font-display text-xl font-semibold text-foreground">Financial Modeling Prep</span>
+            </a>
           </motion.div>
 
           <motion.p
