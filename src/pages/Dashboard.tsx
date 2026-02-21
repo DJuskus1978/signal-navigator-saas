@@ -1,11 +1,14 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StockCard } from "@/components/StockCard";
 import { Exchange } from "@/lib/types";
 import { Search, Filter, LogOut, Loader2, Lock, CreditCard, ArrowRight, Menu } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { openCustomerPortal } from "@/lib/stripe-helpers";
 import { useAuth } from "@/contexts/AuthContext";
 import { RadarLogo } from "@/components/RadarLogo";
@@ -34,6 +37,8 @@ const TIER_LABELS: Record<string, string> = {
 };
 
 export default function Dashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const goToPricing = () => {
@@ -50,6 +55,33 @@ export default function Dashboard() {
   const { data: subscription } = useSubscription();
   const { data: stocks = [], isLoading, error } = useLiveStocks(activeTab);
   const { data: searchResults = [], isLoading: isSearching } = useSearchStocks(globalSearch);
+
+  // Detect return from Stripe checkout and refresh subscription
+  const hasHandledCheckout = useRef(false);
+  useEffect(() => {
+    if (searchParams.get("checkout") === "success" && !hasHandledCheckout.current) {
+      hasHandledCheckout.current = true;
+      // Remove the query param
+      setSearchParams({}, { replace: true });
+
+      // Re-sync subscription from Stripe then refresh local cache
+      const sync = async () => {
+        await supabase.functions.invoke("check-subscription");
+        await queryClient.invalidateQueries({ queryKey: ["subscription"] });
+        // Read updated tier
+        const { data } = await supabase
+          .from("profiles")
+          .select("subscription_tier")
+          .eq("user_id", user?.id ?? "")
+          .single();
+        const tierLabel = TIER_LABELS[data?.subscription_tier ?? "novice"] ?? "your new plan";
+        toast.success(`Congrats, you are now a "${tierLabel}"! 🎉`, {
+          duration: 6000,
+        });
+      };
+      sync();
+    }
+  }, [searchParams, setSearchParams, queryClient, user]);
 
   const isGlobalSearchActive = globalSearch.length >= 2;
   const hasCrypto = subscription?.hasCryptoAccess ?? false;
