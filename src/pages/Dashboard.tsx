@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StockCard } from "@/components/StockCard";
 import { Exchange } from "@/lib/types";
-import { Search, Filter, LogOut, Loader2, Lock, CreditCard, ArrowRight, Menu } from "lucide-react";
+import { Search, LogOut, Loader2, Lock, CreditCard, ArrowRight, Menu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -21,13 +21,6 @@ import {
 } from "@/components/ui/sheet";
 import { useLiveStocks, useSearchStocks } from "@/hooks/use-live-stocks";
 import { useSubscription } from "@/hooks/use-subscription";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const TIER_LABELS: Record<string, string> = {
   novice: "Novice Trader",
@@ -48,7 +41,7 @@ export default function Dashboard() {
     }, 100);
   };
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<string>("all");
+  
   const [activeTab, setActiveTab] = useState<Exchange>("nasdaq");
 
   const { data: subscription } = useSubscription();
@@ -86,20 +79,8 @@ export default function Dashboard() {
   const hasCrypto = subscription?.hasCryptoAccess ?? false;
   const maxPreloaded = subscription?.tier === "novice" ? 2 : Infinity;
 
-  // Apply radar filter to both tab stocks and search results
-  const filteredStocks = stocks.filter((s) => {
-    if (filter === "all") return true;
-    if (s.hasDetailData === false) return true; // Show all batch-quote stocks when filter active
-    return s.recommendation === filter;
-  });
-
-  const filteredSearchResults = searchResults.filter((s) => {
-    const matchesFilter = filter === "all" || s.recommendation === filter;
-    return matchesFilter;
-  });
-
-  const visibleStocks = filteredStocks.slice(0, maxPreloaded);
-  const isLimited = filteredStocks.length > visibleStocks.length;
+  const visibleStocks = stocks.slice(0, maxPreloaded);
+  const isLimited = stocks.length > visibleStocks.length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -175,9 +156,9 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Unified Search + Radar Filter */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative flex-1 max-w-md">
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search any stock (e.g. MCD, Disney, Tesla...)"
@@ -186,20 +167,6 @@ export default function Dashboard() {
               className="pl-10"
             />
           </div>
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[180px]">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Filter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Radars</SelectItem>
-              <SelectItem value="strong-buy">🟢🟢 Strong Buy</SelectItem>
-              <SelectItem value="buy">🟢 Buy</SelectItem>
-              <SelectItem value="hold">🟡 Hold</SelectItem>
-              <SelectItem value="dont-buy">🟠 Don't Buy</SelectItem>
-              <SelectItem value="sell">🔴 Sell</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         {/* Search Results */}
@@ -210,12 +177,12 @@ export default function Dashboard() {
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Searching...</span>
               </div>
-            ) : filteredSearchResults.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">No results for "{search}"{filter !== "all" ? ` with selected filter` : ""}</p>
+            ) : searchResults.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">No results for "{search}"</p>
             ) : (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">{filteredSearchResults.length} result{filteredSearchResults.length !== 1 ? "s" : ""}</p>
-                {filteredSearchResults.map((stock) => (
+                <p className="text-sm text-muted-foreground">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
+                {searchResults.map((stock) => (
                   <StockCard key={stock.ticker} stock={stock} />
                 ))}
               </div>
