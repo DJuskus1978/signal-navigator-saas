@@ -156,13 +156,18 @@ export default function LandingPage() {
           </motion.div>
 
           <motion.div
-            className="mt-10 flex items-center justify-center gap-3"
+            className="mt-10 flex flex-col items-center justify-center gap-2"
             initial="hidden" animate="visible" custom={6} variants={fadeUp}
           >
-            <img src={fmpLogo} alt="Financial Modeling Prep logo" className="w-8 h-8 rounded" />
-            <p className="text-sm text-muted-foreground">
-              Our global partner for financial & stocks data — <a href="https://financialmodelingprep.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-foreground hover:underline">Financial Modeling Prep</a>
+            <p className="font-display text-2xl md:text-3xl font-bold text-foreground">
+              Our global partner for financial & stocks data
             </p>
+            <div className="flex items-center gap-2">
+              <img src={fmpLogo} alt="Financial Modeling Prep logo" className="w-7 h-7 rounded" />
+              <a href="https://financialmodelingprep.com" target="_blank" rel="noopener noreferrer" className="font-display text-xl font-semibold text-foreground hover:underline">
+                Financial Modeling Prep
+              </a>
+            </div>
           </motion.div>
 
           <motion.p
