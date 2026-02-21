@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useLiveStockDetail } from "@/hooks/use-live-stocks";
 import { Badge } from "@/components/ui/badge";
@@ -12,10 +12,40 @@ import { PhaseCard } from "@/components/stock-detail/PhaseCard";
 import { AIDecisionGuidance } from "@/components/stock-detail/AIDecisionGuidance";
 import { getFundamentalPhase, getSentimentPhase, getTechnicalPhase } from "@/components/stock-detail/phase-data";
 
+function ViewModeToggle({ simple, onToggle }: { simple: boolean; onToggle: () => void }) {
+  return (
+    <div className="inline-flex items-center rounded-full border border-border bg-card p-0.5">
+      <button
+        onClick={simple ? undefined : onToggle}
+        className={cn(
+          "rounded-full px-4 py-1.5 text-xs font-semibold transition-all",
+          simple
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+        )}
+      >
+        Simple
+      </button>
+      <button
+        onClick={simple ? onToggle : undefined}
+        className={cn(
+          "rounded-full px-4 py-1.5 text-xs font-semibold transition-all",
+          !simple
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+        )}
+      >
+        Advanced
+      </button>
+    </div>
+  );
+}
+
 export default function StockDetail() {
   const { ticker } = useParams<{ ticker: string }>();
   const { data: stock, isLoading, error } = useLiveStockDetail(ticker || "");
   const breakdownRef = useRef<HTMLDivElement>(null);
+  const [simpleMode, setSimpleMode] = useState(true);
 
   if (isLoading) {
     return (
@@ -68,7 +98,7 @@ export default function StockDetail() {
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
 
-        {/* Price Header */}
+        {/* Price Header + Toggle */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -77,11 +107,14 @@ export default function StockDetail() {
             </div>
             <p className="text-muted-foreground">{stock.name}</p>
           </div>
-          <div className="text-right">
-            <p className="font-display text-3xl font-bold">${stock.price.toFixed(2)}</p>
-            <p className={cn("font-medium", isPositive ? "text-signal-buy" : "text-signal-sell")}>
-              {isPositive ? "+" : ""}{stock.change.toFixed(2)} ({isPositive ? "+" : ""}{stock.changePercent.toFixed(2)}%)
-            </p>
+          <div className="flex flex-col items-end gap-2">
+            <div className="text-right">
+              <p className="font-display text-3xl font-bold">${stock.price.toFixed(2)}</p>
+              <p className={cn("font-medium", isPositive ? "text-signal-buy" : "text-signal-sell")}>
+                {isPositive ? "+" : ""}{stock.change.toFixed(2)} ({isPositive ? "+" : ""}{stock.changePercent.toFixed(2)}%)
+              </p>
+            </div>
+            <ViewModeToggle simple={simpleMode} onToggle={() => setSimpleMode(!simpleMode)} />
           </div>
         </div>
 
@@ -94,18 +127,21 @@ export default function StockDetail() {
             icon={<BarChart3 className="w-5 h-5" />}
             title={isCrypto ? "Market Structure" : "Fundamental Strength"}
             score={stock.phaseScores.fundamental}
+            simple={simpleMode}
             {...fundamentalPhase}
           />
           <PhaseCard
             icon={<Newspaper className="w-5 h-5" />}
             title="News & Sentiment"
             score={stock.phaseScores.sentiment}
+            simple={simpleMode}
             {...sentimentPhase}
           />
           <PhaseCard
             icon={<TrendingUp className="w-5 h-5" />}
             title="Technical Momentum"
             score={stock.phaseScores.technical}
+            simple={simpleMode}
             {...technicalPhase}
           />
         </div>

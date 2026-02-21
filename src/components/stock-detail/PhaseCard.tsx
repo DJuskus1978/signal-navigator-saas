@@ -20,6 +20,7 @@ interface PhaseCardProps {
   interpretation: string;
   subBlocks: SubBlock[];
   detailRows: { label: string; value: string; hint?: string; signal?: SignalLevel }[];
+  simple?: boolean;
 }
 
 function getStatusColor(level: SignalLevel) {
@@ -49,7 +50,7 @@ function SubBlockSection({ block }: { block: SubBlock }) {
   );
 }
 
-export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interpretation, subBlocks, detailRows }: PhaseCardProps) {
+export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interpretation, subBlocks, detailRows, simple = false }: PhaseCardProps) {
   const [expanded, setExpanded] = useState(false);
   const styles = getStatusColor(statusLevel);
 
@@ -70,51 +71,60 @@ export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interp
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        {/* Sub-Blocks */}
-        <div className="grid gap-4">
-          {subBlocks.map((block) => (
-            <SubBlockSection key={block.title} block={block} />
-          ))}
-        </div>
+        {/* Sub-Blocks — only in Advanced mode */}
+        {!simple && (
+          <div className="grid gap-4">
+            {subBlocks.map((block) => (
+              <SubBlockSection key={block.title} block={block} />
+            ))}
+          </div>
+        )}
 
-        {/* Interpretation */}
-        <p className="text-sm text-muted-foreground italic border-t border-border pt-4">
+        {/* Interpretation — always visible */}
+        <p className={cn(
+          "text-sm text-muted-foreground italic",
+          !simple && "border-t border-border pt-4"
+        )}>
           {interpretation}
         </p>
 
-        {/* Expandable Details */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full text-xs text-muted-foreground"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? "Hide" : "See"} Key Metrics
-          <ChevronDown className={cn("w-3.5 h-3.5 ml-1 transition-transform", expanded && "rotate-180")} />
-        </Button>
+        {/* Expandable Details — only in Advanced mode */}
+        {!simple && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-muted-foreground"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? "Hide" : "See"} Key Metrics
+              <ChevronDown className={cn("w-3.5 h-3.5 ml-1 transition-transform", expanded && "rotate-180")} />
+            </Button>
 
-        {expanded && (
-          <div className="space-y-0 border-t border-border pt-2">
-            {detailRows.map((row) => (
-              <div key={row.label} className="flex justify-between items-center py-2.5 border-b border-border last:border-0">
-                <span className="text-sm text-muted-foreground">{row.label}</span>
-                <div className="flex items-center gap-2">
-                  {row.hint && row.signal && (
-                    <span
-                      className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                      style={{
-                        color: row.signal === "bullish" ? "hsl(var(--signal-buy))" : row.signal === "bearish" ? "hsl(var(--signal-sell))" : "hsl(var(--signal-hold))",
-                        backgroundColor: row.signal === "bullish" ? "hsl(var(--signal-buy-bg))" : row.signal === "bearish" ? "hsl(var(--signal-sell-bg))" : "hsl(var(--signal-hold-bg))",
-                      }}
-                    >
-                      {row.hint}
-                    </span>
-                  )}
-                  <span className="font-medium text-sm font-display">{row.value}</span>
-                </div>
+            {expanded && (
+              <div className="space-y-0 border-t border-border pt-2">
+                {detailRows.map((row) => (
+                  <div key={row.label} className="flex justify-between items-center py-2.5 border-b border-border last:border-0">
+                    <span className="text-sm text-muted-foreground">{row.label}</span>
+                    <div className="flex items-center gap-2">
+                      {row.hint && row.signal && (
+                        <span
+                          className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+                          style={{
+                            color: row.signal === "bullish" ? "hsl(var(--signal-buy))" : row.signal === "bearish" ? "hsl(var(--signal-sell))" : "hsl(var(--signal-hold))",
+                            backgroundColor: row.signal === "bullish" ? "hsl(var(--signal-buy-bg))" : row.signal === "bearish" ? "hsl(var(--signal-sell-bg))" : "hsl(var(--signal-hold-bg))",
+                          }}
+                        >
+                          {row.hint}
+                        </span>
+                      )}
+                      <span className="font-medium text-sm font-display">{row.value}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
