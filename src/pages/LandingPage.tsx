@@ -164,7 +164,7 @@ export default function LandingPage() {
             </p>
             <a href="https://financialmodelingprep.com" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity">
               <img src={fmpLogo} alt="Financial Modeling Prep logo" className="h-10" />
-              <span className="font-display text-xl font-semibold text-foreground">Financial Modeling Prep</span>
+              <span className="font-display text-xl text-foreground">Financial Modeling Prep</span>
             </a>
           </motion.div>
 
