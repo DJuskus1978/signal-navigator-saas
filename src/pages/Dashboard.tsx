@@ -108,7 +108,7 @@ export default function Dashboard() {
           <h1 className="font-display text-3xl font-bold mb-2">Dashboard</h1>
           <p className="text-muted-foreground">Real-time StocksRadars across major indices</p>
           {subscription && subscription.tier === "novice" && !subscription.isTrialExpired && (
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-signal-buy mt-1">
               Free trial — {subscription.trialDaysLeft} day{subscription.trialDaysLeft !== 1 ? "s" : ""} left, {subscription.dailyLimit} stock checks/day.{" "}
               <button onClick={goToPricing} className="text-primary font-semibold underline underline-offset-2">Upgrade for more</button>
             </p>
