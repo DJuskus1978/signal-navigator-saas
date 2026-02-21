@@ -50,14 +50,32 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
     if (customers.data.length === 0) {
-      logStep("No Stripe customer found, returning novice");
-      // Ensure profile is novice
-      await supabaseClient.from("profiles").update({
-        subscription_tier: "novice",
-        is_subscribed: false,
-      }).eq("user_id", user.id);
+      logStep("No Stripe customer found, checking trial");
 
-      return new Response(JSON.stringify({ subscribed: false, tier: "novice" }), {
+      // Check trial expiry from profiles
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("trial_started_at")
+        .eq("user_id", user.id)
+        .single();
+
+      const trialStartedAt = profile?.trial_started_at;
+      let isTrialExpired = false;
+      let trialDaysLeft = 7;
+
+      if (trialStartedAt) {
+        const trialEnd = new Date(trialStartedAt);
+        trialEnd.setDate(trialEnd.getDate() + 7);
+        isTrialExpired = new Date() > trialEnd;
+        trialDaysLeft = Math.max(0, Math.ceil((trialEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+      }
+
+      return new Response(JSON.stringify({
+        subscribed: false,
+        tier: "novice",
+        is_trial_expired: isTrialExpired,
+        trial_days_left: trialDaysLeft,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

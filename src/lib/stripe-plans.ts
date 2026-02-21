@@ -1,4 +1,12 @@
 export const STRIPE_PLANS = {
+  novice: {
+    price_id: "price_1T3F3UQPNlHh1Fowq59xXBcC",
+    product_id: "prod_U1HcTz9ZFmZ5AL",
+    name: "Novice Trader",
+    price: 0,
+    emoji: "",
+    trialDays: 7,
+  },
   day_trader: {
     price_id: "price_1T3EzOQPNlHh1FowZMmm67p4",
     product_id: "prod_U1HYWVLuzM8xNa",
@@ -22,4 +30,5 @@ export const STRIPE_PLANS = {
   },
 } as const;
 
-export type PaidTier = keyof typeof STRIPE_PLANS;
+export type PlanTier = keyof typeof STRIPE_PLANS;
+export type PaidTier = Exclude<PlanTier, "novice">;

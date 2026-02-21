@@ -10,6 +10,7 @@ export interface SubscriptionInfo {
   hasCryptoAccess: boolean;
   trialStartedAt: string | null;
   isTrialExpired: boolean;
+  trialDaysLeft: number;
 }
 
 const TIER_LIMITS: Record<SubscriptionTier, number> = {
@@ -40,10 +41,12 @@ export function useSubscription() {
 
       // Check if 7-day trial has expired for novice users
       let isTrialExpired = false;
+      let trialDaysLeft = 7;
       if (tier === "novice" && trialStartedAt) {
         const trialEnd = new Date(trialStartedAt);
         trialEnd.setDate(trialEnd.getDate() + 7);
         isTrialExpired = new Date() > trialEnd;
+        trialDaysLeft = Math.max(0, Math.ceil((trialEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
       }
 
       return {
@@ -52,6 +55,7 @@ export function useSubscription() {
         hasCryptoAccess: tier === "bull_trader",
         trialStartedAt,
         isTrialExpired,
+        trialDaysLeft,
       };
     },
     enabled: !!user,
