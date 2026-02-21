@@ -14,7 +14,8 @@ serve(async (req) => {
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
   );
 
   try {
@@ -37,6 +38,24 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
+    // Check if user is still in free trial — defer billing to trial end
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("trial_started_at, subscription_tier")
+      .eq("user_id", user.id)
+      .single();
+
+    let subscriptionData: Record<string, any> = {};
+    if (profile?.subscription_tier === "novice" && profile?.trial_started_at) {
+      const trialEnd = new Date(profile.trial_started_at);
+      trialEnd.setDate(trialEnd.getDate() + 7);
+      // Only set trial_end if the trial hasn't expired yet
+      if (trialEnd > new Date()) {
+        // Stripe requires trial_end as a Unix timestamp (seconds)
+        subscriptionData.trial_end = Math.floor(trialEnd.getTime() / 1000);
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -44,6 +63,7 @@ serve(async (req) => {
       mode: "subscription",
       success_url: `${req.headers.get("origin")}/dashboard?checkout=success`,
       cancel_url: `${req.headers.get("origin")}/#pricing`,
+      ...(subscriptionData.trial_end ? { subscription_data: { trial_end: subscriptionData.trial_end } } : {}),
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
