@@ -23,12 +23,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const syncSubscription = async () => {
+    try {
+      await supabase.functions.invoke("check-subscription");
+    } catch (e) {
+      console.error("Subscription sync failed:", e);
+    }
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        if (session?.user) {
+          setTimeout(syncSubscription, 0);
+        }
       }
     );
 
@@ -36,6 +47,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      if (session?.user) {
+        syncSubscription();
+      }
     });
 
     return () => subscription.unsubscribe();

@@ -1,5 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { startCheckout } from "@/lib/stripe-helpers";
 import insideRadarImg from "@/assets/inside-radar.jpeg";
 import newsSentimentImg from "@/assets/news-sentiment.jpeg";
 import avatarSarah from "@/assets/avatar-sarah.jpg";
@@ -25,6 +27,16 @@ const fadeUp: Variants = {
 
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handlePlanClick = (tier: "day_trader" | "pro_day_trader" | "bull_trader") => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    startCheckout(tier);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -368,9 +380,9 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link to="/auth">
-                <Button className="w-full" size="lg">Get Started</Button>
-              </Link>
+              <Button className="w-full" size="lg" onClick={() => handlePlanClick("day_trader")}>
+                Get Started
+              </Button>
             </CardContent>
           </Card>
 
@@ -403,9 +415,9 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link to="/auth">
-                <Button className="w-full" size="lg">Get Started</Button>
-              </Link>
+              <Button className="w-full" size="lg" onClick={() => handlePlanClick("pro_day_trader")}>
+                Get Started
+              </Button>
             </CardContent>
           </Card>
 
@@ -437,9 +449,9 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link to="/auth">
-                <Button className="w-full" size="lg">Get Started</Button>
-              </Link>
+              <Button className="w-full" size="lg" onClick={() => handlePlanClick("bull_trader")}>
+                Get Started
+              </Button>
             </CardContent>
           </Card>
         </div>
