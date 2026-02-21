@@ -124,7 +124,7 @@ export default function LandingPage() {
             className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
             initial="hidden" animate="visible" custom={3} variants={fadeUp}
           >
-            Stop guessing which stocks to buy. StocksRadars analyzes fundamentals, news sentiment, and technical indicators across Nasdaq, Dow Jones, and S&P 500, & crypto — delivering clear buy, hold, or sell radars with a simple traffic light.
+            Stop guessing which stocks to buy. StocksRadars analyzes fundamentals, news sentiment, and technical indicators across Nasdaq, Dow Jones, S&P 500, & crypto — delivering clear buy, hold, or sell radars with a simple traffic light.
            </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
@@ -256,7 +256,7 @@ export default function LandingPage() {
             {[
               { icon: Zap, title: "Sign Up Free", desc: "Create your free stock analysis account in seconds with Google or email." },
               { icon: Shield, title: "Choose Your Plan", desc: "Unlock unlimited stock recommendations and full market coverage for just $7/month." },
-              { icon: BarChart3, title: "Get StocksRadars", desc: "See clear Buy, Hold, or Sell recommendations for every Nasdaq, Dow Jones, and S&P 500 stock." },
+              { icon: BarChart3, title: "Get StocksRadars", desc: "See clear Buy, Hold, or Sell recommendations for every Nasdaq, Dow Jones, S&P 500, & crypto stock." },
             ].map((step, i) => (
               <motion.div
                 key={step.title}
