@@ -123,7 +123,7 @@ export default function LandingPage() {
             className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
             initial="hidden" animate="visible" custom={3} variants={fadeUp}
           >
-            Stop guessing which stocks to buy. StocksRadars analyzes fundamentals, news sentiment, and technical indicators across Nasdaq, Dow Jones, and S&P 500 — delivering clear buy, hold, or sell radars with a simple traffic light.
+            Stop guessing which stocks to buy. StocksRadars analyzes fundamentals, news sentiment, and technical indicators across Nasdaq, Dow Jones, and S&P 500, & crypto — delivering clear buy, hold, or sell radars with a simple traffic light.
            </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
