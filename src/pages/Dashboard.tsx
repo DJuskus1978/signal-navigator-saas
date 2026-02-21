@@ -5,10 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StockCard } from "@/components/StockCard";
 import { Exchange } from "@/lib/types";
-import { Search, Filter, LogOut, Loader2, Lock, CreditCard, ArrowRight } from "lucide-react";
+import { Search, Filter, LogOut, Loader2, Lock, CreditCard, ArrowRight, Menu } from "lucide-react";
 import { openCustomerPortal } from "@/lib/stripe-helpers";
 import { useAuth } from "@/contexts/AuthContext";
 import { RadarLogo } from "@/components/RadarLogo";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useLiveStocks, useSearchStocks } from "@/hooks/use-live-stocks";
 import { useSubscription } from "@/hooks/use-subscription";
 import {
@@ -69,24 +76,42 @@ export default function Dashboard() {
             <RadarLogo />
             <span className="font-display font-bold text-xl">StocksRadars</span>
           </Link>
-          <div className="flex items-center gap-3">
-            {subscription && (
-              <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium hidden sm:inline">
-                {TIER_LABELS[subscription.tier]}
-              </span>
-            )}
-            <span className="text-sm text-muted-foreground hidden sm:inline">
-              {user?.email}
-            </span>
-            {subscription && subscription.tier !== "novice" && (
-              <Button variant="ghost" size="sm" onClick={openCustomerPortal} className="gap-1.5">
-                <CreditCard className="w-4 h-4" /> Manage Plan
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="w-5 h-5" />
               </Button>
-            )}
-            <Button variant="ghost" size="sm" onClick={signOut} className="gap-1.5">
-              <LogOut className="w-4 h-4" /> Sign Out
-            </Button>
-          </div>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-72">
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-2 mt-6">
+                {subscription && (
+                  <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium w-fit">
+                    {TIER_LABELS[subscription.tier]}
+                  </span>
+                )}
+                <span className="text-sm text-muted-foreground truncate">
+                  {user?.email}
+                </span>
+                <div className="border-t border-border my-2" />
+                {subscription && subscription.tier !== "novice" && (
+                  <Button variant="ghost" className="justify-start gap-2" onClick={openCustomerPortal}>
+                    <CreditCard className="w-4 h-4" /> Manage Plan
+                  </Button>
+                )}
+                {subscription?.tier === "novice" && (
+                  <Button variant="ghost" className="justify-start gap-2" onClick={goToPricing}>
+                    <ArrowRight className="w-4 h-4" /> Upgrade Plan
+                  </Button>
+                )}
+                <Button variant="ghost" className="justify-start gap-2 text-destructive" onClick={signOut}>
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
