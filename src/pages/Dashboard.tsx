@@ -96,14 +96,12 @@ export default function Dashboard() {
                   {user?.email}
                 </span>
                 <div className="border-t border-border my-2" />
+                <Button variant="ghost" className="justify-start gap-2" onClick={goToPricing}>
+                  <ArrowRight className="w-4 h-4" /> Pricing Plans
+                </Button>
                 {subscription && subscription.tier !== "novice" && (
                   <Button variant="ghost" className="justify-start gap-2" onClick={openCustomerPortal}>
                     <CreditCard className="w-4 h-4" /> Manage Plan
-                  </Button>
-                )}
-                {subscription?.tier === "novice" && (
-                  <Button variant="ghost" className="justify-start gap-2" onClick={goToPricing}>
-                    <ArrowRight className="w-4 h-4" /> Upgrade Plan
                   </Button>
                 )}
                 <Button variant="ghost" className="justify-start gap-2 text-destructive" onClick={signOut}>
@@ -132,9 +130,12 @@ export default function Dashboard() {
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold mb-2">Dashboard</h1>
           <p className="text-muted-foreground">Real-time StocksRadars across major indices</p>
-          {subscription && subscription.tier === "novice" && !subscription.isTrialExpired && (
+          {subscription && subscription.tier !== "bull_trader" && (
             <p className="text-sm text-signal-buy mt-1">
-              Free trial — {subscription.trialDaysLeft} day{subscription.trialDaysLeft !== 1 ? "s" : ""} left, {subscription.dailyLimit} stock checks/day.{" "}
+              {subscription.tier === "novice" && !subscription.isTrialExpired
+                ? <>Free trial — {subscription.trialDaysLeft} day{subscription.trialDaysLeft !== 1 ? "s" : ""} left, {subscription.dailyLimit} stock checks/day. </>
+                : <>{subscription.dailyLimit < Infinity ? `${subscription.dailyLimit} stock checks/day. ` : ""}</>
+              }
               <button onClick={goToPricing} className="text-primary font-semibold underline underline-offset-2">Upgrade for more</button>
             </p>
           )}
