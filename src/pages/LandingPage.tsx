@@ -156,7 +156,7 @@ export default function LandingPage() {
           </motion.div>
 
           <motion.div
-            className="mt-10 flex flex-col items-center justify-center gap-2"
+            className="mt-10 flex flex-col items-center justify-center gap-6"
             initial="hidden" animate="visible" custom={6} variants={fadeUp}
           >
             <p className="font-display text-2xl md:text-3xl font-bold text-foreground">
