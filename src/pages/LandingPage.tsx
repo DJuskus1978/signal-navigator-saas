@@ -27,15 +27,21 @@ const fadeUp: Variants = {
 
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handlePlanClick = (tier: "day_trader" | "pro_day_trader" | "bull_trader") => {
+  const handlePlanClick = async (tier: "day_trader" | "pro_day_trader" | "bull_trader") => {
     if (!user) {
       navigate("/auth");
       return;
     }
-    startCheckout(tier);
+    setLoadingTier(tier);
+    try {
+      await startCheckout(tier);
+    } finally {
+      setLoadingTier(null);
+    }
   };
 
   return (
@@ -380,8 +386,8 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full" size="lg" onClick={() => handlePlanClick("day_trader")}>
-                Get Started
+              <Button className="w-full active:scale-95 active:opacity-70 transition-all" size="lg" onClick={() => handlePlanClick("day_trader")} disabled={loadingTier === "day_trader"}>
+                {loadingTier === "day_trader" ? <span className="flex items-center gap-2"><RadarLogo size={24} /> Loading…</span> : "Get Started"}
               </Button>
             </CardContent>
           </Card>
@@ -415,8 +421,8 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full" size="lg" onClick={() => handlePlanClick("pro_day_trader")}>
-                Get Started
+              <Button className="w-full active:scale-95 active:opacity-70 transition-all" size="lg" onClick={() => handlePlanClick("pro_day_trader")} disabled={loadingTier === "pro_day_trader"}>
+                {loadingTier === "pro_day_trader" ? <span className="flex items-center gap-2"><RadarLogo size={24} /> Loading…</span> : "Get Started"}
               </Button>
             </CardContent>
           </Card>
@@ -449,8 +455,8 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full" size="lg" onClick={() => handlePlanClick("bull_trader")}>
-                Get Started
+              <Button className="w-full active:scale-95 active:opacity-70 transition-all" size="lg" onClick={() => handlePlanClick("bull_trader")} disabled={loadingTier === "bull_trader"}>
+                {loadingTier === "bull_trader" ? <span className="flex items-center gap-2"><RadarLogo size={24} /> Loading…</span> : "Get Started"}
               </Button>
             </CardContent>
           </Card>
