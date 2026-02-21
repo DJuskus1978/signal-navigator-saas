@@ -106,22 +106,28 @@ export default function LandingPage() {
               AI-powered stock radars
             </span>
           </motion.div>
+          <motion.p
+            className="font-display text-xl md:text-2xl font-semibold text-muted-foreground italic mb-3"
+            initial="hidden" animate="visible" custom={1} variants={fadeUp}
+          >
+            "We analyze. You decide."
+          </motion.p>
           <motion.h1
             className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
-            initial="hidden" animate="visible" custom={1} variants={fadeUp}
+            initial="hidden" animate="visible" custom={2} variants={fadeUp}
           >
             Stock buy, hold & sell radars for{" "}
             <span className="text-primary">everyday investors</span>
           </motion.h1>
           <motion.p
             className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
-            initial="hidden" animate="visible" custom={2} variants={fadeUp}
+            initial="hidden" animate="visible" custom={3} variants={fadeUp}
           >
             Stop guessing which stocks to buy. StocksRadars analyzes fundamentals, news sentiment, and technical indicators across Nasdaq, Dow Jones, and S&P 500 — delivering clear buy, hold, or sell radars with a simple traffic light.
            </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
-            initial="hidden" animate="visible" custom={3} variants={fadeUp}
+            initial="hidden" animate="visible" custom={4} variants={fadeUp}
           >
             <Link to="/auth">
               <Button size="lg" className="gap-2 text-base px-8">
@@ -138,7 +144,7 @@ export default function LandingPage() {
           {/* Traffic light preview */}
           <motion.div
             className="mt-16 flex flex-wrap justify-center gap-4"
-            initial="hidden" animate="visible" custom={4} variants={fadeUp}
+            initial="hidden" animate="visible" custom={5} variants={fadeUp}
             role="img"
             aria-label="Stock recommendation traffic lights showing buy, hold, don't buy, and sell signals"
           >
@@ -150,7 +156,7 @@ export default function LandingPage() {
 
           <motion.p
             className="mt-10 text-base text-muted-foreground/80 mb-0 max-w-2xl mx-auto italic"
-            initial="hidden" animate="visible" custom={5} variants={fadeUp}
+            initial="hidden" animate="visible" custom={6} variants={fadeUp}
           >
             Our proprietary AI-powered stock analysis algorithm evaluates each stock through three phases — fundamental analysis, real-time news sentiment, and technical indicators — delivering a single, clear stock recommendation you can trust. No jargon, no complexity: just actionable stock radars designed for beginner and everyday investors who want professional-grade stock market insights without the learning curve.
           </motion.p>
