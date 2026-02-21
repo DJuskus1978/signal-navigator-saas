@@ -88,8 +88,9 @@ export default function Dashboard() {
 
   // Apply radar filter to both tab stocks and search results
   const filteredStocks = stocks.filter((s) => {
-    const matchesFilter = filter === "all" || s.recommendation === filter;
-    return matchesFilter;
+    if (filter === "all") return true;
+    if (s.hasDetailData === false) return true; // Show all batch-quote stocks when filter active
+    return s.recommendation === filter;
   });
 
   const filteredSearchResults = searchResults.filter((s) => {

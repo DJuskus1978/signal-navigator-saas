@@ -3,6 +3,7 @@ import { TrafficLight } from "./TrafficLight";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
 
 interface StockCardProps {
   stock: Stock;
@@ -12,6 +13,7 @@ interface StockCardProps {
 export function StockCard({ stock, blurred = false }: StockCardProps) {
   const navigate = useNavigate();
   const isPositive = stock.change >= 0;
+  const hasRadar = stock.hasDetailData !== false;
 
   return (
     <Card
@@ -41,8 +43,17 @@ export function StockCard({ stock, blurred = false }: StockCardProps) {
         </div>
 
         <div className={cn(blurred && "blur-sm")}>
-          <TrafficLight recommendation={stock.recommendation} size="sm" />
-          <p className="text-xs text-muted-foreground text-right mt-1">{stock.confidence}</p>
+          {hasRadar ? (
+            <>
+              <TrafficLight recommendation={stock.recommendation} size="sm" />
+              <p className="text-xs text-muted-foreground text-right mt-1">{stock.confidence}</p>
+            </>
+          ) : (
+            <div className="flex items-center gap-1 text-primary text-sm font-medium">
+              <span>View Radar</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
+          )}
         </div>
       </div>
     </Card>
