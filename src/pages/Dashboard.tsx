@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StockCard } from "@/components/StockCard";
 import { Exchange } from "@/lib/types";
-import { Search, Filter, LogOut, Loader2, Lock } from "lucide-react";
+import { Search, Filter, LogOut, Loader2, Lock, CreditCard } from "lucide-react";
+import { openCustomerPortal } from "@/lib/stripe-helpers";
 import { useAuth } from "@/contexts/AuthContext";
 import { RadarLogo } from "@/components/RadarLogo";
 import { useLiveStocks, useSearchStocks } from "@/hooks/use-live-stocks";
@@ -77,6 +78,11 @@ export default function Dashboard() {
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {user?.email}
             </span>
+            {subscription && subscription.tier !== "novice" && (
+              <Button variant="ghost" size="sm" onClick={openCustomerPortal} className="gap-1.5">
+                <CreditCard className="w-4 h-4" /> Manage Plan
+              </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={signOut} className="gap-1.5">
               <LogOut className="w-4 h-4" /> Sign Out
             </Button>
