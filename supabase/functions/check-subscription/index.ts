@@ -94,9 +94,13 @@ serve(async (req) => {
     let tier = "novice";
     let subscriptionEnd: string | null = null;
 
+    logStep("Subscriptions listed", { count: subscriptions.data.length, statuses: subscriptions.data.map(s => s.status), hasActiveSub });
+
     if (hasActiveSub && activeSub) {
-      subscriptionEnd = new Date(activeSub.current_period_end * 1000).toISOString();
-      const productId = activeSub.items.data[0].price.product as string;
+      if (activeSub.current_period_end) {
+        subscriptionEnd = new Date(activeSub.current_period_end * 1000).toISOString();
+      }
+      const productId = activeSub.items.data[0]?.price?.product as string;
       tier = PRODUCT_TO_TIER[productId] || "novice";
       logStep("Active/trialing subscription", { tier, status: activeSub.status, subscriptionEnd });
     } else {
