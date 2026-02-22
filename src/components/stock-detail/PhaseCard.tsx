@@ -92,9 +92,9 @@ export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interp
         {!simple && (
           <>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="w-full text-xs text-muted-foreground"
+              className="w-full text-xs bg-secondary text-secondary-foreground hover:bg-secondary/80"
               onClick={() => setExpanded(!expanded)}
             >
               {expanded ? "Hide" : "See"} Key Metrics
