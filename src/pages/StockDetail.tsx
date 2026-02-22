@@ -140,7 +140,15 @@ export default function StockDetail() {
         </div>
 
         {/* 1️⃣ AI Radar Signal Card */}
-        <AIRadarSignalCard stock={stock} isCrypto={isCrypto} onViewBreakdown={handleViewBreakdown} profile={profile} onProfileChange={setProfile} />
+        <AIRadarSignalCard
+          stock={stock}
+          isCrypto={isCrypto}
+          onViewBreakdown={handleViewBreakdown}
+          profile={profile}
+          onProfileChange={setProfile}
+          lockedProfiles={hasAdvancedAccess ? [] : (["conservative", "active"] as InvestorProfile[])}
+          onLockedProfileClick={goToPricing}
+        />
 
         {/* 2️⃣ 3-Phase Breakdown */}
         <div ref={breakdownRef} className="mt-8 space-y-6">
