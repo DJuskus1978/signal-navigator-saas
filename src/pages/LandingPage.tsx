@@ -2,7 +2,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { startCheckout } from "@/lib/stripe-helpers";
-import insideRadarImg from "@/assets/inside-radar.jpeg";
+import insideRadarSignalImg from "@/assets/inside-radar-signal.jpeg";
+import insideRadarPhasesImg from "@/assets/inside-radar-phases.jpeg";
+import insideRadarDashboardImg from "@/assets/inside-radar-dashboard.jpeg";
 import newsSentimentImg from "@/assets/news-sentiment.jpeg";
 import fmpLogo from "@/assets/fmp-logo-full.svg";
 import avatarSarah from "@/assets/avatar-sarah.jpg";
@@ -191,15 +193,31 @@ export default function LandingPage() {
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
             See how our AI stock screener breaks down fundamentals, sentiment, and technicals into clear, actionable recommendations
           </p>
-          <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
-            <img
-              src={insideRadarImg}
-              alt="StocksRadars stock analysis dashboard showing fundamental analysis scores, news sentiment ratings, and technical indicator breakdown for a Nasdaq stock"
-              className="w-full h-auto"
-              loading="lazy"
-              width="800"
-              height="600"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
+              <img
+                src={insideRadarSignalImg}
+                alt="StocksRadars signal card showing AAPL stock with Buy recommendation, Balanced profile selected, and Fundamentals/News/Technical weight bars"
+                className="w-full h-auto"
+                loading="lazy"
+              />
+            </div>
+            <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
+              <img
+                src={insideRadarPhasesImg}
+                alt="StocksRadars analysis phases showing Fundamental Strength, News & Sentiment, and Technical Momentum breakdowns with Decision Guidance"
+                className="w-full h-auto"
+                loading="lazy"
+              />
+            </div>
+            <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
+              <img
+                src={insideRadarDashboardImg}
+                alt="StocksRadars dashboard showing stock list with AAPL and MSFT, search bar, and index tabs for Nasdaq, Dow Jones, S&P 500 and Crypto"
+                className="w-full h-auto"
+                loading="lazy"
+              />
+            </div>
           </div>
         </motion.div>
       </section>
