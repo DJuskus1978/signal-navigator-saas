@@ -20,6 +20,5 @@ export function getPhaseStatus(score: number): { label: string; level: SignalLev
 
 export function getConfidencePercent(confidence: string, score: number): number {
   const absScore = Math.abs(score);
-  // Map absolute combined score to 0-100 confidence percentage
   return Math.min(95, Math.max(15, Math.round(absScore * 0.8 + 20)));
 }

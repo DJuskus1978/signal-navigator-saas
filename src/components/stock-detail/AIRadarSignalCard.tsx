@@ -2,13 +2,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { getRadarStatus, getConfidencePercent } from "./types";
-import type { Stock } from "@/lib/types";
+import type { Stock, InvestorProfile } from "@/lib/types";
+import { PROFILE_WEIGHTS } from "@/lib/types";
+import { getSignalLabel, getSignalColor } from "@/lib/radar-scoring";
 
 interface Props {
   stock: Stock;
   isCrypto: boolean;
   onViewBreakdown: () => void;
+  profile: InvestorProfile;
+  onProfileChange: (p: InvestorProfile) => void;
 }
 
 function getStatusStyles(color: "constructive" | "neutral" | "cautious") {
@@ -22,42 +25,78 @@ function getStatusStyles(color: "constructive" | "neutral" | "cautious") {
   }
 }
 
-function generateSummary(stock: Stock, isCrypto: boolean): string {
-  const { phaseScores } = stock;
-  const f = phaseScores.fundamental;
-  const s = phaseScores.sentiment;
-  const t = phaseScores.technical;
+const PROFILE_LABELS: Record<InvestorProfile, string> = {
+  conservative: "Conservative",
+  balanced: "Balanced",
+  active: "Active",
+};
 
-  if (isCrypto) {
-    if (f >= 20 && t >= 20) return `${stock.name} shows strong market structure and bullish technical momentum, supported by positive sentiment.`;
-    if (f >= 10 && t < 0) return `${stock.name} maintains solid market positioning, but short-term technical momentum shows mild pressure.`;
-    if (f < 0 && s < 0) return `${stock.name} faces headwinds in both market structure and sentiment. Technical signals suggest caution.`;
-    if (t >= 15 && f < 5) return `${stock.name} shows improving technical momentum, though underlying market structure remains mixed.`;
-    return `${stock.name} displays mixed signals across market structure, sentiment, and technicals. Monitor for clearer direction.`;
+function generateSummary(stock: Stock, isCrypto: boolean, signal: string, radarScore: number): string {
+  if (radarScore >= 80) {
+    return `Positive ${isCrypto ? "market structure" : "fundamentals"} and strengthening momentum align with constructive market conditions for ${stock.name}.`;
   }
-
-  if (f >= 20 && t >= 20) return `${stock.name} scores strongly across all phases — solid fundamentals, positive sentiment, and bullish technicals align.`;
-  if (f >= 15 && t < 0) return `Solid company fundamentals remain intact, but short-term technical momentum shows mild pressure.`;
-  if (f < 0 && s < -10) return `${stock.name} faces fundamental headwinds compounded by negative market sentiment. Technical indicators confirm caution.`;
-  if (t >= 15 && f < 5) return `Technical momentum is strengthening for ${stock.name}, though underlying fundamentals remain average.`;
-  if (s >= 20 && f >= 10) return `Positive news flow and solid fundamentals create a constructive backdrop for ${stock.name}.`;
-  return `${stock.name} shows mixed conditions across fundamentals, sentiment, and technicals. A balanced outlook is warranted.`;
+  if (radarScore >= 65) {
+    return `${stock.name} shows solid ${isCrypto ? "market positioning" : "fundamentals"} supported by positive sentiment and favorable technical trends.`;
+  }
+  if (radarScore >= 45) {
+    return `${isCrypto ? "Market structure" : "Company fundamentals"} remain stable for ${stock.name}, while short-term momentum is mixed.`;
+  }
+  if (radarScore >= 30) {
+    return `Weakening momentum and mixed sentiment create a cautious outlook for ${stock.name}. ${isCrypto ? "Market structure" : "Fundamentals"} show pressure.`;
+  }
+  return `Multiple analysis phases show stress for ${stock.name}. Weakening momentum and negative sentiment outweigh ${isCrypto ? "market positioning" : "stable fundamentals"}.`;
 }
 
-export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown }: Props) {
-  const { phaseScores } = stock;
-  const status = getRadarStatus(phaseScores.combined);
-  const styles = getStatusStyles(status.color);
-  const confidencePercent = getConfidencePercent(stock.confidence, phaseScores.combined);
-  const summary = generateSummary(stock, isCrypto);
+function ProfileToggle({ profile, onChange }: { profile: InvestorProfile; onChange: (p: InvestorProfile) => void }) {
+  const profiles: InvestorProfile[] = ["conservative", "balanced", "active"];
+  return (
+    <div className="space-y-2">
+      <div className="inline-flex items-center rounded-full border border-border bg-card p-0.5">
+        {profiles.map((p) => (
+          <button
+            key={p}
+            onClick={() => onChange(p)}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-semibold transition-all",
+              profile === p
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {PROFILE_LABELS[p]}
+          </button>
+        ))}
+      </div>
+      <p className="text-[10px] text-muted-foreground text-center">
+        F {Math.round(PROFILE_WEIGHTS[profile].fundamental * 100)}% • N {Math.round(PROFILE_WEIGHTS[profile].sentiment * 100)}% • T {Math.round(PROFILE_WEIGHTS[profile].technical * 100)}%
+      </p>
+    </div>
+  );
+}
+
+export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, onProfileChange }: Props) {
+  const radar = stock.radarScores?.[profile];
+  
+  // Fallback for stocks without radarScores (shouldn't happen)
+  const signal = radar?.signal ?? stock.recommendation;
+  const radarScore = radar?.radarScore ?? 50;
+  const confidence = radar?.confidence ?? stock.confidence;
+  
+  const signalLabel = getSignalLabel(signal);
+  const colorKey = getSignalColor(signal);
+  const styles = getStatusStyles(colorKey);
+  const summary = generateSummary(stock, isCrypto, signalLabel, radarScore);
 
   return (
     <Card className="border-2 overflow-hidden">
       <CardContent className="p-8">
-        {/* Header */}
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-6">
-          AI Radar Signal
-        </p>
+        {/* Header + Profile Toggle */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            AI Radar Signal
+          </p>
+          <ProfileToggle profile={profile} onChange={onProfileChange} />
+        </div>
 
         {/* Big Status Badge */}
         <div className="flex justify-center mb-8">
@@ -70,7 +109,7 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown }: Props) {
               style={{ backgroundColor: styles.dot }}
             />
             <span className={cn("font-display text-2xl font-bold", styles.text)}>
-              {status.label}
+              {signalLabel}
             </span>
           </div>
         </div>
@@ -79,12 +118,12 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown }: Props) {
         <div className="mb-8 max-w-md mx-auto">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
             <span>Low</span>
-            <span className="font-display font-bold text-sm text-foreground">{confidencePercent}%</span>
+            <span className="font-display font-bold text-sm text-foreground">{radarScore}%</span>
             <span>High</span>
           </div>
-          <Progress value={confidencePercent} className="h-1.5" />
+          <Progress value={radarScore} className="h-1.5" />
           <p className="text-[11px] text-muted-foreground text-center mt-2">
-            Based on combined {isCrypto ? "market structure" : "fundamental strength"}, news sentiment, and technical momentum.
+            Adjust how the AI prioritizes {isCrypto ? "market structure" : "fundamentals"}, news, and technical momentum.
           </p>
         </div>
 

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import type { InvestorProfile } from "@/lib/types";
 import { useParams, Link } from "react-router-dom";
 import { useLiveStockDetail } from "@/hooks/use-live-stocks";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +47,7 @@ export default function StockDetail() {
   const { data: stock, isLoading, error } = useLiveStockDetail(ticker || "");
   const breakdownRef = useRef<HTMLDivElement>(null);
   const [simpleMode, setSimpleMode] = useState(true);
+  const [profile, setProfile] = useState<InvestorProfile>("balanced");
 
   if (isLoading) {
     return (
@@ -119,7 +121,7 @@ export default function StockDetail() {
         </div>
 
         {/* 1️⃣ AI Radar Signal Card */}
-        <AIRadarSignalCard stock={stock} isCrypto={isCrypto} onViewBreakdown={handleViewBreakdown} />
+        <AIRadarSignalCard stock={stock} isCrypto={isCrypto} onViewBreakdown={handleViewBreakdown} profile={profile} onProfileChange={setProfile} />
 
         {/* 2️⃣ 3-Phase Breakdown */}
         <div ref={breakdownRef} className="mt-8 space-y-6">
@@ -148,7 +150,7 @@ export default function StockDetail() {
 
         {/* 3️⃣ AI Decision Guidance */}
         <div className="mt-8 mb-8">
-          <AIDecisionGuidance stock={stock} isCrypto={isCrypto} />
+          <AIDecisionGuidance stock={stock} isCrypto={isCrypto} profile={profile} />
         </div>
       </main>
     </div>
