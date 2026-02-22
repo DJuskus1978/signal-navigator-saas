@@ -66,10 +66,7 @@ function ProfileToggle({ profile, onChange }: { profile: InvestorProfile; onChan
             {PROFILE_LABELS[p]}
           </button>
         ))}
-      </div>
-      <p className="text-[10px] text-muted-foreground text-center">
-        F {Math.round(PROFILE_WEIGHTS[profile].fundamental * 100)}% • N {Math.round(PROFILE_WEIGHTS[profile].sentiment * 100)}% • T {Math.round(PROFILE_WEIGHTS[profile].technical * 100)}%
-      </p>
+    </div>
     </div>
   );
 }
