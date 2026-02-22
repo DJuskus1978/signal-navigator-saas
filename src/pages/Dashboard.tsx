@@ -161,7 +161,7 @@ export default function Dashboard() {
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search any stock (e.g. MCD, Disney, Tesla...)"
+              placeholder="Search Stock/Ticker (e.g. MCD, Disney, Tesla, …)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
