@@ -453,6 +453,7 @@ export default function LandingPage() {
                   "Simple + Advanced Traders Radars",
                   "Real-time Buy/Hold/Sell radars",
                   "Technical & fundamental analysis",
+                  "Radars adapted to Investor Profiles",
                   "Confidence indicators",
                 ].map((f) => (
                   <li key={f} className="flex items-start gap-2">
@@ -487,6 +488,7 @@ export default function LandingPage() {
                   "Real-time Buy/Hold/Sell radars",
                   "Technical & fundamental analysis",
                   "Crypto radars (BTC, ETH & more)",
+                  "Radars adapted to Investor Profiles",
                   "Confidence indicators",
                   "Priority support",
                 ].map((f) => (
