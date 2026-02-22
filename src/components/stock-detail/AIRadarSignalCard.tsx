@@ -93,7 +93,7 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, o
         {/* Header + Profile Toggle */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            AI Radar Signal
+            StocksRadars Signal
           </p>
           <ProfileToggle profile={profile} onChange={onProfileChange} />
         </div>
