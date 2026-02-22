@@ -191,7 +191,7 @@ export default function LandingPage() {
         >
           <h2 className="font-display text-3xl font-bold mb-4">Inside the StocksRadars</h2>
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
-            See how our AI stock screener breaks down fundamentals, sentiment, and technicals into clear, actionable recommendations. Choose your investor profile: Conservative, Balanced, or Active — and get personalized stocks radars.
+            See how our AI stock screener breaks down fundamentals, sentiment, and technicals into clear, actionable recommendations. Choose your investor profile: <em>Conservative</em>, <em>Balanced</em>, or <em>Active</em> — and get personalized stocks radars.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
