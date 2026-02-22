@@ -31,18 +31,18 @@ function generateGuidance(stock: Stock, isCrypto: boolean, profile: InvestorProf
 
 export function AIDecisionGuidance({ stock, isCrypto, profile }: Props) {
   return (
-    <Card className="border-dashed">
+    <Card className="border-none bg-primary text-primary-foreground">
       <CardContent className="p-6">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg">🧭</span>
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            AI Decision Guidance
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary-foreground/80">
+            StocksRadars Decision Guidance
           </p>
         </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-sm text-primary-foreground/90 leading-relaxed">
           {generateGuidance(stock, isCrypto, profile)}
         </p>
-        <p className="text-[10px] text-muted-foreground/60 mt-4">
+        <p className="text-[10px] text-primary-foreground/50 mt-4">
           This signal reflects algorithmic analysis and is not personalized investment advice.
         </p>
       </CardContent>
