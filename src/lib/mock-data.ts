@@ -1,5 +1,6 @@
 import type { Stock, Exchange, TechnicalIndicators, FundamentalIndicators, SentimentIndicators, SentimentRating } from "./types";
 import { calculatePhaseScores, getRecommendation, getConfidence } from "./recommendation-engine";
+import { calculateAllRadarScores } from "./radar-scoring";
 
 function rand(min: number, max: number) {
   return Math.round((Math.random() * (max - min) + min) * 100) / 100;
@@ -109,6 +110,7 @@ function createStock(ticker: string, name: string, exchange: Exchange, priceBase
   const sentiment = generateSentiment(name);
   const phaseScores = calculatePhaseScores(fundamental, sentiment, technical);
   const { combined } = phaseScores;
+  const radarScores = calculateAllRadarScores(phaseScores);
   const change = rand(-priceBase * 0.05, priceBase * 0.05);
 
   return {
@@ -118,13 +120,14 @@ function createStock(ticker: string, name: string, exchange: Exchange, priceBase
     price: priceBase + change,
     change,
     changePercent: (change / priceBase) * 100,
-    recommendation: getRecommendation(combined),
-    confidence: getConfidence(combined),
-    score: combined,
+    recommendation: radarScores.balanced.signal,
+    confidence: radarScores.balanced.confidence,
+    score: radarScores.balanced.radarScore,
     phaseScores,
     technical,
     fundamental,
     sentiment,
+    radarScores,
   };
 }
 

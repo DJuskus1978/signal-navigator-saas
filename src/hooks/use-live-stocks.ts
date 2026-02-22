@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Stock, Exchange, TechnicalIndicators, FundamentalIndicators, SentimentIndicators, SentimentRating, CryptoMarketIndicators } from "@/lib/types";
 import { calculatePhaseScores, getRecommendation, getConfidence } from "@/lib/recommendation-engine";
 import { calculateCryptoPhaseScores } from "@/lib/crypto-scoring-engine";
+import { calculateAllRadarScores } from "@/lib/radar-scoring";
 
 // Tickers grouped by our exchange categories
 const EXCHANGE_TICKERS: Record<Exchange, string[]> = {
@@ -218,6 +219,7 @@ function cryptoQuoteToStock(quote: QuoteResponse): Stock {
   };
   const cryptoMarket = buildCryptoMarket(quote);
   const phaseScores = calculateCryptoPhaseScores(cryptoMarket, sentiment, technical);
+  const radarScores = calculateAllRadarScores(phaseScores);
   const displayTicker = quote.symbol.replace("USD", "");
   return {
     ticker: quote.symbol,
@@ -227,15 +229,16 @@ function cryptoQuoteToStock(quote: QuoteResponse): Stock {
     price: quote.price,
     change: quote.change,
     changePercent: quote.changePercent,
-    recommendation: getRecommendation(phaseScores.combined),
-    confidence: getConfidence(phaseScores.combined),
-    score: phaseScores.combined,
+    recommendation: radarScores.balanced.signal,
+    confidence: radarScores.balanced.confidence,
+    score: radarScores.balanced.radarScore,
     phaseScores,
     technical,
     fundamental: DEFAULT_FUNDAMENTAL,
     sentiment,
     cryptoMarket,
     hasDetailData: false,
+    radarScores,
   };
 }
 
@@ -257,6 +260,7 @@ function cryptoDetailToStock(detail: DetailResponse): Stock {
   }
   
   const phaseScores = calculateCryptoPhaseScores(cryptoMarket, sentiment, technical);
+  const radarScores = calculateAllRadarScores(phaseScores);
   return {
     ticker: detail.symbol,
     name: CRYPTO_NAMES[detail.symbol] || detail.name,
@@ -265,15 +269,16 @@ function cryptoDetailToStock(detail: DetailResponse): Stock {
     price: detail.price,
     change: detail.change,
     changePercent: detail.changePercent,
-    recommendation: getRecommendation(phaseScores.combined),
-    confidence: getConfidence(phaseScores.combined),
-    score: phaseScores.combined,
+    recommendation: radarScores.balanced.signal,
+    confidence: radarScores.balanced.confidence,
+    score: radarScores.balanced.radarScore,
     phaseScores,
     technical,
     fundamental: DEFAULT_FUNDAMENTAL,
     sentiment,
     cryptoMarket,
     hasDetailData: true,
+    radarScores,
   };
 }
 
@@ -288,6 +293,7 @@ function quoteToStock(quote: QuoteResponse, exchange: Exchange): Stock {
     headline: `${quote.name} trades at $${quote.price.toFixed(2)}`,
   };
   const phaseScores = calculatePhaseScores(fundamental, sentiment, technical);
+  const radarScores = calculateAllRadarScores(phaseScores);
   return {
     ticker: quote.symbol,
     name: quote.name,
@@ -296,14 +302,15 @@ function quoteToStock(quote: QuoteResponse, exchange: Exchange): Stock {
     price: quote.price,
     change: quote.change,
     changePercent: quote.changePercent,
-    recommendation: getRecommendation(phaseScores.combined),
-    confidence: getConfidence(phaseScores.combined),
-    score: phaseScores.combined,
+    recommendation: radarScores.balanced.signal,
+    confidence: radarScores.balanced.confidence,
+    score: radarScores.balanced.radarScore,
     phaseScores,
     technical,
     fundamental,
     sentiment,
     hasDetailData: false,
+    radarScores,
   };
 }
 
@@ -313,6 +320,7 @@ function detailToStock(detail: DetailResponse, exchange: Exchange): Stock {
   const fundamental = buildFundamentals(detail.fundamental);
   const sentiment = buildSentiment(detail.sentiment);
   const phaseScores = calculatePhaseScores(fundamental, sentiment, technical);
+  const radarScores = calculateAllRadarScores(phaseScores);
   return {
     ticker: detail.symbol,
     name: detail.name,
@@ -321,14 +329,15 @@ function detailToStock(detail: DetailResponse, exchange: Exchange): Stock {
     price: detail.price,
     change: detail.change,
     changePercent: detail.changePercent,
-    recommendation: getRecommendation(phaseScores.combined),
-    confidence: getConfidence(phaseScores.combined),
-    score: phaseScores.combined,
+    recommendation: radarScores.balanced.signal,
+    confidence: radarScores.balanced.confidence,
+    score: radarScores.balanced.radarScore,
     phaseScores,
     technical,
     fundamental,
     sentiment,
     hasDetailData: true,
+    radarScores,
   };
 }
 

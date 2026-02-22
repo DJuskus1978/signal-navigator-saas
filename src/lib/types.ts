@@ -3,6 +3,19 @@ export type Confidence = "Strong" | "Moderate" | "Weak";
 export type Exchange = "nasdaq" | "dow" | "sp500" | "crypto";
 export type SentimentRating = "very-positive" | "positive" | "neutral" | "negative" | "very-negative";
 export type AssetType = "stock" | "crypto";
+export type InvestorProfile = "conservative" | "balanced" | "active";
+
+export interface ProfileWeights {
+  fundamental: number;
+  technical: number;
+  sentiment: number;
+}
+
+export const PROFILE_WEIGHTS: Record<InvestorProfile, ProfileWeights> = {
+  conservative: { fundamental: 0.50, technical: 0.30, sentiment: 0.20 },
+  balanced:     { fundamental: 0.40, technical: 0.40, sentiment: 0.20 },
+  active:       { fundamental: 0.25, technical: 0.55, sentiment: 0.20 },
+};
 
 export interface TechnicalIndicators {
   rsi: number;
@@ -52,10 +65,25 @@ export interface SentimentIndicators {
 }
 
 export interface PhaseScores {
-  fundamental: number;
-  sentiment: number;
-  technical: number;
-  combined: number;
+  fundamental: number;   // raw score
+  sentiment: number;     // raw score
+  technical: number;     // raw score
+  combined: number;      // legacy weighted raw score
+}
+
+// Normalized 0-100 scores used by the Balanced AI Signal System
+export interface NormalizedScores {
+  fundamental: number;   // 0-100
+  sentiment: number;     // 0-100
+  technical: number;     // 0-100
+}
+
+export interface RadarScore {
+  normalized: NormalizedScores;
+  radarScore: number;    // 0-100 weighted score
+  signal: Recommendation;
+  confidence: Confidence;
+  profile: InvestorProfile;
 }
 
 export interface Stock {
@@ -75,4 +103,5 @@ export interface Stock {
   sentiment: SentimentIndicators;
   cryptoMarket?: CryptoMarketIndicators;
   hasDetailData?: boolean;
+  radarScores?: Record<InvestorProfile, RadarScore>;
 }
