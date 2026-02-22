@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import type { Stock, InvestorProfile } from "@/lib/types";
 import { PROFILE_WEIGHTS } from "@/lib/types";
 import { getSignalLabel, getSignalColor } from "@/lib/radar-scoring";
-import { BarChart3, Newspaper, TrendingUp } from "lucide-react";
+import { BarChart3, Newspaper, TrendingUp, Lock } from "lucide-react";
 
 interface Props {
   stock: Stock;
@@ -12,6 +12,8 @@ interface Props {
   onViewBreakdown: () => void;
   profile: InvestorProfile;
   onProfileChange: (p: InvestorProfile) => void;
+  lockedProfiles?: InvestorProfile[];
+  onLockedProfileClick?: () => void;
 }
 
 function getStatusStyles(color: "constructive" | "neutral" | "cautious") {
@@ -47,25 +49,39 @@ function generateSummary(stock: Stock, isCrypto: boolean, signal: string, radarS
   return `Multiple analysis phases show stress for ${stock.name}. Weakening momentum and negative sentiment outweigh ${isCrypto ? "market positioning" : "stable fundamentals"}.`;
 }
 
-function ProfileToggle({ profile, onChange }: { profile: InvestorProfile; onChange: (p: InvestorProfile) => void }) {
+function ProfileToggle({ profile, onChange, lockedProfiles = [], onLockedClick }: { profile: InvestorProfile; onChange: (p: InvestorProfile) => void; lockedProfiles?: InvestorProfile[]; onLockedClick?: () => void }) {
   const profiles: InvestorProfile[] = ["conservative", "balanced", "active"];
   return (
     <div className="space-y-2">
       <div className="inline-flex items-center rounded-full border border-border bg-card p-0.5">
-        {profiles.map((p) => (
-          <button
-            key={p}
-            onClick={() => onChange(p)}
-            className={cn(
-              "rounded-full px-3 py-1 text-xs font-semibold transition-all",
-              profile === p
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {PROFILE_LABELS[p]}
-          </button>
-        ))}
+        {profiles.map((p) => {
+          const isLocked = lockedProfiles.includes(p);
+          if (isLocked) {
+            return (
+              <button
+                key={p}
+                onClick={onLockedClick}
+                className="rounded-full px-3 py-1 text-xs font-semibold text-muted-foreground opacity-50 flex items-center gap-1"
+              >
+                <Lock className="w-3 h-3" /> {PROFILE_LABELS[p]}
+              </button>
+            );
+          }
+          return (
+            <button
+              key={p}
+              onClick={() => onChange(p)}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-semibold transition-all",
+                profile === p
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {PROFILE_LABELS[p]}
+            </button>
+          );
+        })}
     </div>
       <p className="text-[10px] text-muted-foreground text-center">
         F {Math.round(PROFILE_WEIGHTS[profile].fundamental * 100)}% • N {Math.round(PROFILE_WEIGHTS[profile].sentiment * 100)}% • T {Math.round(PROFILE_WEIGHTS[profile].technical * 100)}%
@@ -74,7 +90,7 @@ function ProfileToggle({ profile, onChange }: { profile: InvestorProfile; onChan
   );
 }
 
-export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, onProfileChange }: Props) {
+export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, onProfileChange, lockedProfiles = [], onLockedProfileClick }: Props) {
   const radar = stock.radarScores?.[profile];
   
   // Fallback for stocks without radarScores (shouldn't happen)
@@ -95,7 +111,7 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, o
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             StocksRadars Signal
           </p>
-          <ProfileToggle profile={profile} onChange={onProfileChange} />
+          <ProfileToggle profile={profile} onChange={onProfileChange} lockedProfiles={lockedProfiles} onLockedClick={onLockedProfileClick} />
         </div>
 
         {/* Big Status Badge */}
