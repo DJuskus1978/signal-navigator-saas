@@ -193,7 +193,7 @@ export default function Dashboard() {
         {/* Tab view (hidden while searching) */}
         {!isSearchActive && (
           <Tabs defaultValue="nasdaq" onValueChange={(v) => setActiveTab(v as Exchange)}>
-            <TabsList className="mb-6">
+            <TabsList className="mb-6 w-full">
               <TabsTrigger value="nasdaq">Nasdaq</TabsTrigger>
               <TabsTrigger value="dow">Dow Jones</TabsTrigger>
               <TabsTrigger value="sp500">S&P 500</TabsTrigger>
