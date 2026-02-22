@@ -397,6 +397,7 @@ export default function LandingPage() {
                 {[
                   "25 real-time stock checks/day",
                   "All Nasdaq, Dow & S&P 500",
+                  "Simple Traders Radars",
                   "Real-time Buy/Hold/Sell radars",
                   "Technical & fundamental analysis",
                 ].map((f) => (
@@ -431,6 +432,7 @@ export default function LandingPage() {
                 {[
                   "50 real-time stock checks/day",
                   "All Nasdaq, Dow & S&P 500",
+                  "Simple + Advanced Traders Radars",
                   "Real-time Buy/Hold/Sell radars",
                   "Technical & fundamental analysis",
                   "Confidence indicators",
@@ -463,6 +465,7 @@ export default function LandingPage() {
                 {[
                   "Unlimited real-time stock checks",
                   "All Nasdaq, Dow & S&P 500",
+                  "Simple + Advanced Traders Radars",
                   "Real-time Buy/Hold/Sell radars",
                   "Technical & fundamental analysis",
                   "Crypto radars (BTC, ETH & more)",

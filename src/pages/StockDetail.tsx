@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
 import type { InvestorProfile } from "@/lib/types";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useLiveStockDetail } from "@/hooks/use-live-stocks";
+import { useSubscription } from "@/hooks/use-subscription";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BarChart3, Newspaper, TrendingUp, Loader2 } from "lucide-react";
+import { ArrowLeft, BarChart3, Newspaper, TrendingUp, Loader2, Lock } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +14,7 @@ import { PhaseCard } from "@/components/stock-detail/PhaseCard";
 import { AIDecisionGuidance } from "@/components/stock-detail/AIDecisionGuidance";
 import { getFundamentalPhase, getSentimentPhase, getTechnicalPhase } from "@/components/stock-detail/phase-data";
 
-function ViewModeToggle({ simple, onToggle }: { simple: boolean; onToggle: () => void }) {
+function ViewModeToggle({ simple, onToggle, advancedLocked, onLockedClick }: { simple: boolean; onToggle: () => void; advancedLocked?: boolean; onLockedClick?: () => void }) {
   return (
     <div className="inline-flex items-center rounded-full border border-border bg-card p-0.5">
       <button
@@ -27,17 +28,26 @@ function ViewModeToggle({ simple, onToggle }: { simple: boolean; onToggle: () =>
       >
         Simple
       </button>
-      <button
-        onClick={simple ? onToggle : undefined}
-        className={cn(
-          "rounded-full px-4 py-1.5 text-xs font-semibold transition-all",
-          !simple
-            ? "bg-primary text-primary-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
-        )}
-      >
-        Advanced
-      </button>
+      {advancedLocked ? (
+        <button
+          onClick={onLockedClick}
+          className="rounded-full px-4 py-1.5 text-xs font-semibold text-muted-foreground opacity-50 flex items-center gap-1"
+        >
+          <Lock className="w-3 h-3" /> Advanced
+        </button>
+      ) : (
+        <button
+          onClick={simple ? onToggle : undefined}
+          className={cn(
+            "rounded-full px-4 py-1.5 text-xs font-semibold transition-all",
+            !simple
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Advanced
+        </button>
+      )}
     </div>
   );
 }
@@ -45,9 +55,18 @@ function ViewModeToggle({ simple, onToggle }: { simple: boolean; onToggle: () =>
 export default function StockDetail() {
   const { ticker } = useParams<{ ticker: string }>();
   const { data: stock, isLoading, error } = useLiveStockDetail(ticker || "");
+  const { data: subscription } = useSubscription();
+  const navigate = useNavigate();
   const breakdownRef = useRef<HTMLDivElement>(null);
   const [simpleMode, setSimpleMode] = useState(true);
   const [profile, setProfile] = useState<InvestorProfile>("balanced");
+
+  // Advanced mode requires pro_day_trader or bull_trader
+  const hasAdvancedAccess = subscription?.tier === "pro_day_trader" || subscription?.tier === "bull_trader";
+  const goToPricing = () => {
+    navigate("/");
+    setTimeout(() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }), 100);
+  };
 
   if (isLoading) {
     return (
@@ -116,7 +135,7 @@ export default function StockDetail() {
                 {isPositive ? "+" : ""}{stock.change.toFixed(2)} ({isPositive ? "+" : ""}{stock.changePercent.toFixed(2)}%)
               </p>
             </div>
-            <ViewModeToggle simple={simpleMode} onToggle={() => setSimpleMode(!simpleMode)} />
+            <ViewModeToggle simple={simpleMode} onToggle={() => setSimpleMode(!simpleMode)} advancedLocked={!hasAdvancedAccess} onLockedClick={goToPricing} />
           </div>
         </div>
 
