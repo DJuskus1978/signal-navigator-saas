@@ -117,24 +117,22 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, o
         {/* Phase Bars */}
         <div className="mb-8 max-w-sm mx-auto space-y-3">
           {(() => {
-            const normalized = radar?.normalized ?? { fundamental: 50, sentiment: 50, technical: 50 };
+            const weights = PROFILE_WEIGHTS[profile];
             const phases = [
-              { label: isCrypto ? "Market" : "Fundamentals", icon: <BarChart3 className="w-3.5 h-3.5" />, value: normalized.fundamental },
-              { label: "News", icon: <Newspaper className="w-3.5 h-3.5" />, value: normalized.sentiment },
-              { label: "Technical", icon: <TrendingUp className="w-3.5 h-3.5" />, value: normalized.technical },
+              { label: isCrypto ? "Market" : "Fundamentals", icon: <BarChart3 className="w-3.5 h-3.5" />, value: Math.round(weights.fundamental * 100) },
+              { label: "News", icon: <Newspaper className="w-3.5 h-3.5" />, value: Math.round(weights.sentiment * 100) },
+              { label: "Technical", icon: <TrendingUp className="w-3.5 h-3.5" />, value: Math.round(weights.technical * 100) },
             ];
-            return phases.map((p) => {
-              const barColor = p.value >= 60 ? "bg-signal-buy" : p.value >= 40 ? "bg-signal-hold" : "bg-signal-sell";
-              return (
-                <div key={p.label} className="flex items-center gap-2">
-                  <span className="text-muted-foreground">{p.icon}</span>
-                  <span className="text-[11px] text-muted-foreground w-24 truncate">{p.label}</span>
-                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                    <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${p.value}%` }} />
-                  </div>
+            return phases.map((p) => (
+              <div key={p.label} className="flex items-center gap-2">
+                <span className="text-muted-foreground">{p.icon}</span>
+                <span className="text-[11px] text-muted-foreground w-24 truncate">{p.label}</span>
+                <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full transition-all bg-primary" style={{ width: `${p.value}%` }} />
                 </div>
-              );
-            });
+                <span className="text-[11px] text-muted-foreground w-8 text-right">{p.value}%</span>
+              </div>
+            ));
           })()}
           <p className="text-[10px] text-muted-foreground text-center mt-1">
             How each analysis phase contributes to the signal.
