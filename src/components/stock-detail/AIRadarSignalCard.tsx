@@ -173,7 +173,7 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, o
               </div>
             ));
           })()}
-          <p className="text-[10px] text-muted-foreground text-center mt-1">
+          <p className="text-[10px] text-muted-foreground/40 text-center mt-1">
             How each analysis phase contributes to the signal.
           </p>
         </div>
