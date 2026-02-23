@@ -42,11 +42,11 @@ export function StockCard({ stock, blurred = false }: StockCardProps) {
           </p>
         </div>
 
-        <div className={cn(blurred && "blur-sm")}>
+        <div className={cn("flex flex-col items-end gap-1", blurred && "blur-sm")}>
           {hasRadar ? (
             <>
               <TrafficLight recommendation={stock.recommendation} size="sm" />
-              <p className="text-xs text-muted-foreground text-right mt-1">{stock.confidence}</p>
+              <p className="text-[10px] font-semibold text-muted-foreground tracking-wide">RadarScore™</p>
             </>
           ) : (
             <div className="flex items-center gap-1 text-primary text-sm font-medium">
