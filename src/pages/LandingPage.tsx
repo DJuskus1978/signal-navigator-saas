@@ -496,15 +496,22 @@ export default function LandingPage() {
       </section>
 
       {/* Algorithm Description & FMP Partner */}
-      <section className="container mx-auto px-4 py-20">
+      <section className="container mx-auto px-4 py-16">
         <div className="max-w-3xl mx-auto text-center">
           <motion.p
-            className="text-base text-muted-foreground/80 mb-12 max-w-2xl mx-auto italic"
+            className="text-base text-muted-foreground/80 mb-6 max-w-2xl mx-auto italic"
             initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp}
           >
             Our proprietary AI-powered stock algorithm - RadarScore™ - analyze massive amounts of market data — fundamental analysis, real-time news sentiment, and technical indicators — delivering a single, clear stock recommendation you can trust.
             <br /><br />
             No jargon, no complexity: just actionable stock radars designed for beginner and everyday investors who want professional-grade stock market insights without the learning curve.
+          </motion.p>
+
+          <motion.p
+            className="text-sm font-medium text-muted-foreground mb-16"
+            initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0.5} variants={fadeUp}
+          >
+            Founder - D. Juskus
           </motion.p>
 
           <motion.div
