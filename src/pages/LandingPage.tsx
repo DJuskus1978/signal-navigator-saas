@@ -18,6 +18,7 @@ import { TrafficLight } from "@/components/TrafficLight";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { ArrowRight, BarChart3, Shield, Zap, Menu, X, TrendingUp, Crown, ChevronLeft, ChevronRight } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
+import { IPhoneFrame } from "@/components/IPhoneFrame";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -262,31 +263,31 @@ export default function LandingPage() {
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
             Choose your investor profile: <em>Conservative</em>, <em>Balanced</em>, or <em>Active</em> — and get personalized stocks radars.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+            <IPhoneFrame>
               <img
                 src={insideRadarSignalImg}
                 alt="StocksRadars signal card showing AAPL stock with Buy recommendation, Balanced profile selected, and Fundamentals/News/Technical weight bars"
                 className="w-full h-auto"
                 loading="lazy"
               />
-            </div>
-            <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
+            </IPhoneFrame>
+            <IPhoneFrame>
               <img
                 src={insideRadarPhasesImg}
                 alt="StocksRadars analysis phases showing Fundamental Strength, News & Sentiment, and Technical Momentum breakdowns with Decision Guidance"
                 className="w-full h-auto"
                 loading="lazy"
               />
-            </div>
-            <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
+            </IPhoneFrame>
+            <IPhoneFrame>
               <img
                 src={insideRadarDashboardImg}
                 alt="StocksRadars dashboard showing stock list with AAPL and MSFT, search bar, and index tabs for Nasdaq, Dow Jones, S&P 500 and Crypto"
                 className="w-full h-auto"
                 loading="lazy"
               />
-            </div>
+            </IPhoneFrame>
           </div>
         </motion.div>
       </section>
@@ -305,15 +306,15 @@ export default function LandingPage() {
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
             AI-powered news analysis and market sentiment scoring to help you make informed stock trading decisions
           </p>
-          <div className="rounded-2xl border border-border overflow-hidden shadow-lg bg-card">
-            <img
-              src={newsSentimentImg}
-              alt="StocksRadars real-time stock news sentiment analysis showing headline scoring, analyst ratings, and insider trading activity for S&P 500 stocks"
-              className="w-full h-auto"
-              loading="lazy"
-              width="800"
-              height="600"
-            />
+          <div className="flex justify-center">
+            <IPhoneFrame>
+              <img
+                src={newsSentimentImg}
+                alt="StocksRadars real-time stock news sentiment analysis showing headline scoring, analyst ratings, and insider trading activity for S&P 500 stocks"
+                className="w-full h-auto"
+                loading="lazy"
+              />
+            </IPhoneFrame>
           </div>
         </motion.div>
       </section>
