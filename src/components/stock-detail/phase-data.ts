@@ -147,7 +147,7 @@ export function getSentimentPhase(stock: Stock): PhaseData {
         icon: "newspaper", title: "Headlines Tone",
         items: [
           { label: "News Sentiment", value: newsSignal === "bullish" ? "Positive" : newsSignal === "bearish" ? "Negative" : "Neutral", signal: newsSignal },
-          { label: "Articles Analyzed", value: String(s.newsCount) },
+          { label: "Articles Analyzed", value: String(s.newsCount), signal: "neutral" as SignalLevel },
         ],
       },
       {
@@ -167,7 +167,7 @@ export function getSentimentPhase(stock: Stock): PhaseData {
     ],
     detailRows: [
       { label: "News Sentiment", value: s.newsScore > 0 ? `+${s.newsScore.toFixed(0)}` : s.newsScore.toFixed(0), hint: newsSignal === "bullish" ? "Positive" : newsSignal === "bearish" ? "Negative" : "Mixed", signal: newsSignal },
-      { label: "Articles Analyzed", value: String(s.newsCount) },
+      { label: "Articles Analyzed", value: String(s.newsCount), signal: "neutral" as SignalLevel },
       { label: "Social Sentiment", value: s.socialScore > 0 ? `+${s.socialScore.toFixed(0)}` : s.socialScore.toFixed(0), hint: socialSignal === "bullish" ? "Bullish buzz" : socialSignal === "bearish" ? "Bearish chatter" : "Neutral", signal: socialSignal },
       { label: "Analyst Rating", value: `${s.analystRating.toFixed(1)} / 5.0`, hint: analystSignal === "bullish" ? "Buy consensus" : analystSignal === "neutral" ? "Hold consensus" : "Sell consensus", signal: analystSignal },
       { label: "Insider Activity", value: s.insiderActivity > 0 ? "Net Buying" : s.insiderActivity < -0.2 ? "Net Selling" : "Neutral", hint: `Score: ${s.insiderActivity.toFixed(2)}`, signal: s.insiderActivity > 0 ? "bullish" : s.insiderActivity < -0.2 ? "bearish" : "neutral" },
