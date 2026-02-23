@@ -143,7 +143,7 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, o
     <Card className="border-2 overflow-hidden">
       <CardContent className="p-8">
         {/* Header + Profile Toggle */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-10">
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             StocksRadars Signal — <span className="normal-case">RadarScore™</span>
           </p>
@@ -151,7 +151,7 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, o
         </div>
 
         {/* Phase Bars — moved UP */}
-        <div className="mb-8 max-w-sm mx-auto space-y-3">
+        <div className="mb-10 max-w-sm mx-auto space-y-3">
           {(() => {
             const weights = PROFILE_WEIGHTS[profile];
             const phases = [
