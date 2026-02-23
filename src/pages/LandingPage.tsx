@@ -198,7 +198,9 @@ export default function LandingPage() {
             className="mt-10 text-base text-muted-foreground/80 mb-0 max-w-2xl mx-auto italic"
             initial="hidden" animate="visible" custom={6} variants={fadeUp}
           >
-            Our proprietary AI-powered stock algorithm analyze massive amounts of market data — fundamental analysis, real-time news sentiment, and technical indicators — delivering a single, clear stock recommendation you can trust. No jargon, no complexity: just actionable stock radars designed for beginner and everyday investors who want professional-grade stock market insights without the learning curve.
+            Our proprietary AI-powered stock algorithm analyze massive amounts of market data — fundamental analysis, real-time news sentiment, and technical indicators — delivering a single, clear stock recommendation you can trust.
+            <br /><br />
+            No jargon, no complexity: just actionable stock radars designed for beginner and everyday investors who want professional-grade stock market insights without the learning curve.
           </motion.p>
         </div>
       </section>
