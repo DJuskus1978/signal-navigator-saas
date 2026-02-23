@@ -139,11 +139,6 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="container mx-auto px-4 py-20 md:py-32" aria-label="Stock recommendations overview">
         <div className="max-w-3xl mx-auto text-center">
-          <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp}>
-            <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              AI-powered stock radars
-            </span>
-          </motion.div>
           <motion.h1
             className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
             initial="hidden" animate="visible" custom={2} variants={fadeUp}
