@@ -495,12 +495,21 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FMP Partner & Algorithm */}
+      {/* Algorithm Description & FMP Partner */}
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-3xl mx-auto text-center">
+          <motion.p
+            className="text-base text-muted-foreground/80 mb-12 max-w-2xl mx-auto italic"
+            initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp}
+          >
+            Our proprietary AI-powered stock algorithm - RadarScore™ - analyze massive amounts of market data — fundamental analysis, real-time news sentiment, and technical indicators — delivering a single, clear stock recommendation you can trust.
+            <br /><br />
+            No jargon, no complexity: just actionable stock radars designed for beginner and everyday investors who want professional-grade stock market insights without the learning curve.
+          </motion.p>
+
           <motion.div
             className="flex flex-col items-center justify-center gap-6"
-            initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp}
+            initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} variants={fadeUp}
           >
             <p className="font-display text-2xl md:text-3xl font-bold text-foreground">
               Our global partner for financial & stocks data
@@ -510,15 +519,6 @@ export default function LandingPage() {
               <span className="font-display text-xl text-muted-foreground">Financial Modeling Prep</span>
             </a>
           </motion.div>
-
-          <motion.p
-            className="mt-10 text-base text-muted-foreground/80 mb-0 max-w-2xl mx-auto italic"
-            initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} variants={fadeUp}
-          >
-            Our proprietary AI-powered stock algorithm - RadarScore™ - analyze massive amounts of market data — fundamental analysis, real-time news sentiment, and technical indicators — delivering a single, clear stock recommendation you can trust.
-            <br /><br />
-            No jargon, no complexity: just actionable stock radars designed for beginner and everyday investors who want professional-grade stock market insights without the learning curve.
-          </motion.p>
         </div>
       </section>
 
