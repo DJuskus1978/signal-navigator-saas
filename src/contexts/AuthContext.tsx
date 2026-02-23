@@ -23,6 +23,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const gtag = (...args: unknown[]) => (window as any).gtag?.(...args);
+
+  const setGAUser = async (u: User) => {
+    gtag("set", { user_id: u.id });
+    gtag("set", "user_properties", { logged_in: "true" });
+
+    // Fetch subscription tier for segmentation
+    const { data } = await supabase
+      .from("profiles")
+      .select("subscription_tier, is_subscribed")
+      .eq("user_id", u.id)
+      .single();
+
+    if (data) {
+      gtag("set", "user_properties", {
+        subscription_tier: data.subscription_tier,
+        is_subscribed: String(data.is_subscribed),
+      });
+    }
+  };
+
+  const clearGAUser = () => {
+    gtag("set", { user_id: undefined });
+    gtag("set", "user_properties", {
+      logged_in: "false",
+      subscription_tier: undefined,
+      is_subscribed: undefined,
+    });
+  };
+
   const syncSubscription = async () => {
     try {
       await supabase.functions.invoke("check-subscription");
@@ -39,6 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
         if (session?.user) {
           setTimeout(syncSubscription, 0);
+          setGAUser(session.user);
+        } else {
+          clearGAUser();
         }
       }
     );
@@ -49,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       if (session?.user) {
         syncSubscription();
+        setGAUser(session.user);
       }
     });
 
