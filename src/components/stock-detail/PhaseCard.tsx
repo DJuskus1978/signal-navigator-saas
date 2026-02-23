@@ -50,7 +50,7 @@ function SubBlockSection({ block }: { block: SubBlock }) {
       </p>
       <div className="space-y-1">
         {block.items.map((item) => {
-          const color = item.signal === "bullish" ? "text-signal-buy" : item.signal === "bearish" ? "text-signal-sell" : "text-muted-foreground";
+          const color = item.signal === "bullish" ? "text-signal-buy" : item.signal === "bearish" ? "text-signal-sell" : "text-signal-hold";
           return (
             <div key={item.label} className="flex justify-between items-center text-sm py-0.5">
               <span className="text-muted-foreground">{item.label}</span>
