@@ -187,8 +187,8 @@ export default function LandingPage() {
             className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
             initial="hidden" animate="visible" custom={2} variants={fadeUp}
           >
-            Your Powerful <span className="text-primary">AI Stock Recommendation Tool</span> — Made Simple for{" "}
-            <span className="text-foreground">Daily Investors</span>
+            Your Daily <span className="text-primary">AI Stock Recommendation Tool</span> — Made Simple for{" "}
+            <span className="text-foreground">Everyday Investors</span>
           </motion.h1>
           <motion.p
             className="text-lg md:text-xl text-muted-foreground mb-6 max-w-2xl mx-auto"
