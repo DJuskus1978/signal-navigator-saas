@@ -7,6 +7,7 @@ import insideRadarPhasesImg from "@/assets/inside-radar-phases.jpeg";
 import insideRadarDashboardImg from "@/assets/inside-radar-dashboard.jpeg";
 import newsSentimentImg from "@/assets/news-sentiment.jpeg";
 import fmpLogo from "@/assets/fmp-logo-full.svg";
+import heroBanner from "@/assets/hero-banner.png";
 import avatarSarah from "@/assets/avatar-sarah.jpg";
 import avatarJames from "@/assets/avatar-james.jpg";
 import avatarElena from "@/assets/avatar-elena.jpg";
@@ -180,8 +181,21 @@ export default function LandingPage() {
         </AnimatePresence>
       </header>
 
+      {/* Hero Banner */}
+      <motion.div
+        className="w-full"
+        initial="hidden" animate="visible" custom={1} variants={fadeUp}
+      >
+        <img
+          src={heroBanner}
+          alt="StocksRadars — Smart AI Stock Decision Tool for everyday investors"
+          className="w-full h-auto object-cover max-h-[500px]"
+          loading="eager"
+        />
+      </motion.div>
+
       {/* Hero */}
-      <section className="container mx-auto px-4 py-20 md:py-32" aria-label="Stock recommendations overview">
+      <section className="container mx-auto px-4 py-16 md:py-24" aria-label="Stock recommendations overview">
         <div className="max-w-3xl mx-auto text-center">
           <motion.h1
             className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
