@@ -63,7 +63,9 @@ function ProfileToggle({ profile, onChange, lockedProfiles = [], onLockedClick }
   const profiles: InvestorProfile[] = ["conservative", "balanced", "active"];
   return (
     <div className="space-y-2">
-      <div className="inline-flex items-center rounded-full border border-border bg-card p-0.5">
+      <div className="inline-flex items-center gap-2">
+        <span className="text-xs font-semibold text-muted-foreground">Investor:</span>
+        <div className="inline-flex items-center rounded-full border border-border bg-card p-0.5">
         {profiles.map((p) => {
           const isLocked = lockedProfiles.includes(p);
           if (isLocked) {
@@ -92,6 +94,7 @@ function ProfileToggle({ profile, onChange, lockedProfiles = [], onLockedClick }
             </button>
           );
         })}
+        </div>
       </div>
       <p className="text-[10px] text-muted-foreground text-center">
         F {Math.round(PROFILE_WEIGHTS[profile].fundamental * 100)}% • N {Math.round(PROFILE_WEIGHTS[profile].sentiment * 100)}% • T {Math.round(PROFILE_WEIGHTS[profile].technical * 100)}%
