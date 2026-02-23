@@ -31,7 +31,7 @@ export default function TermsOfUse() {
 
           <section>
             <h2 className="font-display text-xl font-semibold text-foreground mb-3">2. Disclaimer — Not Financial Advice</h2>
-            <p><strong className="text-foreground">StocksRadars does not serve as financial advice. The data shown is for recommendational purposes only.</strong></p>
+            <p><strong className="text-foreground">StocksRadars does not serve as financial advice. The data shown is for informational purposes only.</strong></p>
             <p>All information, recommendations, radars, and analysis provided by StocksRadars are for informational and educational purposes only. Nothing on this platform constitutes a solicitation, recommendation, endorsement, or offer to buy or sell any securities or other financial instruments.</p>
             <p>You should always conduct your own research and consult with a qualified financial advisor before making any investment decisions. StocksRadars and its operators shall not be held liable for any losses or damages arising from the use of the information provided.</p>
           </section>

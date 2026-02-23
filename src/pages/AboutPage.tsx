@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import founderPhoto from "@/assets/founder-photo.jpeg";
 import { RadarLogo } from "@/components/RadarLogo";
@@ -15,6 +16,10 @@ const fadeUp: Variants = {
 };
 
 export default function AboutPage() {
+  useEffect(() => {
+    document.title = "About StocksRadars — 20 Years of Trading Experience";
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}

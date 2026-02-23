@@ -274,7 +274,7 @@ export default function LandingPage() {
             {[
               { icon: Zap, title: "Sign Up Free", desc: "Create your free stock analysis account in seconds with Google or email." },
               { icon: Shield, title: "Choose Your Plan", desc: "Unlock unlimited stock recommendations and full market coverage for just $9/month." },
-              { icon: BarChart3, title: "Get StocksRadars", desc: "See clear Buy, Hold, or Sell recommendations for every Nasdaq, Dow Jones, S&P 500 stocks & crypto." },
+              { icon: BarChart3, title: "Get StocksRadars", desc: "See clear Buy, Hold, or Sell recommendations for every Nasdaq, Dow Jones, S&P 500 stock & crypto." },
             ].map((step, i) => (
               <motion.div
                 key={step.title}
@@ -513,6 +513,8 @@ export default function LandingPage() {
             StocksRadars does not serve as financial advice. Stock recommendations are for informational purposes only.
           </p>
           <div className="flex items-center justify-center gap-4">
+            <Link to="/about" className="hover:text-foreground underline underline-offset-4">About</Link>
+            <span>·</span>
             <Link to="/terms" className="hover:text-foreground underline underline-offset-4">Terms of Use</Link>
             <span>·</span>
             <Link to="/privacy" className="hover:text-foreground underline underline-offset-4">Privacy Policy</Link>
