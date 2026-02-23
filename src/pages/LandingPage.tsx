@@ -197,7 +197,7 @@ export default function LandingPage() {
             Stop guessing which stocks to buy. StocksRadars analyzes fundamentals, news sentiment, and technical indicators — delivering clear buy, hold, or sell radars with a simple traffic light.
           </motion.p>
           <motion.p
-            className="text-sm md:text-base text-muted-foreground mb-10"
+            className="text-base md:text-xl font-medium text-muted-foreground mb-10 tracking-wide"
             initial="hidden" animate="visible" custom={3.5} variants={fadeUp}
           >
             Nasdaq &nbsp;·&nbsp; Dow Jones &nbsp;·&nbsp; S&P 500 &nbsp;·&nbsp; Crypto
