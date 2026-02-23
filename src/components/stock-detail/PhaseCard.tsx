@@ -12,6 +12,7 @@ interface SubBlock {
 }
 
 interface PhaseCardProps {
+  initialExpanded?: boolean;
   icon: React.ReactNode;
   title: string;
   score: number;
@@ -63,8 +64,8 @@ function SubBlockSection({ block }: { block: SubBlock }) {
   );
 }
 
-export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interpretation, subBlocks, detailRows, simple = false }: PhaseCardProps) {
-  const [expanded, setExpanded] = useState(false);
+export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interpretation, subBlocks, detailRows, simple = false, initialExpanded = false }: PhaseCardProps) {
+  const [expanded, setExpanded] = useState(initialExpanded);
   const styles = getStatusColor(statusLevel);
 
   return (

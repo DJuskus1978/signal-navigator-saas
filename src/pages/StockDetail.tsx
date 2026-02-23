@@ -162,6 +162,7 @@ export default function StockDetail() {
             title={isCrypto ? "Market Structure" : "Fundamental Strength"}
             score={stock.phaseScores.fundamental}
             simple={simpleMode}
+            initialExpanded={!simpleMode}
             {...fundamentalPhase}
           />
           <PhaseCard
