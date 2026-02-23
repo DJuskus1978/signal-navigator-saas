@@ -25,13 +25,30 @@
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#1a1a2e" />
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1F3L6RMVJC"></script>
+    <!-- Google Consent Mode v2 (must load before gtag.js) -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      gtag('consent', 'default', {
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'analytics_storage': 'granted',
+        'functionality_storage': 'granted',
+        'personalization_storage': 'denied',
+        'security_storage': 'granted',
+        'wait_for_update': 500
+      });
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1F3L6RMVJC"></script>
+    <script>
       gtag('js', new Date());
-      gtag('config', 'G-1F3L6RMVJC');
+      gtag('config', 'G-1F3L6RMVJC', {
+        'send_page_view': true,
+        'cookie_flags': 'SameSite=None;Secure'
+      });
     </script>
 
     <script type="application/ld+json">
