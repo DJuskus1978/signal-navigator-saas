@@ -411,7 +411,7 @@ export default function LandingPage() {
           {/* Day Trader */}
           <Card className="border border-border relative overflow-hidden">
             <div className="absolute top-3 right-3">
-              <Zap className="w-6 h-6 text-primary" />
+              <TrendingUp className="w-6 h-6 text-primary" />
             </div>
             <CardContent className="p-6 text-center">
               <p className="text-sm font-medium text-muted-foreground mb-2">DAY TRADER</p>
@@ -446,7 +446,7 @@ export default function LandingPage() {
               MOST POPULAR
             </div>
             <div className="absolute top-5 right-3">
-              <TrendingUp className="w-6 h-6 text-primary" />
+              <Zap className="w-6 h-6 text-primary" />
             </div>
             <CardContent className="p-6 pt-6 text-center">
               <p className="text-sm font-semibold text-muted-foreground mb-2">PRO DAY TRADER</p>
