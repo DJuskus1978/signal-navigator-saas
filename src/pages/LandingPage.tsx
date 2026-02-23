@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrafficLight } from "@/components/TrafficLight";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { ArrowRight, BarChart3, Shield, Zap, Menu, X } from "lucide-react";
+import { ArrowRight, BarChart3, Shield, Zap, Menu, X, TrendingUp, Crown } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
 
 const fadeUp: Variants = {
@@ -335,6 +335,12 @@ export default function LandingPage() {
               avatar: avatarPriya,
               quote: "I love data but hated sifting through endless financial reports. StocksRadars distills everything into one clear radar — it helped me navigate the market with real confidence.",
             },
+            {
+              name: "Marcus L.",
+              role: "Small Business Owner",
+              avatar: avatarDavid,
+              quote: "As someone who invests on the side, I needed something dead simple. StocksRadars gives me a quick, reliable read on any stock — I check it every morning before the market opens.",
+            },
           ].map((testimonial, i) => (
             <motion.div
               key={testimonial.name}
@@ -401,8 +407,8 @@ export default function LandingPage() {
 
           {/* Day Trader */}
           <Card className="border border-border relative overflow-hidden">
-            <div className="absolute -top-1 -right-1 w-16 h-16 flex items-center justify-center">
-              <span className="text-3xl drop-shadow-md" role="img" aria-label="Lightning">⚡</span>
+            <div className="absolute top-3 right-3">
+              <Zap className="w-6 h-6 text-primary" />
             </div>
             <CardContent className="p-6 text-center">
               <p className="text-sm font-medium text-muted-foreground mb-2">DAY TRADER</p>
@@ -436,8 +442,8 @@ export default function LandingPage() {
             <div className="absolute top-0 left-1/2 -translate-x-1/2 translate-y-0 px-4 py-1 bg-primary text-primary-foreground text-xs font-semibold rounded-b-lg whitespace-nowrap z-10">
               MOST POPULAR
             </div>
-            <div className="absolute top-2 right-2 w-12 h-12 flex items-center justify-center">
-              <span className="text-2xl drop-shadow-md" role="img" aria-label="Rocket">🚀</span>
+            <div className="absolute top-5 right-3">
+              <TrendingUp className="w-6 h-6 text-primary" />
             </div>
             <CardContent className="p-6 pt-6 text-center">
               <p className="text-sm font-semibold text-muted-foreground mb-2">PRO DAY TRADER</p>
@@ -470,8 +476,8 @@ export default function LandingPage() {
 
           {/* Bull Trader */}
           <Card className="border border-border relative overflow-hidden">
-            <div className="absolute -top-1 -right-1 w-16 h-16 flex items-center justify-center">
-              <span className="text-3xl drop-shadow-md" role="img" aria-label="Money">💵</span>
+            <div className="absolute top-3 right-3">
+              <Crown className="w-6 h-6 text-primary" />
             </div>
             <CardContent className="p-6 text-center">
               <p className="text-sm font-medium text-muted-foreground mb-2">BULL TRADER</p>
