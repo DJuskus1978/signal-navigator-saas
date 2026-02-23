@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import type { Stock, InvestorProfile } from "@/lib/types";
 import { getSignalLabel } from "@/lib/radar-scoring";
+import { Compass } from "lucide-react";
 
 interface Props {
   stock: Stock;
@@ -34,7 +35,7 @@ export function AIDecisionGuidance({ stock, isCrypto, profile }: Props) {
     <Card className="border-none bg-primary text-primary-foreground">
       <CardContent className="p-6">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-lg">🧭</span>
+          <Compass className="w-5 h-5 text-primary-foreground/80" />
           <p className="text-xs font-semibold uppercase tracking-widest text-primary-foreground/80">
             StocksRadars Decision Guidance
           </p>
