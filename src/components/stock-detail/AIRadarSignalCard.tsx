@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Stock, InvestorProfile } from "@/lib/types";
+import type { Stock, InvestorProfile, Recommendation } from "@/lib/types";
 import { PROFILE_WEIGHTS } from "@/lib/types";
 import { getSignalLabel, getSignalColor } from "@/lib/radar-scoring";
 import { BarChart3, Newspaper, TrendingUp, Lock } from "lucide-react";
@@ -31,6 +31,16 @@ const PROFILE_LABELS: Record<InvestorProfile, string> = {
   conservative: "Conservative",
   balanced: "Balanced",
   active: "Active",
+};
+
+const ALL_SIGNALS: Recommendation[] = ["strong-buy", "buy", "hold", "dont-buy", "sell"];
+
+const SIGNAL_STYLES: Record<Recommendation, { dot: string; text: string }> = {
+  "strong-buy": { dot: "hsl(var(--signal-buy))", text: "text-signal-buy" },
+  "buy": { dot: "hsl(var(--signal-buy))", text: "text-signal-buy" },
+  "hold": { dot: "hsl(var(--signal-hold))", text: "text-signal-hold" },
+  "dont-buy": { dot: "hsl(var(--signal-sell))", text: "text-signal-sell" },
+  "sell": { dot: "hsl(var(--signal-sell))", text: "text-signal-sell" },
 };
 
 function generateSummary(stock: Stock, isCrypto: boolean, signal: string, radarScore: number): string {
@@ -82,7 +92,7 @@ function ProfileToggle({ profile, onChange, lockedProfiles = [], onLockedClick }
             </button>
           );
         })}
-    </div>
+      </div>
       <p className="text-[10px] text-muted-foreground text-center">
         F {Math.round(PROFILE_WEIGHTS[profile].fundamental * 100)}% • N {Math.round(PROFILE_WEIGHTS[profile].sentiment * 100)}% • T {Math.round(PROFILE_WEIGHTS[profile].technical * 100)}%
       </p>
@@ -90,18 +100,45 @@ function ProfileToggle({ profile, onChange, lockedProfiles = [], onLockedClick }
   );
 }
 
+function SignalToggle({ activeSignal }: { activeSignal: Recommendation }) {
+  return (
+    <div className="inline-flex items-center rounded-full border border-border bg-card p-0.5">
+      {ALL_SIGNALS.map((sig) => {
+        const isActive = sig === activeSignal;
+        const style = SIGNAL_STYLES[sig];
+        const label = getSignalLabel(sig);
+        return (
+          <div
+            key={sig}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5",
+              isActive
+                ? "bg-muted shadow-sm"
+                : "text-muted-foreground/40"
+            )}
+          >
+            {isActive && (
+              <span
+                className="w-2 h-2 rounded-full animate-pulse-glow shrink-0"
+                style={{ backgroundColor: style.dot }}
+              />
+            )}
+            <span className={isActive ? style.text : ""}>
+              {label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, onProfileChange, lockedProfiles = [], onLockedProfileClick }: Props) {
   const radar = stock.radarScores?.[profile];
   
-  // Fallback for stocks without radarScores (shouldn't happen)
   const signal = radar?.signal ?? stock.recommendation;
   const radarScore = radar?.radarScore ?? 50;
-  const confidence = radar?.confidence ?? stock.confidence;
-  
-  const signalLabel = getSignalLabel(signal);
-  const colorKey = getSignalColor(signal);
-  const styles = getStatusStyles(colorKey);
-  const summary = generateSummary(stock, isCrypto, signalLabel, radarScore);
+  const summary = generateSummary(stock, isCrypto, getSignalLabel(signal), radarScore);
 
   return (
     <Card className="border-2 overflow-hidden">
@@ -114,23 +151,7 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, o
           <ProfileToggle profile={profile} onChange={onProfileChange} lockedProfiles={lockedProfiles} onLockedClick={onLockedProfileClick} />
         </div>
 
-        {/* Big Status Badge */}
-        <div className="flex justify-center mb-8">
-          <div
-            className="inline-flex items-center gap-3 rounded-full px-6 py-3"
-            style={{ backgroundColor: styles.bg }}
-          >
-            <span
-              className="w-3 h-3 rounded-full animate-pulse-glow"
-              style={{ backgroundColor: styles.dot }}
-            />
-            <span className={cn("font-display text-2xl font-bold", styles.text)}>
-              {signalLabel}
-            </span>
-          </div>
-        </div>
-
-        {/* Phase Bars */}
+        {/* Phase Bars — moved UP */}
         <div className="mb-8 max-w-sm mx-auto space-y-3">
           {(() => {
             const weights = PROFILE_WEIGHTS[profile];
@@ -153,6 +174,11 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, o
           <p className="text-[10px] text-muted-foreground text-center mt-1">
             How each analysis phase contributes to the signal.
           </p>
+        </div>
+
+        {/* Signal Toggle — moved BELOW bars */}
+        <div className="flex justify-center mb-8 overflow-x-auto">
+          <SignalToggle activeSignal={signal} />
         </div>
 
         {/* Summary */}
