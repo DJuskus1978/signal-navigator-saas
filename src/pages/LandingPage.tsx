@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { startCheckout } from "@/lib/stripe-helpers";
 import insideRadarSignalImg from "@/assets/inside-radar-signal.jpeg";
@@ -33,8 +33,43 @@ export default function LandingPage() {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const pricingRef = useRef<HTMLElement>(null);
+
+  // Track pricing section view on scroll
+  useEffect(() => {
+    const el = pricingRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          (window as any).gtag?.("event", "view_pricing_section", {
+            event_category: "engagement",
+          });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const trackPlanClick = (planName: string, price: number) => {
+    (window as any).gtag?.("event", "select_plan", {
+      event_category: "pricing",
+      plan_name: planName,
+      plan_price: price,
+    });
+  };
 
   const handlePlanClick = async (tier: "day_trader" | "pro_day_trader" | "bull_trader") => {
+    const planMap = {
+      day_trader: { name: "Day Trader", price: 9 },
+      pro_day_trader: { name: "Pro Day Trader", price: 19 },
+      bull_trader: { name: "Bull Trader", price: 29 },
+    };
+    trackPlanClick(planMap[tier].name, planMap[tier].price);
+
     if (!user) {
       navigate("/auth");
       return;
@@ -371,7 +406,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="pricing" className="container mx-auto px-4 py-20" aria-label="StocksRadars pricing plans">
+      <section id="pricing" ref={pricingRef} className="container mx-auto px-4 py-20" aria-label="StocksRadars pricing plans">
         <h2 className="font-display text-3xl font-bold text-center mb-4">StocksRadars Pricing</h2>
         <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
           Pick the plan that fits your trading style. Upgrade or downgrade anytime.
@@ -399,7 +434,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link to="/auth">
+              <Link to="/auth" onClick={() => trackPlanClick("Novice Trader", 0)}>
                 <Button className="w-full bg-signal-buy hover:bg-signal-buy/90 text-white" size="lg">Start Free</Button>
               </Link>
             </CardContent>
