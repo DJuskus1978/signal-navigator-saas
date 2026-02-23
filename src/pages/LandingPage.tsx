@@ -194,7 +194,7 @@ export default function LandingPage() {
             className="text-lg md:text-xl text-muted-foreground mb-6 max-w-2xl mx-auto"
             initial="hidden" animate="visible" custom={3} variants={fadeUp}
           >
-            Stop guessing which stocks to buy. StocksRadars analyzes fundamentals, news sentiment, and technical indicators — delivering clear buy, hold, or sell radars with a simple traffic light.
+            Stop guessing which stocks to buy. Our RadarScore™ analyzes Real-Time Market Data - fundamentals, news sentiment, and technical indicators — delivering clear buy, hold, or sell radars with a simple traffic light.
           </motion.p>
           <motion.p
             className="text-base md:text-xl font-medium text-muted-foreground/50 mb-10 tracking-wide"
