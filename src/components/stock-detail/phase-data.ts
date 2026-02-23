@@ -43,14 +43,14 @@ export function getFundamentalPhase(stock: Stock): PhaseData {
           : `${stock.name} shows signs of structural weakness — monitor closely for further deterioration.`,
       subBlocks: [
         {
-          icon: "📊", title: "Market Position",
+          icon: "pie-chart", title: "Market Position",
           items: [
             { label: "Market Cap Rank", value: `#${cm.marketCapRank}`, signal: cm.marketCapRank <= 5 ? "bullish" : cm.marketCapRank <= 15 ? "neutral" : "bearish" },
             { label: "Supply Circulating", value: `${cm.circulatingSupplyPercent.toFixed(0)}%`, signal: cm.circulatingSupplyPercent > 80 ? "bullish" : "neutral" },
           ],
         },
         {
-          icon: "📈", title: "Price Trends",
+          icon: "trending-up", title: "Price Trends",
           items: [
             { label: "24h", value: `${cm.priceChange24h > 0 ? "+" : ""}${cm.priceChange24h.toFixed(1)}%`, signal: cm.priceChange24h > 1 ? "bullish" : cm.priceChange24h < -1 ? "bearish" : "neutral" },
             { label: "7d", value: `${cm.priceChange7d > 0 ? "+" : ""}${cm.priceChange7d.toFixed(1)}%`, signal: cm.priceChange7d > 3 ? "bullish" : cm.priceChange7d < -3 ? "bearish" : "neutral" },
@@ -58,7 +58,7 @@ export function getFundamentalPhase(stock: Stock): PhaseData {
           ],
         },
         {
-          icon: "⚡", title: "Activity",
+          icon: "activity", title: "Activity",
           items: [
             { label: "Vol/MCap", value: cm.volumeToMarketCap.toFixed(3), signal: cm.volumeToMarketCap > 0.1 ? "bullish" : cm.volumeToMarketCap < 0.02 ? "bearish" : "neutral" },
             { label: "30d Volatility", value: `${cm.volatility30d.toFixed(0)}%`, signal: cm.volatility30d > 80 ? "bearish" : "neutral" },
@@ -87,7 +87,7 @@ export function getFundamentalPhase(stock: Stock): PhaseData {
         : `Fundamental indicators show signs of stress — declining growth or elevated leverage.`,
     subBlocks: [
       {
-        icon: "💰", title: "Profitability",
+        icon: "dollar-sign", title: "Profitability",
         items: [
           { label: "Revenue Growth", value: `${f.revenueGrowth > 0 ? "+" : ""}${f.revenueGrowth.toFixed(1)}%`, signal: f.revenueGrowth > 10 ? "bullish" : f.revenueGrowth > 0 ? "neutral" : "bearish" },
           { label: "Earnings Growth", value: `${f.earningsGrowth > 0 ? "+" : ""}${f.earningsGrowth.toFixed(1)}%`, signal: f.earningsGrowth > 15 ? "bullish" : f.earningsGrowth > 0 ? "neutral" : "bearish" },
@@ -95,7 +95,7 @@ export function getFundamentalPhase(stock: Stock): PhaseData {
         ],
       },
       {
-        icon: "🏦", title: "Financial Health",
+        icon: "landmark", title: "Financial Health",
         items: [
           { label: "Debt/Equity", value: f.debtToEquity.toFixed(2), signal: f.debtToEquity < 0.5 ? "bullish" : f.debtToEquity > 2 ? "bearish" : "neutral" },
           { label: "Return on Equity", value: `${f.returnOnEquity.toFixed(1)}%`, signal: f.returnOnEquity > 20 ? "bullish" : f.returnOnEquity > 10 ? "neutral" : "bearish" },
@@ -103,7 +103,7 @@ export function getFundamentalPhase(stock: Stock): PhaseData {
         ],
       },
       {
-        icon: "📊", title: "Valuation",
+        icon: "bar-chart-horizontal", title: "Valuation",
         items: [
           { label: "P/E Ratio", value: f.peRatio.toFixed(1), signal: f.peRatio < 15 ? "bullish" : f.peRatio > 35 ? "bearish" : "neutral" },
           { label: "Forward P/E", value: f.forwardPE.toFixed(1), signal: f.forwardPE < f.peRatio ? "bullish" : "bearish" },
@@ -144,21 +144,21 @@ export function getSentimentPhase(stock: Stock): PhaseData {
         : `Sentiment indicators are turning negative — news tone and analyst revisions warrant attention.`,
     subBlocks: [
       {
-        icon: "📰", title: "Headlines Tone",
+        icon: "newspaper", title: "Headlines Tone",
         items: [
           { label: "News Sentiment", value: newsSignal === "bullish" ? "Positive" : newsSignal === "bearish" ? "Negative" : "Neutral", signal: newsSignal },
           { label: "Articles Analyzed", value: String(s.newsCount) },
         ],
       },
       {
-        icon: "📈", title: "Market Reaction",
+        icon: "trending-up", title: "Market Reaction",
         items: [
           { label: "Social Buzz", value: socialSignal === "bullish" ? "Bullish buzz" : socialSignal === "bearish" ? "Bearish chatter" : "Neutral", signal: socialSignal },
           { label: "Insider Activity", value: s.insiderActivity > 0 ? "Net Buying" : s.insiderActivity < -0.2 ? "Net Selling" : "Neutral", signal: s.insiderActivity > 0 ? "bullish" : s.insiderActivity < -0.2 ? "bearish" : "neutral" },
         ],
       },
       {
-        icon: "🔎", title: "Analyst Direction",
+        icon: "search", title: "Analyst Direction",
         items: [
           { label: "Consensus", value: s.analystRating >= 4 ? "Buy consensus" : s.analystRating >= 3 ? "Hold consensus" : "Sell consensus", signal: analystSignal },
           { label: "Rating", value: `${s.analystRating.toFixed(1)} / 5.0`, signal: analystSignal },
@@ -195,7 +195,7 @@ export function getTechnicalPhase(stock: Stock): PhaseData {
         : `Technical indicators point to weakening momentum — key support levels should be monitored.`,
     subBlocks: [
       {
-        icon: "📈", title: "Trend",
+        icon: "trending-up", title: "Trend",
         items: [
           { label: "Short-term (EMA 20)", value: trendShort === "bullish" ? "Upward" : "Downward", signal: trendShort },
           { label: "Medium-term (SMA 50)", value: trendMid === "bullish" ? "Above 200-day" : "Below 200-day", signal: trendMid },
@@ -203,14 +203,14 @@ export function getTechnicalPhase(stock: Stock): PhaseData {
         ],
       },
       {
-        icon: "⚡", title: "Momentum",
+        icon: "gauge", title: "Momentum",
         items: [
           { label: "RSI (14)", value: t.rsi < 30 ? "Oversold" : t.rsi > 70 ? "Overbought" : `${t.rsi.toFixed(0)} — Neutral`, signal: t.rsi < 30 ? "bullish" : t.rsi > 70 ? "bearish" : "neutral" },
           { label: "MACD", value: t.macd > t.macdSignal ? "Bullish crossover" : "Bearish crossover", signal: t.macd > t.macdSignal ? "bullish" : "bearish" },
         ],
       },
       {
-        icon: "📊", title: "Activity",
+        icon: "activity", title: "Activity",
         items: [
           { label: "Volume", value: t.volume > t.avgVolume ? "Above average" : "Below average", signal: t.volume > t.avgVolume ? "bullish" : "neutral" },
           { label: "Volatility (ATR)", value: t.atr > stock.price * 0.04 ? "High" : "Normal", signal: t.atr > stock.price * 0.04 ? "bearish" : "neutral" },
