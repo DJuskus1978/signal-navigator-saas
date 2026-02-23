@@ -38,7 +38,7 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    // Check if user is still in free trial — defer billing to trial end
+    // Check if user is still in free trial — charge immediately but anchor billing to trial end
     const { data: profile } = await supabaseClient
       .from("profiles")
       .select("trial_started_at, subscription_tier")
@@ -49,10 +49,11 @@ serve(async (req) => {
     if (profile?.subscription_tier === "novice" && profile?.trial_started_at) {
       const trialEnd = new Date(profile.trial_started_at);
       trialEnd.setDate(trialEnd.getDate() + 7);
-      // Only set trial_end if the trial hasn't expired yet
+      // Only anchor billing cycle if the trial hasn't expired yet
       if (trialEnd > new Date()) {
-        // Stripe requires trial_end as a Unix timestamp (seconds)
-        subscriptionData.trial_end = Math.floor(trialEnd.getTime() / 1000);
+        // Use billing_cycle_anchor to set the next payment date to trial end
+        // Combined with no trial_end, this charges immediately and then bills again at trial end
+        subscriptionData.billing_cycle_anchor = Math.floor(trialEnd.getTime() / 1000);
       }
     }
 
@@ -63,7 +64,9 @@ serve(async (req) => {
       mode: "subscription",
       success_url: `${req.headers.get("origin")}/dashboard?checkout=success`,
       cancel_url: `${req.headers.get("origin")}/#pricing`,
-      ...(subscriptionData.trial_end ? { subscription_data: { trial_end: subscriptionData.trial_end } } : {}),
+      ...(subscriptionData.billing_cycle_anchor
+        ? { subscription_data: { billing_cycle_anchor: subscriptionData.billing_cycle_anchor, proration_behavior: "none" } }
+        : {}),
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
