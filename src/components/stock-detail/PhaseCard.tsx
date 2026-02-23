@@ -24,9 +24,9 @@ interface PhaseCardProps {
 }
 
 function getStatusColor(level: SignalLevel) {
-  if (level === "bullish") return { dot: "hsl(var(--signal-buy))", bg: "hsl(var(--signal-buy-bg))", text: "text-signal-buy" };
-  if (level === "bearish") return { dot: "hsl(var(--signal-sell))", bg: "hsl(var(--signal-sell-bg))", text: "text-signal-sell" };
-  return { dot: "hsl(var(--signal-hold))", bg: "hsl(var(--signal-hold-bg))", text: "text-signal-hold" };
+  if (level === "bullish") return { bg: "hsl(var(--signal-buy))", text: "white" };
+  if (level === "bearish") return { bg: "hsl(var(--signal-sell))", text: "white" };
+  return { bg: "hsl(var(--signal-hold))", text: "white" };
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -76,9 +76,9 @@ export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interp
           </CardTitle>
           <div
             className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
-            style={{ backgroundColor: styles.bg, color: styles.dot }}
+            style={{ backgroundColor: styles.bg, color: styles.text }}
           >
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: styles.dot }} />
+            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
             {statusLabel}
           </div>
         </div>
