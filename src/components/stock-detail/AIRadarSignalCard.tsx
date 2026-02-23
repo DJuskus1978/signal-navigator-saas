@@ -35,12 +35,12 @@ const PROFILE_LABELS: Record<InvestorProfile, string> = {
 
 const ALL_SIGNALS: Recommendation[] = ["strong-buy", "buy", "hold", "dont-buy", "sell"];
 
-const SIGNAL_STYLES: Record<Recommendation, { dot: string; text: string }> = {
-  "strong-buy": { dot: "hsl(var(--signal-buy))", text: "text-signal-buy" },
-  "buy": { dot: "hsl(var(--signal-buy))", text: "text-signal-buy" },
-  "hold": { dot: "hsl(var(--signal-hold))", text: "text-signal-hold" },
-  "dont-buy": { dot: "hsl(var(--signal-sell))", text: "text-signal-sell" },
-  "sell": { dot: "hsl(var(--signal-sell))", text: "text-signal-sell" },
+const SIGNAL_STYLES: Record<Recommendation, { dot: string; text: string; activeBg: string; activeText: string }> = {
+  "strong-buy": { dot: "hsl(var(--signal-buy))", text: "text-signal-buy", activeBg: "bg-signal-buy", activeText: "text-white" },
+  "buy": { dot: "hsl(var(--signal-buy))", text: "text-signal-buy", activeBg: "bg-signal-buy", activeText: "text-white" },
+  "hold": { dot: "hsl(var(--signal-hold))", text: "text-signal-hold", activeBg: "bg-signal-hold", activeText: "text-white" },
+  "dont-buy": { dot: "hsl(var(--signal-sell))", text: "text-signal-sell", activeBg: "bg-signal-sell", activeText: "text-white" },
+  "sell": { dot: "hsl(var(--signal-sell))", text: "text-signal-sell", activeBg: "bg-signal-sell", activeText: "text-white" },
 };
 
 function generateSummary(stock: Stock, isCrypto: boolean, signal: string, radarScore: number): string {
@@ -113,17 +113,16 @@ function SignalToggle({ activeSignal }: { activeSignal: Recommendation }) {
             className={cn(
               "rounded-full px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5",
               isActive
-                ? "bg-muted shadow-sm"
+                ? cn(style.activeBg, style.activeText, "shadow-sm")
                 : "text-muted-foreground/40"
             )}
           >
             {isActive && (
               <span
-                className="w-2 h-2 rounded-full animate-pulse-glow shrink-0"
-                style={{ backgroundColor: style.dot }}
+                className="w-2 h-2 rounded-full animate-pulse-glow shrink-0 bg-white"
               />
             )}
-            <span className={isActive ? style.text : ""}>
+            <span>
               {label}
             </span>
           </div>
