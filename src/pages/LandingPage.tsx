@@ -229,6 +229,7 @@ export default function LandingPage() {
             <TrafficLight recommendation="hold" size="lg" />
             <TrafficLight recommendation="dont-buy" size="lg" />
             <TrafficLight recommendation="sell" size="lg" />
+            <p className="w-full text-center text-xs font-semibold text-muted-foreground tracking-wide mt-2">RadarScore™</p>
           </motion.div>
 
           <motion.div
