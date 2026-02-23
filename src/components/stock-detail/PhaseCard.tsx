@@ -84,19 +84,10 @@ export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interp
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        {/* Sub-Blocks — only in Advanced mode */}
-        {!simple && (
-          <div className="grid gap-4">
-            {subBlocks.map((block) => (
-              <SubBlockSection key={block.title} block={block} />
-            ))}
-          </div>
-        )}
-
         {/* Interpretation — always visible */}
         <p className={cn(
           "text-sm italic",
-          simple ? "text-foreground" : "text-primary border-t border-border pt-4"
+          simple ? "text-foreground" : "text-primary"
         )}>
           {interpretation}
         </p>
