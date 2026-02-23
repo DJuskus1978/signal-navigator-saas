@@ -144,12 +144,6 @@ export default function LandingPage() {
               AI-powered stock radars
             </span>
           </motion.div>
-          <motion.p
-            className="font-display text-xl md:text-2xl font-semibold text-muted-foreground italic mb-3"
-            initial="hidden" animate="visible" custom={1} variants={fadeUp}
-          >
-            "We analyze. You decide."
-          </motion.p>
           <motion.h1
             className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
             initial="hidden" animate="visible" custom={2} variants={fadeUp}
