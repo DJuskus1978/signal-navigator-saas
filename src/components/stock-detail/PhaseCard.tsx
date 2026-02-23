@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, DollarSign, Landmark, BarChartHorizontal, Newspaper, TrendingUp, Search, Gauge, Activity, PieChart } from "lucide-react";
 import type { SignalLevel } from "./types";
 
 interface SubBlock {
@@ -29,11 +29,24 @@ function getStatusColor(level: SignalLevel) {
   return { dot: "hsl(var(--signal-hold))", bg: "hsl(var(--signal-hold-bg))", text: "text-signal-hold" };
 }
 
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  "dollar-sign": DollarSign,
+  "landmark": Landmark,
+  "bar-chart-horizontal": BarChartHorizontal,
+  "newspaper": Newspaper,
+  "trending-up": TrendingUp,
+  "search": Search,
+  "gauge": Gauge,
+  "activity": Activity,
+  "pie-chart": PieChart,
+};
+
 function SubBlockSection({ block }: { block: SubBlock }) {
+  const IconComponent = iconMap[block.icon];
   return (
     <div className="space-y-2">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-        <span>{block.icon}</span> {block.title}
+        {IconComponent ? <IconComponent className="w-3.5 h-3.5" /> : <span>{block.icon}</span>} {block.title}
       </p>
       <div className="space-y-1">
         {block.items.map((item) => {
