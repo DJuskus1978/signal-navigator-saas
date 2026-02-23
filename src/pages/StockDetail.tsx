@@ -150,8 +150,13 @@ export default function StockDetail() {
           onLockedProfileClick={goToPricing}
         />
 
-        {/* 2️⃣ 3-Phase Breakdown */}
-        <div ref={breakdownRef} className="mt-8 space-y-6">
+        {/* AI Decision Guidance */}
+        <div className="mt-8 mb-6">
+          <AIDecisionGuidance stock={stock} isCrypto={isCrypto} profile={profile} />
+        </div>
+
+        {/* 3-Phase Breakdown */}
+        <div ref={breakdownRef} className="space-y-6 mb-8">
           <PhaseCard
             icon={<BarChart3 className="w-5 h-5" />}
             title={isCrypto ? "Market Structure" : "Fundamental Strength"}
@@ -173,11 +178,6 @@ export default function StockDetail() {
             simple={simpleMode}
             {...technicalPhase}
           />
-        </div>
-
-        {/* 3️⃣ AI Decision Guidance */}
-        <div className="mt-8 mb-8">
-          <AIDecisionGuidance stock={stock} isCrypto={isCrypto} profile={profile} />
         </div>
       </main>
     </div>
