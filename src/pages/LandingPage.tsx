@@ -143,8 +143,8 @@ export default function LandingPage() {
             className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
             initial="hidden" animate="visible" custom={2} variants={fadeUp}
           >
-            Stock buy, hold & sell radars for{" "}
-            <span className="text-primary">everyday investors</span>
+            Your Powerful AI Stock Recommendation Tool — Made Simple for{" "}
+            <span className="text-primary">Daily Investors</span>
           </motion.h1>
           <motion.p
             className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
