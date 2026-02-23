@@ -191,11 +191,25 @@ export default function LandingPage() {
             <span className="text-foreground">Daily Investors</span>
           </motion.h1>
           <motion.p
-            className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
+            className="text-lg md:text-xl text-muted-foreground mb-6 max-w-2xl mx-auto"
             initial="hidden" animate="visible" custom={3} variants={fadeUp}
           >
-            Stop guessing which stocks to buy. StocksRadars analyzes fundamentals, news sentiment, and technical indicators across Nasdaq, Dow Jones, S&P 500, & crypto — delivering clear buy, hold, or sell radars with a simple traffic light.
-           </motion.p>
+            Stop guessing which stocks to buy. StocksRadars analyzes fundamentals, news sentiment, and technical indicators — delivering clear buy, hold, or sell radars with a simple traffic light.
+          </motion.p>
+          <motion.div
+            className="flex flex-wrap items-center justify-center gap-2 mb-10"
+            initial="hidden" animate="visible" custom={3.5} variants={fadeUp}
+          >
+            <span className="text-sm font-medium text-muted-foreground">Markets/Indices:</span>
+            {["Nasdaq", "Dow Jones", "S&P 500", "Crypto"].map((market) => (
+              <span
+                key={market}
+                className="px-3 py-1 rounded-full border border-border bg-card text-sm font-medium text-foreground"
+              >
+                {market}
+              </span>
+            ))}
+          </motion.div>
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
             initial="hidden" animate="visible" custom={4} variants={fadeUp}
