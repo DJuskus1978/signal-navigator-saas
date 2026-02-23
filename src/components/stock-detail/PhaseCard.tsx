@@ -87,7 +87,7 @@ export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interp
         {/* Interpretation — always visible */}
         <p className={cn(
           "text-sm italic",
-          simple ? "text-foreground" : "text-primary"
+          simple ? "text-foreground" : "text-foreground"
         )}>
           {interpretation}
         </p>
