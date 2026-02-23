@@ -46,7 +46,7 @@ export function StockCard({ stock, blurred = false }: StockCardProps) {
           {hasRadar ? (
             <>
               <TrafficLight recommendation={stock.recommendation} size="sm" />
-              <p className="text-[10px] font-semibold text-muted-foreground tracking-wide">RadarScore™</p>
+              <p className="text-xs font-semibold text-muted-foreground tracking-wide">RadarScore™</p>
             </>
           ) : (
             <div className="flex items-center gap-1 text-primary text-sm font-medium">
