@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrafficLight } from "@/components/TrafficLight";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { ArrowRight, BarChart3, Shield, Zap, Menu, X, TrendingUp, Crown } from "lucide-react";
+import { ArrowRight, BarChart3, Shield, Zap, Menu, X, TrendingUp, Crown, ChevronLeft, ChevronRight } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
 
 const fadeUp: Variants = {
@@ -31,9 +31,52 @@ const fadeUp: Variants = {
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
   const { user } = useAuth();
   const navigate = useNavigate();
   const pricingRef = useRef<HTMLElement>(null);
+
+  const testimonials = [
+    {
+      name: "Sarah M.",
+      role: "Retail Investor",
+      avatar: avatarSarah,
+      quote: "StocksRadars cut through all the noise. I used to spend hours reading conflicting opinions online — now I check my radars in 30 seconds and make confident decisions.",
+    },
+    {
+      name: "James T.",
+      role: "Part-time Trader",
+      avatar: avatarJames,
+      quote: "The simplicity is what sold me. No jargon, no complicated charts — just a clear green, yellow, or red light. I've made smarter trades in two weeks than I did in six months on my own.",
+    },
+    {
+      name: "Elena R.",
+      role: "First-time Investor",
+      avatar: avatarElena,
+      quote: "I was overwhelmed by the amount of stock information out there. StocksRadars made it so easy to understand what to buy and what to avoid. It's like having a financial advisor in my pocket.",
+    },
+    {
+      name: "David K.",
+      role: "Freelance Designer",
+      avatar: avatarDavid,
+      quote: "I don't have time to research every stock. StocksRadars saves me hours every week and the recommendations have been spot-on. Fastest investing decisions I've ever made.",
+    },
+    {
+      name: "Priya N.",
+      role: "Software Engineer",
+      avatar: avatarPriya,
+      quote: "I love data but hated sifting through endless financial reports. StocksRadars distills everything into one clear radar — it helped me navigate the market with real confidence.",
+    },
+    {
+      name: "Marcus L.",
+      role: "Small Business Owner",
+      avatar: avatarDavid,
+      quote: "As someone who invests on the side, I needed something dead simple. StocksRadars gives me a quick, reliable read on any stock — I check it every morning before the market opens.",
+    },
+  ];
+
+  const nextTestimonial = () => setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+  const prevTestimonial = () => setTestimonialIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
 
   // Track pricing section view on scroll
   useEffect(() => {
@@ -322,80 +365,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Customer Radars */}
-      <section className="container mx-auto px-4 py-20" aria-label="Customer reviews">
-        <h2 className="font-display text-3xl font-bold text-center mb-4">What investors say about StocksRadars</h2>
-        <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
-          Real reviews from everyday investors using our stock recommendation tool
 
-        </p>
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {[
-            {
-              name: "Sarah M.",
-              role: "Retail Investor",
-              avatar: avatarSarah,
-              quote: "StocksRadars cut through all the noise. I used to spend hours reading conflicting opinions online — now I check my radars in 30 seconds and make confident decisions.",
-            },
-            {
-              name: "James T.",
-              role: "Part-time Trader",
-              avatar: avatarJames,
-              quote: "The simplicity is what sold me. No jargon, no complicated charts — just a clear green, yellow, or red light. I've made smarter trades in two weeks than I did in six months on my own.",
-            },
-            {
-              name: "Elena R.",
-              role: "First-time Investor",
-              avatar: avatarElena,
-              quote: "I was overwhelmed by the amount of stock information out there. StocksRadars made it so easy to understand what to buy and what to avoid. It's like having a financial advisor in my pocket.",
-            },
-            {
-              name: "David K.",
-              role: "Freelance Designer",
-              avatar: avatarDavid,
-              quote: "I don't have time to research every stock. StocksRadars saves me hours every week and the recommendations have been spot-on. Fastest investing decisions I've ever made.",
-            },
-            {
-              name: "Priya N.",
-              role: "Software Engineer",
-              avatar: avatarPriya,
-              quote: "I love data but hated sifting through endless financial reports. StocksRadars distills everything into one clear radar — it helped me navigate the market with real confidence.",
-            },
-            {
-              name: "Marcus L.",
-              role: "Small Business Owner",
-              avatar: avatarDavid,
-              quote: "As someone who invests on the side, I needed something dead simple. StocksRadars gives me a quick, reliable read on any stock — I check it every morning before the market opens.",
-            },
-          ].map((testimonial, i) => (
-            <motion.div
-              key={testimonial.name}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              custom={i}
-              variants={fadeUp}
-            >
-              <Card className="h-full">
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground mb-4 italic">"{testimonial.quote}"</p>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={testimonial.avatar}
-                      alt={testimonial.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <p className="text-sm font-medium">{testimonial.name}</p>
-                      <p className="text-xs text-muted-foreground">{testimonial.role}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </section>
 
       <section id="pricing" ref={pricingRef} className="container mx-auto px-4 py-20" aria-label="StocksRadars pricing plans">
         <h2 className="font-display text-3xl font-bold text-center mb-4">StocksRadars Pricing</h2>
@@ -535,6 +505,68 @@ export default function LandingPage() {
               </Button>
             </CardContent>
           </Card>
+        </div>
+      </section>
+
+      {/* Customer Testimonials Slider */}
+      <section className="container mx-auto px-4 py-20" aria-label="Customer reviews">
+        <h2 className="font-display text-3xl font-bold text-center mb-4">What investors say about StocksRadars</h2>
+        <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
+          Real reviews from everyday investors using our stock recommendation tool
+        </p>
+        <div className="relative max-w-2xl mx-auto">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={testimonialIndex}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="h-full">
+                <CardContent className="p-8">
+                  <p className="text-base text-muted-foreground mb-6 italic leading-relaxed">"{testimonials[testimonialIndex].quote}"</p>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={testimonials[testimonialIndex].avatar}
+                      alt={testimonials[testimonialIndex].name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                    <div>
+                      <p className="text-sm font-medium">{testimonials[testimonialIndex].name}</p>
+                      <p className="text-xs text-muted-foreground">{testimonials[testimonialIndex].role}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </AnimatePresence>
+          <div className="flex items-center justify-center gap-4 mt-6">
+            <button
+              onClick={prevTestimonial}
+              className="p-2 rounded-full border border-border hover:bg-accent transition-colors"
+              aria-label="Previous testimonial"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="flex gap-2">
+              {testimonials.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setTestimonialIndex(i)}
+                  className={`w-2.5 h-2.5 rounded-full transition-colors ${i === testimonialIndex ? "bg-primary" : "bg-border"}`}
+                  aria-label={`Go to testimonial ${i + 1}`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={nextTestimonial}
+              className="p-2 rounded-full border border-border hover:bg-accent transition-colors"
+              aria-label="Next testimonial"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </section>
 
