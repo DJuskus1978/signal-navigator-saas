@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -65,7 +65,13 @@ function SubBlockSection({ block }: { block: SubBlock }) {
 }
 
 export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interpretation, subBlocks, detailRows, simple = false, initialExpanded = false }: PhaseCardProps) {
-  const [expanded, setExpanded] = useState(initialExpanded);
+  const [expanded, setExpanded] = useState(!simple && initialExpanded);
+
+  useEffect(() => {
+    if (initialExpanded) {
+      setExpanded(!simple);
+    }
+  }, [simple, initialExpanded]);
   const styles = getStatusColor(statusLevel);
 
   return (
