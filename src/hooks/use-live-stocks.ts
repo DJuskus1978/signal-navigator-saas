@@ -189,7 +189,7 @@ const CRYPTO_NAMES: Record<string, string> = {
 };
 
 function isCryptoSymbol(symbol: string): boolean {
-  return symbol.endsWith("USD") && EXCHANGE_TICKERS.crypto.includes(symbol);
+  return symbol.endsWith("USD") || symbol.endsWith("USDT") || EXCHANGE_TICKERS.crypto.includes(symbol);
 }
 
 const DEFAULT_CRYPTO_MARKET: CryptoMarketIndicators = {
