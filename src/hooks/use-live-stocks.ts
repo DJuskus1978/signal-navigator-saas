@@ -364,12 +364,13 @@ export function useLiveStocks(exchange: Exchange) {
   });
 }
 
-export function useSearchStocks(query: string) {
+export function useSearchStocks(query: string, assetType: "stock" | "crypto" = "stock") {
   return useQuery<Stock[]>({
-    queryKey: ["search-stocks", query],
+    queryKey: ["search-stocks", query, assetType],
     queryFn: async () => {
       const headers = await getAuthHeaders();
-      const res = await fetch(edgeFnUrl(`?search=${encodeURIComponent(query)}`), { headers });
+      const typeParam = assetType === "crypto" ? "&type=crypto" : "";
+      const res = await fetch(edgeFnUrl(`?search=${encodeURIComponent(query)}${typeParam}`), { headers });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || `HTTP ${res.status}`);
@@ -377,6 +378,7 @@ export function useSearchStocks(query: string) {
       const data = await res.json();
       const quotes: QuoteResponse[] = data.stocks || [];
       return quotes.map((q) => {
+        if (assetType === "crypto") return cryptoQuoteToStock(q);
         const exchange = findExchangeForTicker(q.symbol);
         return quoteToStock(q, exchange);
       });
