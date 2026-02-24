@@ -7,12 +7,68 @@ const corsHeaders = {
 
 const FMP_BASE = "https://financialmodelingprep.com";
 
+// Cache TTL in minutes per request type
+const CACHE_TTL = {
+  batch: 5,   // Dashboard batch quotes — 5 min shared across all users
+  search: 3,  // Search results — 3 min
+  detail: 2,  // Single stock detail — 2 min
+};
+
 async function fmpFetch(path: string, apiKey: string) {
   const separator = path.includes("?") ? "&" : "?";
   const url = `${FMP_BASE}${path}${separator}apikey=${apiKey}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`FMP ${res.status}: ${path}`);
   return res.json();
+}
+
+// ─── Cache helpers (uses service role client) ────────────────────────────────
+
+function getServiceClient() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  );
+}
+
+async function getCached<T>(key: string): Promise<T | null> {
+  try {
+    const db = getServiceClient();
+    const { data } = await db
+      .from('stock_cache')
+      .select('data')
+      .eq('cache_key', key)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+    return data?.data as T ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function setCache(key: string, data: unknown, ttlMinutes: number) {
+  try {
+    const db = getServiceClient();
+    const now = new Date();
+    const expires = new Date(now.getTime() + ttlMinutes * 60_000);
+    await db.from('stock_cache').upsert({
+      cache_key: key,
+      data,
+      fetched_at: now.toISOString(),
+      expires_at: expires.toISOString(),
+    }, { onConflict: 'cache_key' });
+  } catch (e) {
+    console.error('Cache write error:', e);
+  }
+}
+
+// Cleanup expired entries (fire-and-forget, runs occasionally)
+async function cleanupExpired() {
+  if (Math.random() > 0.1) return; // Run ~10% of requests
+  try {
+    const db = getServiceClient();
+    await db.from('stock_cache').delete().lt('expires_at', new Date().toISOString());
+  } catch { /* ignore */ }
 }
 
 // Convert analyst grade strings to a 1-5 numeric scale
@@ -29,7 +85,6 @@ function gradeToScore(grade: string): number {
 // Compute an analyst consensus rating from recent grades (1-5 scale)
 function computeAnalystRating(grades: any[]): number {
   if (!grades || grades.length === 0) return 3;
-  // Take up to 10 most recent grades
   const recent = grades.slice(0, 10);
   const sum = recent.reduce((acc: number, g: any) => acc + gradeToScore(g.newGrade || ""), 0);
   return Math.round((sum / recent.length) * 10) / 10;
@@ -43,7 +98,6 @@ function computeGradeAction(grades: any[]): number {
   for (const g of recent) {
     if (g.action === "upgrade") score += 1;
     else if (g.action === "downgrade") score -= 1;
-    // maintain = 0
   }
   return Math.max(-1, Math.min(1, score / recent.length));
 }
@@ -81,9 +135,20 @@ Deno.serve(async (req) => {
     const symbolsParam = searchParams.get('symbols');
     const singleSymbol = searchParams.get('symbol');
 
+    // Fire-and-forget cleanup
+    cleanupExpired();
+
     // ─── Single stock/crypto detail: quote + technicals + fundamentals + sentiment ───
     if (singleSymbol) {
       const symbol = singleSymbol.toUpperCase();
+      const cacheKey = `detail:${symbol}`;
+
+      // Check cache first
+      const cached = await getCached<any>(cacheKey);
+      if (cached) {
+        return new Response(JSON.stringify(cached), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       const isCrypto = symbol.endsWith("USD") && symbol.length <= 10;
 
       const [quoteArr, rsiArr, sma50Arr, sma200Arr, ema20Arr] = await Promise.all([
@@ -94,8 +159,6 @@ Deno.serve(async (req) => {
         fmpFetch(`/stable/technical-indicators/ema?symbol=${symbol}&periodLength=20&timeframe=1day`, apiKey).catch(() => []),
       ]);
 
-      // Fetch stock-specific or crypto-specific data in parallel
-      // Compute MACD from EMA 12 and EMA 26 since the direct MACD endpoint may not be available
       const [ema12Arr, ema26Arr, keyMetricsArr, growthArr, newsArr, gradesArr] = await Promise.all([
         fmpFetch(`/stable/technical-indicators/ema?symbol=${symbol}&periodLength=12&timeframe=1day`, apiKey).catch(() => []),
         fmpFetch(`/stable/technical-indicators/ema?symbol=${symbol}&periodLength=26&timeframe=1day`, apiKey).catch(() => []),
@@ -123,24 +186,14 @@ Deno.serve(async (req) => {
       const rawNews = Array.isArray(newsArr) ? newsArr : [];
       const grades = Array.isArray(gradesArr) ? gradesArr : [];
 
-      // Compute MACD from EMA 12 and EMA 26
       const ema12Val = ema12_0?.ema ?? null;
       const ema26Val = ema26_0?.ema ?? null;
       const computedMacd = (ema12Val != null && ema26Val != null) ? ema12Val - ema26Val : null;
-      // Signal line approximation: use a 9-period EMA of MACD. Since we only have current values,
-      // we approximate by fetching more EMA data. For now, estimate signal as a dampened MACD.
-      // A better approximation: signal ≈ MACD * 0.8 (since signal lags behind MACD)
       const computedMacdSignal = computedMacd != null ? computedMacd * 0.8 : null;
 
-      // Use ALL news from the stock/crypto-specific endpoint without additional filtering
-      // The FMP endpoint already filters by the requested symbol
       const news = rawNews;
-
-      // Compute analyst rating from grades
       const analystRating = computeAnalystRating(grades);
       const gradeActivity = computeGradeAction(grades);
-
-      // Get top headline — only use filtered relevant news
       const topHeadline = news.length > 0 ? news[0].title : `${q.name || symbol} trades at $${q.price?.toFixed(2)}`;
 
       const result = {
@@ -179,7 +232,6 @@ Deno.serve(async (req) => {
           analystRating,
           insiderActivity: gradeActivity,
           headline: topHeadline,
-          // News headlines for AI sentiment analysis on client
           recentNews: news.slice(0, 5).map((n: any) => ({
             title: n.title,
             publisher: n.publisher,
@@ -194,14 +246,25 @@ Deno.serve(async (req) => {
         },
       };
 
+      // Cache the result
+      await setCache(cacheKey, result, CACHE_TTL.detail);
+
       return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // ─── Batch quote mode for dashboard ───
     if (symbolsParam) {
       const allSymbols = symbolsParam.split(',').slice(0, 24);
+      const cacheKey = `batch:${allSymbols.sort().join(',')}`;
 
-      // Batch endpoint not available on this plan — fetch individual quotes in parallel
+      // Check cache first — shared across ALL users for the same exchange tab
+      const cached = await getCached<{ stocks: any[] }>(cacheKey);
+      if (cached) {
+        console.log(`Cache HIT for ${cacheKey}`);
+        return new Response(JSON.stringify(cached), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      console.log(`Cache MISS for ${cacheKey}`);
+
       const quotePromises = allSymbols.map(sym =>
         fmpFetch(`/stable/quote?symbol=${sym.trim()}`, apiKey)
           .then((data: any) => {
@@ -227,20 +290,29 @@ Deno.serve(async (req) => {
 
       const results = await Promise.all(quotePromises);
       const stocks = results.filter(Boolean);
+      const responseData = { stocks };
 
-      return new Response(JSON.stringify({ stocks }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      // Cache for all users
+      await setCache(cacheKey, responseData, CACHE_TTL.batch);
+
+      return new Response(JSON.stringify(responseData), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // ─── Search mode: find tickers by query string ───
     const searchQuery = searchParams.get('search');
     if (searchQuery && searchQuery.length >= 1) {
-      // Try both symbol search and name search in parallel for best coverage
+      const cacheKey = `search:${searchQuery.toLowerCase()}`;
+
+      const cached = await getCached<{ stocks: any[] }>(cacheKey);
+      if (cached) {
+        return new Response(JSON.stringify(cached), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       const [symbolResults, nameResults] = await Promise.all([
         fmpFetch(`/stable/search-symbol?query=${encodeURIComponent(searchQuery)}&limit=10`, apiKey).catch(() => []),
         fmpFetch(`/stable/search-name?query=${encodeURIComponent(searchQuery)}&limit=10`, apiKey).catch(() => []),
       ]);
       
-      // Merge and deduplicate by symbol
       const allItems = [...(Array.isArray(symbolResults) ? symbolResults : []), ...(Array.isArray(nameResults) ? nameResults : [])];
       const seen = new Set<string>();
       const items: any[] = [];
@@ -250,7 +322,6 @@ Deno.serve(async (req) => {
           items.push(item);
         }
       }
-      // Filter to stocks and crypto
       const stockItems = items
         .filter((item: any) => item.type === "stock" || item.type === "crypto" || !item.type)
         .slice(0, 8);
@@ -281,8 +352,11 @@ Deno.serve(async (req) => {
 
       const quoteResults = await Promise.all(quotePromises);
       const stocks = quoteResults.filter(Boolean);
+      const responseData = { stocks };
 
-      return new Response(JSON.stringify({ stocks }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      await setCache(cacheKey, responseData, CACHE_TTL.search);
+
+      return new Response(JSON.stringify(responseData), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     return new Response(JSON.stringify({ error: 'Provide ?symbols=AAPL,MSFT or ?symbol=AAPL or ?search=query' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

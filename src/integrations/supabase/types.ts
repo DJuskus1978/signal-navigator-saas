@@ -80,6 +80,27 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_cache: {
+        Row: {
+          cache_key: string
+          data: Json
+          expires_at: string
+          fetched_at: string
+        }
+        Insert: {
+          cache_key: string
+          data: Json
+          expires_at: string
+          fetched_at?: string
+        }
+        Update: {
+          cache_key?: string
+          data?: Json
+          expires_at?: string
+          fetched_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
