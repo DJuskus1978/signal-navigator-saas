@@ -182,15 +182,17 @@ export default function LandingPage() {
         </AnimatePresence>
       </header>
 
-      {/* Hero */}
-      <section
-        className="relative bg-cover bg-center bg-no-repeat py-20 md:py-32 lg:py-40"
-        style={{ backgroundImage: `url(${heroBannerImg})` }}
-        aria-label="Stock recommendations overview"
-      >
-        {/* Dark overlay for text contrast */}
-        <div className="absolute inset-0 bg-background/75 dark:bg-background/85" />
-        <div className="container mx-auto px-4 relative z-10">
+      {/* Hero Banner Image */}
+      <div className="w-full">
+        <img
+          src={heroBannerImg}
+          alt="StocksRadars hero banner showing financial charts, radar target, and market analysis illustrations"
+          className="w-full h-auto object-cover max-h-[200px] sm:max-h-[280px] md:max-h-[360px] lg:max-h-[420px]"
+        />
+      </div>
+
+      {/* Hero Text */}
+      <section className="container mx-auto px-4 py-12 md:py-20" aria-label="Stock recommendations overview">
         <div className="max-w-3xl mx-auto text-center">
           <motion.h1
             className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
@@ -209,7 +211,7 @@ export default function LandingPage() {
             className="text-base md:text-xl font-medium text-muted-foreground/50 mb-10 tracking-wide"
             initial="hidden" animate="visible" custom={3.5} variants={fadeUp}
           >
-            Nasdaq &nbsp;·&nbsp; Dow Jones &nbsp;·&nbsp; S&P 500 &nbsp;·&nbsp; Crypto
+            Nasdaq &nbsp;·&nbsp; Dow Jones &nbsp;·&nbsp; S&amp;P 500 &nbsp;·&nbsp; Crypto
           </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
@@ -241,7 +243,6 @@ export default function LandingPage() {
             <p className="w-full text-center text-xs font-semibold text-muted-foreground tracking-wide mt-2">RadarScore™</p>
           </motion.div>
 
-        </div>
         </div>
       </section>
 
