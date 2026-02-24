@@ -46,7 +46,7 @@ export default function Dashboard() {
 
   const { data: subscription } = useSubscription();
   const { data: stocks = [], isLoading, error } = useLiveStocks(activeTab);
-  const { data: searchResults = [], isLoading: isSearching } = useSearchStocks(search);
+  const { data: searchResults = [], isLoading: isSearching } = useSearchStocks(search, activeTab === "crypto" ? "crypto" : "stock");
 
   // Detect return from Stripe checkout and refresh subscription
   const hasHandledCheckout = useRef(false);
@@ -161,7 +161,7 @@ export default function Dashboard() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search any stock (e.g. MCD, Disney, Tesla...)"
+              placeholder={activeTab === "crypto" ? "Search any cryptocurrency (e.g. Bitcoin, ETH, Solana...)" : "Search any stock (e.g. MCD, Disney, Tesla...)"}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"

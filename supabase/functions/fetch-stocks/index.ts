@@ -134,6 +134,7 @@ Deno.serve(async (req) => {
     const { searchParams } = new URL(req.url);
     const symbolsParam = searchParams.get('symbols');
     const singleSymbol = searchParams.get('symbol');
+    const typeFilter = searchParams.get('type'); // "crypto" to search only crypto
 
     // Fire-and-forget cleanup
     cleanupExpired();
@@ -301,30 +302,52 @@ Deno.serve(async (req) => {
     // ─── Search mode: find tickers by query string ───
     const searchQuery = searchParams.get('search');
     if (searchQuery && searchQuery.length >= 1) {
-      const cacheKey = `search:${searchQuery.toLowerCase()}`;
+      const isCryptoSearch = typeFilter === "crypto";
+      const cacheKey = `search:${isCryptoSearch ? "crypto:" : ""}${searchQuery.toLowerCase()}`;
 
       const cached = await getCached<{ stocks: any[] }>(cacheKey);
       if (cached) {
         return new Response(JSON.stringify(cached), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
-      const [symbolResults, nameResults] = await Promise.all([
-        fmpFetch(`/stable/search-symbol?query=${encodeURIComponent(searchQuery)}&limit=10`, apiKey).catch(() => []),
-        fmpFetch(`/stable/search-name?query=${encodeURIComponent(searchQuery)}&limit=10`, apiKey).catch(() => []),
-      ]);
-      
-      const allItems = [...(Array.isArray(symbolResults) ? symbolResults : []), ...(Array.isArray(nameResults) ? nameResults : [])];
-      const seen = new Set<string>();
-      const items: any[] = [];
-      for (const item of allItems) {
-        if (item?.symbol && !seen.has(item.symbol)) {
-          seen.add(item.symbol);
-          items.push(item);
+      let stockItems: any[] = [];
+
+      if (isCryptoSearch) {
+        // For crypto search, use FMP's crypto search endpoint
+        const [symbolResults, nameResults] = await Promise.all([
+          fmpFetch(`/stable/search-symbol?query=${encodeURIComponent(searchQuery)}&limit=20`, apiKey).catch(() => []),
+          fmpFetch(`/stable/search-name?query=${encodeURIComponent(searchQuery)}&limit=20`, apiKey).catch(() => []),
+        ]);
+        const allItems = [...(Array.isArray(symbolResults) ? symbolResults : []), ...(Array.isArray(nameResults) ? nameResults : [])];
+        const seen = new Set<string>();
+        const items: any[] = [];
+        for (const item of allItems) {
+          if (item?.symbol && !seen.has(item.symbol)) {
+            seen.add(item.symbol);
+            items.push(item);
+          }
         }
+        stockItems = items
+          .filter((item: any) => item.type === "crypto" || (item.symbol && item.symbol.endsWith("USD") && item.exchangeShortName === "CRYPTO"))
+          .slice(0, 12);
+      } else {
+        const [symbolResults, nameResults] = await Promise.all([
+          fmpFetch(`/stable/search-symbol?query=${encodeURIComponent(searchQuery)}&limit=10`, apiKey).catch(() => []),
+          fmpFetch(`/stable/search-name?query=${encodeURIComponent(searchQuery)}&limit=10`, apiKey).catch(() => []),
+        ]);
+        const allItems = [...(Array.isArray(symbolResults) ? symbolResults : []), ...(Array.isArray(nameResults) ? nameResults : [])];
+        const seen = new Set<string>();
+        const items: any[] = [];
+        for (const item of allItems) {
+          if (item?.symbol && !seen.has(item.symbol)) {
+            seen.add(item.symbol);
+            items.push(item);
+          }
+        }
+        stockItems = items
+          .filter((item: any) => item.type === "stock" || item.type === "crypto" || !item.type)
+          .slice(0, 8);
       }
-      const stockItems = items
-        .filter((item: any) => item.type === "stock" || item.type === "crypto" || !item.type)
-        .slice(0, 8);
       
       if (stockItems.length === 0) {
         return new Response(JSON.stringify({ stocks: [] }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
