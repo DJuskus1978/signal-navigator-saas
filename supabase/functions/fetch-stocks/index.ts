@@ -315,8 +315,8 @@ Deno.serve(async (req) => {
       if (isCryptoSearch) {
         // For crypto search, use FMP's crypto search endpoint
         const [symbolResults, nameResults] = await Promise.all([
-          fmpFetch(`/stable/search-symbol?query=${encodeURIComponent(searchQuery)}&limit=20`, apiKey).catch(() => []),
-          fmpFetch(`/stable/search-name?query=${encodeURIComponent(searchQuery)}&limit=20`, apiKey).catch(() => []),
+          fmpFetch(`/stable/search-symbol?query=${encodeURIComponent(searchQuery)}&limit=30`, apiKey).catch(() => []),
+          fmpFetch(`/stable/search-name?query=${encodeURIComponent(searchQuery)}&limit=30`, apiKey).catch(() => []),
         ]);
         const allItems = [...(Array.isArray(symbolResults) ? symbolResults : []), ...(Array.isArray(nameResults) ? nameResults : [])];
         const seen = new Set<string>();
@@ -327,8 +327,17 @@ Deno.serve(async (req) => {
             items.push(item);
           }
         }
+        // Log raw items to debug filtering
+        console.log(`Crypto search "${searchQuery}": ${allItems.length} raw, ${items.length} unique. Sample types:`, items.slice(0, 3).map((i: any) => ({ symbol: i.symbol, type: i.type, exchange: i.exchangeShortName })));
+        
+        // Accept items that look like crypto: type=crypto, exchange contains CRYPTO, or symbol ends with USD/USDT
         stockItems = items
-          .filter((item: any) => item.type === "crypto" || (item.symbol && item.symbol.endsWith("USD") && item.exchangeShortName === "CRYPTO"))
+          .filter((item: any) => {
+            const sym = (item.symbol || "").toUpperCase();
+            const type = (item.type || "").toLowerCase();
+            const exchange = (item.exchangeShortName || item.exchange || "").toUpperCase();
+            return type === "crypto" || exchange.includes("CRYPTO") || exchange === "CCC" || sym.endsWith("USD") || sym.endsWith("USDT");
+          })
           .slice(0, 12);
       } else {
         const [symbolResults, nameResults] = await Promise.all([
