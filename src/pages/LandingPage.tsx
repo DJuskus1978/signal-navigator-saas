@@ -372,8 +372,8 @@ export default function LandingPage() {
         </p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
           {/* Novice Trader */}
-          <Card className="border border-border relative overflow-hidden">
-            <CardContent className="p-6 text-center">
+          <Card className="border border-border relative overflow-hidden flex flex-col">
+            <CardContent className="p-6 text-center flex flex-col flex-1">
               <p className="text-sm font-medium text-muted-foreground mb-2">NOVICE TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
                 <span className="font-display text-4xl font-bold">$0</span>
@@ -393,18 +393,20 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link to="/auth" onClick={() => trackPlanClick("Novice Trader", 0)}>
-                <Button className="w-full bg-signal-buy hover:bg-signal-buy/90 text-white" size="lg">Start Free</Button>
-              </Link>
+              <div className="mt-auto">
+                <Link to="/auth" onClick={() => trackPlanClick("Novice Trader", 0)}>
+                  <Button className="w-full bg-signal-buy hover:bg-signal-buy/90 text-white" size="lg">Start Free</Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
 
           {/* Day Trader */}
-          <Card className="border border-border relative overflow-hidden">
+          <Card className="border border-border relative overflow-hidden flex flex-col">
             <div className="absolute top-3 right-3">
               <TrendingUp className="w-6 h-6 text-primary" />
             </div>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-6 text-center flex flex-col flex-1">
               <p className="text-sm font-medium text-muted-foreground mb-2">DAY TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
                 <span className="font-display text-4xl font-bold">$9</span>
@@ -425,21 +427,23 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full active:scale-95 active:opacity-70 transition-all" size="lg" onClick={() => handlePlanClick("day_trader")} disabled={loadingTier === "day_trader"}>
-                {loadingTier === "day_trader" ? <span className="flex items-center gap-2"><RadarLogo size={24} /> Loading…</span> : "Get Started"}
-              </Button>
+              <div className="mt-auto">
+                <Button className="w-full active:scale-95 active:opacity-70 transition-all" size="lg" onClick={() => handlePlanClick("day_trader")} disabled={loadingTier === "day_trader"}>
+                  {loadingTier === "day_trader" ? <span className="flex items-center gap-2"><RadarLogo size={24} /> Loading…</span> : "Get Started"}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
           {/* Pro Day Trader */}
-          <Card className="border-2 border-primary shadow-lg relative overflow-hidden pt-4">
+          <Card className="border-2 border-primary shadow-lg relative overflow-hidden pt-4 flex flex-col">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 translate-y-0 px-4 py-1 bg-primary text-primary-foreground text-xs font-semibold rounded-b-lg whitespace-nowrap z-10">
               MOST POPULAR
             </div>
             <div className="absolute top-5 right-3">
               <Zap className="w-6 h-6 text-primary" />
             </div>
-            <CardContent className="p-6 pt-6 text-center">
+            <CardContent className="p-6 pt-6 text-center flex flex-col flex-1">
               <p className="text-sm font-semibold text-muted-foreground mb-2">PRO DAY TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
                 <span className="font-display text-4xl font-bold">$19</span>
@@ -462,18 +466,20 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full active:scale-95 active:opacity-70 transition-all" size="lg" onClick={() => handlePlanClick("pro_day_trader")} disabled={loadingTier === "pro_day_trader"}>
-                {loadingTier === "pro_day_trader" ? <span className="flex items-center gap-2"><RadarLogo size={24} /> Loading…</span> : "Get Started"}
-              </Button>
+              <div className="mt-auto">
+                <Button className="w-full active:scale-95 active:opacity-70 transition-all" size="lg" onClick={() => handlePlanClick("pro_day_trader")} disabled={loadingTier === "pro_day_trader"}>
+                  {loadingTier === "pro_day_trader" ? <span className="flex items-center gap-2"><RadarLogo size={24} /> Loading…</span> : "Get Started"}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
           {/* Bull Trader */}
-          <Card className="border border-border relative overflow-hidden">
+          <Card className="border border-border relative overflow-hidden flex flex-col">
             <div className="absolute top-3 right-3">
               <Crown className="w-6 h-6 text-primary" />
             </div>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-6 text-center flex flex-col flex-1">
               <p className="text-sm font-medium text-muted-foreground mb-2">BULL TRADER</p>
               <div className="flex items-baseline justify-center gap-1 mb-2">
                 <span className="font-display text-4xl font-bold">$29</span>
@@ -498,9 +504,11 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full active:scale-95 active:opacity-70 transition-all" size="lg" onClick={() => handlePlanClick("bull_trader")} disabled={loadingTier === "bull_trader"}>
-                {loadingTier === "bull_trader" ? <span className="flex items-center gap-2"><RadarLogo size={24} /> Loading…</span> : "Get Started"}
-              </Button>
+              <div className="mt-auto">
+                <Button className="w-full active:scale-95 active:opacity-70 transition-all" size="lg" onClick={() => handlePlanClick("bull_trader")} disabled={loadingTier === "bull_trader"}>
+                  {loadingTier === "bull_trader" ? <span className="flex items-center gap-2"><RadarLogo size={24} /> Loading…</span> : "Get Started"}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
