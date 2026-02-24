@@ -187,7 +187,7 @@ export default function LandingPage() {
         <img
           src={heroBannerImg}
           alt="StocksRadars hero banner showing financial charts, radar target, and market analysis illustrations"
-          className="w-full h-auto object-cover max-h-[200px] sm:max-h-[280px] md:max-h-[360px] lg:max-h-[420px]"
+          className="w-full h-auto object-cover"
         />
       </div>
 
