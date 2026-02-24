@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { startCheckout } from "@/lib/stripe-helpers";
+import heroBannerImg from "@/assets/hero-banner-new.jpg";
 import insideRadarSignalImg from "@/assets/inside-radar-signal.jpeg";
 import insideRadarPhasesImg from "@/assets/inside-radar-phases.jpeg";
 import insideRadarDashboardImg from "@/assets/inside-radar-dashboard.jpeg";
@@ -182,7 +183,14 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="container mx-auto px-4 py-16 md:py-24" aria-label="Stock recommendations overview">
+      <section
+        className="relative bg-cover bg-center bg-no-repeat py-20 md:py-32 lg:py-40"
+        style={{ backgroundImage: `url(${heroBannerImg})` }}
+        aria-label="Stock recommendations overview"
+      >
+        {/* Dark overlay for text contrast */}
+        <div className="absolute inset-0 bg-background/75 dark:bg-background/85" />
+        <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto text-center">
           <motion.h1
             className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
@@ -233,6 +241,7 @@ export default function LandingPage() {
             <p className="w-full text-center text-xs font-semibold text-muted-foreground tracking-wide mt-2">RadarScore™</p>
           </motion.div>
 
+        </div>
         </div>
       </section>
 
