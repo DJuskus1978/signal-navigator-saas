@@ -13,8 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Search, LogOut, ArrowUpDown, Users, CreditCard, TrendingUp } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Search, LogOut, ArrowUpDown, Users, CreditCard, TrendingUp, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "@/hooks/use-toast";
 
 interface AdminUser {
   user_id: string;
@@ -26,6 +28,7 @@ interface AdminUser {
   updated_at: string;
   email: string | null;
   subscription_tier: string | null;
+  is_subscription_exempt: boolean;
 }
 
 type SortField = "email" | "created_at" | "subscription_tier";
@@ -54,6 +57,7 @@ export default function AdminPage() {
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [fetching, setFetching] = useState(true);
+  const [togglingExempt, setTogglingExempt] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -67,25 +71,41 @@ export default function AdminPage() {
     checkAdmin();
   }, [user]);
 
+  const fetchUsers = async () => {
+    setFetching(true);
+    const { data, error } = await supabase.rpc("get_admin_users");
+    if (!error && data) setUsers(data as AdminUser[]);
+    setFetching(false);
+  };
+
   useEffect(() => {
     if (!isAdmin) return;
-    const fetchUsers = async () => {
-      setFetching(true);
-      const { data, error } = await supabase.rpc("get_admin_users");
-      if (!error && data) setUsers(data as AdminUser[]);
-      setFetching(false);
-    };
     fetchUsers();
   }, [isAdmin]);
 
+  const handleToggleExempt = async (userId: string, newValue: boolean) => {
+    setTogglingExempt(userId);
+    const { error } = await supabase.rpc("set_subscription_exempt", {
+      _target_user_id: userId,
+      _exempt: newValue,
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: newValue ? "User exempted" : "Exemption removed", description: newValue ? "User now has full access without paying." : "User will need a subscription." });
+      await fetchUsers();
+    }
+    setTogglingExempt(null);
+  };
+
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/admin/login" replace />;
   if (isAdmin === null) return null;
   if (!isAdmin) return <Navigate to="/dashboard" replace />;
 
-  // Stats
   const totalUsers = users.length;
   const paidUsers = users.filter((u) => u.subscription_tier && u.subscription_tier !== "novice").length;
+  const exemptUsers = users.filter((u) => u.is_subscription_exempt).length;
   const tierCounts: Record<string, number> = { novice: 0, day_trader: 0, pro_day_trader: 0, bull_trader: 0 };
   users.forEach((u) => {
     const t = u.subscription_tier || "novice";
@@ -110,7 +130,8 @@ export default function AdminPage() {
     const tier = u.subscription_tier || "novice";
     const matchTier = tierFilter === "all" || tierFilter === tier ||
       (tierFilter === "paid" && tier !== "novice") ||
-      (tierFilter === "free" && tier === "novice");
+      (tierFilter === "free" && tier === "novice") ||
+      (tierFilter === "exempt" && u.is_subscription_exempt);
     return matchSearch && matchTier;
   });
 
@@ -149,7 +170,7 @@ export default function AdminPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
           <Card>
             <CardContent className="p-4 text-center">
               <Users className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
@@ -162,6 +183,13 @@ export default function AdminPage() {
               <CreditCard className="w-5 h-5 text-primary mx-auto mb-1" />
               <p className="font-display text-2xl font-bold">{paidUsers}</p>
               <p className="text-xs text-muted-foreground">Paid Users</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <ShieldCheck className="w-5 h-5 text-green-500 mx-auto mb-1" />
+              <p className="font-display text-2xl font-bold">{exemptUsers}</p>
+              <p className="text-xs text-muted-foreground">Exempt</p>
             </CardContent>
           </Card>
           <Card>
@@ -210,6 +238,7 @@ export default function AdminPage() {
               <SelectItem value="all">All Users</SelectItem>
               <SelectItem value="paid">All Paid</SelectItem>
               <SelectItem value="free">Free Only</SelectItem>
+              <SelectItem value="exempt">Exempt Only</SelectItem>
               <SelectItem value="novice">Novice Trader</SelectItem>
               <SelectItem value="day_trader">Day Trader</SelectItem>
               <SelectItem value="pro_day_trader">Pro Day Trader</SelectItem>
@@ -234,6 +263,7 @@ export default function AdminPage() {
                     Plan <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </TableHead>
+                <TableHead>Exempt</TableHead>
                 <TableHead>
                   <button className="flex items-center gap-1" onClick={() => toggleSort("created_at")}>
                     Joined <ArrowUpDown className="w-3 h-3" />
@@ -244,13 +274,13 @@ export default function AdminPage() {
             <TableBody>
               {fetching ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     Loading…
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     No users found.
                   </TableCell>
                 </TableRow>
@@ -262,9 +292,23 @@ export default function AdminPage() {
                       <TableCell className="font-medium">{u.email ?? "—"}</TableCell>
                       <TableCell>{u.display_name || "—"}</TableCell>
                       <TableCell>
-                        <Badge variant={TIER_VARIANTS[tier] ?? "secondary"}>
-                          {TIER_LABELS[tier] ?? tier}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={TIER_VARIANTS[tier] ?? "secondary"}>
+                            {TIER_LABELS[tier] ?? tier}
+                          </Badge>
+                          {u.is_subscription_exempt && (
+                            <Badge variant="outline" className="text-green-600 border-green-600 text-[10px]">
+                              EXEMPT
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={u.is_subscription_exempt}
+                          disabled={togglingExempt === u.user_id}
+                          onCheckedChange={(checked) => handleToggleExempt(u.user_id, checked)}
+                        />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {format(new Date(u.created_at), "MMM d, yyyy")}
