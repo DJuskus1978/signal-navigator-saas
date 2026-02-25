@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth check
+    // Auth check — lightweight getUser instead of getClaims
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -120,9 +120,8 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -152,15 +151,14 @@ Deno.serve(async (req) => {
 
       const isCrypto = symbol.endsWith("USD") && symbol.length <= 10;
 
-      const [quoteArr, rsiArr, sma50Arr, sma200Arr, ema20Arr] = await Promise.all([
+      // All API calls in a single Promise.all for maximum parallelism
+      const isCrypto = symbol.endsWith("USD") && symbol.length <= 10;
+      const [quoteArr, rsiArr, sma50Arr, sma200Arr, ema20Arr, ema12Arr, ema26Arr, keyMetricsArr, growthArr, newsArr, gradesArr] = await Promise.all([
         fmpFetch(`/stable/quote?symbol=${symbol}`, apiKey),
         fmpFetch(`/stable/technical-indicators/rsi?symbol=${symbol}&periodLength=14&timeframe=1day`, apiKey).catch(() => []),
         fmpFetch(`/stable/technical-indicators/sma?symbol=${symbol}&periodLength=50&timeframe=1day`, apiKey).catch(() => []),
         fmpFetch(`/stable/technical-indicators/sma?symbol=${symbol}&periodLength=200&timeframe=1day`, apiKey).catch(() => []),
         fmpFetch(`/stable/technical-indicators/ema?symbol=${symbol}&periodLength=20&timeframe=1day`, apiKey).catch(() => []),
-      ]);
-
-      const [ema12Arr, ema26Arr, keyMetricsArr, growthArr, newsArr, gradesArr] = await Promise.all([
         fmpFetch(`/stable/technical-indicators/ema?symbol=${symbol}&periodLength=12&timeframe=1day`, apiKey).catch(() => []),
         fmpFetch(`/stable/technical-indicators/ema?symbol=${symbol}&periodLength=26&timeframe=1day`, apiKey).catch(() => []),
         isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/key-metrics?symbol=${symbol}&limit=1`, apiKey).catch(() => []),
@@ -255,10 +253,10 @@ Deno.serve(async (req) => {
 
     // ─── Batch quote mode for dashboard ───
     if (symbolsParam) {
-      const allSymbols = symbolsParam.split(',').slice(0, 24);
+      // Use FMP batch quote endpoint — single API call instead of N individual calls
+      const allSymbols = symbolsParam.split(',').slice(0, 30);
       const cacheKey = `batch:${allSymbols.sort().join(',')}`;
 
-      // Check cache first — shared across ALL users for the same exchange tab
       const cached = await getCached<{ stocks: any[] }>(cacheKey);
       if (cached) {
         console.log(`Cache HIT for ${cacheKey}`);
@@ -266,34 +264,49 @@ Deno.serve(async (req) => {
       }
       console.log(`Cache MISS for ${cacheKey}`);
 
-      const quotePromises = allSymbols.map(sym =>
-        fmpFetch(`/stable/quote?symbol=${sym.trim()}`, apiKey)
-          .then((data: any) => {
-            const q = Array.isArray(data) ? data[0] : data;
-            if (!q || q.error || !q.symbol) return null;
-            return {
-              symbol: q.symbol,
-              name: q.name || q.symbol,
-              exchange: q.exchange || '',
-              price: q.price ?? 0,
-              previousClose: q.previousClose ?? 0,
-              change: q.change ?? 0,
-              changePercent: q.changePercentage ?? 0,
-              volume: q.volume ?? 0,
-              avgVolume: q.volume ?? 0,
-            };
-          })
-          .catch((err: Error) => {
-            console.error(`FMP quote error for ${sym}:`, err.message);
-            return null;
-          })
-      );
+      const batchData = await fmpFetch(`/stable/batch-quote?symbols=${allSymbols.join(',')}`, apiKey).catch(() => null);
+      
+      let stocks: any[];
+      if (batchData && Array.isArray(batchData) && batchData.length > 0) {
+        stocks = batchData
+          .filter((q: any) => q && !q.error && q.symbol)
+          .map((q: any) => ({
+            symbol: q.symbol,
+            name: q.name || q.symbol,
+            exchange: q.exchange || '',
+            price: q.price ?? 0,
+            previousClose: q.previousClose ?? 0,
+            change: q.change ?? 0,
+            changePercent: q.changePercentage ?? 0,
+            volume: q.volume ?? 0,
+            avgVolume: q.avgVolume ?? q.volume ?? 0,
+          }));
+      } else {
+        // Fallback: individual quotes in parallel
+        const quotePromises = allSymbols.map(sym =>
+          fmpFetch(`/stable/quote?symbol=${sym.trim()}`, apiKey)
+            .then((data: any) => {
+              const q = Array.isArray(data) ? data[0] : data;
+              if (!q || q.error || !q.symbol) return null;
+              return {
+                symbol: q.symbol,
+                name: q.name || q.symbol,
+                exchange: q.exchange || '',
+                price: q.price ?? 0,
+                previousClose: q.previousClose ?? 0,
+                change: q.change ?? 0,
+                changePercent: q.changePercentage ?? 0,
+                volume: q.volume ?? 0,
+                avgVolume: q.avgVolume ?? q.volume ?? 0,
+              };
+            })
+            .catch(() => null)
+        );
+        const results = await Promise.all(quotePromises);
+        stocks = results.filter(Boolean);
+      }
 
-      const results = await Promise.all(quotePromises);
-      const stocks = results.filter(Boolean);
       const responseData = { stocks };
-
-      // Cache for all users
       await setCache(cacheKey, responseData, CACHE_TTL.batch);
 
       return new Response(JSON.stringify(responseData), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
