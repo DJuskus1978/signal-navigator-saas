@@ -5,6 +5,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { RadarLogo } from "@/components/RadarLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -14,7 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Search, LogOut, ArrowUpDown, Users, CreditCard, TrendingUp, ShieldCheck } from "lucide-react";
+import { Search, LogOut, ArrowUpDown, Users, CreditCard, TrendingUp, ShieldCheck, Ban, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 
@@ -29,6 +34,7 @@ interface AdminUser {
   email: string | null;
   subscription_tier: string | null;
   is_subscription_exempt: boolean;
+  is_blocked: boolean;
 }
 
 type SortField = "email" | "created_at" | "subscription_tier";
@@ -58,6 +64,8 @@ export default function AdminPage() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [fetching, setFetching] = useState(true);
   const [togglingExempt, setTogglingExempt] = useState<string | null>(null);
+  const [togglingBlocked, setTogglingBlocked] = useState<string | null>(null);
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -96,6 +104,35 @@ export default function AdminPage() {
       await fetchUsers();
     }
     setTogglingExempt(null);
+  };
+
+  const handleToggleBlocked = async (userId: string, newValue: boolean) => {
+    setTogglingBlocked(userId);
+    const { error } = await supabase.rpc("set_user_blocked", {
+      _target_user_id: userId,
+      _blocked: newValue,
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: newValue ? "User blocked" : "User unblocked", description: newValue ? "User can no longer access the platform." : "User access has been restored." });
+      await fetchUsers();
+    }
+    setTogglingBlocked(null);
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    setDeletingUser(userId);
+    const { error } = await supabase.rpc("admin_delete_user", {
+      _target_user_id: userId,
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "User deleted", description: "User has been permanently removed." });
+      await fetchUsers();
+    }
+    setDeletingUser(null);
   };
 
   if (loading) return null;
@@ -264,23 +301,25 @@ export default function AdminPage() {
                   </button>
                 </TableHead>
                 <TableHead>Exempt</TableHead>
+                <TableHead>Blocked</TableHead>
                 <TableHead>
                   <button className="flex items-center gap-1" onClick={() => toggleSort("created_at")}>
                     Joined <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {fetching ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Loading…
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     No users found.
                   </TableCell>
                 </TableRow>
@@ -301,6 +340,11 @@ export default function AdminPage() {
                               EXEMPT
                             </Badge>
                           )}
+                          {u.is_blocked && (
+                            <Badge variant="destructive" className="text-[10px]">
+                              BLOCKED
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -310,8 +354,42 @@ export default function AdminPage() {
                           onCheckedChange={(checked) => handleToggleExempt(u.user_id, checked)}
                         />
                       </TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={u.is_blocked}
+                          disabled={togglingBlocked === u.user_id}
+                          onCheckedChange={(checked) => handleToggleBlocked(u.user_id, checked)}
+                        />
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {format(new Date(u.created_at), "MMM d, yyyy")}
+                      </TableCell>
+                      <TableCell>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete user?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete <strong>{u.email || u.display_name || "this user"}</strong> and all their data. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteUser(u.user_id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                disabled={deletingUser === u.user_id}
+                              >
+                                {deletingUser === u.user_id ? "Deleting…" : "Delete"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </TableCell>
                     </TableRow>
                   );

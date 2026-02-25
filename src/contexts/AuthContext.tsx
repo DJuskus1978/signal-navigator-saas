@@ -61,13 +61,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const checkBlocked = async (u: User) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("is_blocked")
+      .eq("user_id", u.id)
+      .single();
+    if (data?.is_blocked) {
+      await supabase.auth.signOut();
+      return true;
+    }
+    return false;
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
         if (session?.user) {
+          const blocked = await checkBlocked(session.user);
+          if (blocked) return;
           setTimeout(syncSubscription, 0);
           setGAUser(session.user);
         } else {
@@ -76,11 +91,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
       if (session?.user) {
+        const blocked = await checkBlocked(session.user);
+        if (blocked) return;
         syncSubscription();
         setGAUser(session.user);
       }
