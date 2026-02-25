@@ -130,6 +130,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_user: {
+        Args: { _target_user_id: string }
+        Returns: undefined
+      }
       check_and_increment_usage: {
         Args: { _daily_limit: number; _user_id: string }
         Returns: boolean
@@ -141,6 +145,7 @@ export type Database = {
           created_at: string
           display_name: string
           email: string
+          is_blocked: boolean
           is_subscribed: boolean
           is_subscription_exempt: boolean
           stripe_customer_id: string
@@ -158,6 +163,10 @@ export type Database = {
       }
       set_subscription_exempt: {
         Args: { _exempt: boolean; _target_user_id: string }
+        Returns: undefined
+      }
+      set_user_blocked: {
+        Args: { _blocked: boolean; _target_user_id: string }
         Returns: undefined
       }
     }
