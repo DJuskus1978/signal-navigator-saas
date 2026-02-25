@@ -48,6 +48,7 @@ export type Database = {
           display_name: string | null
           id: string
           is_subscribed: boolean
+          is_subscription_exempt: boolean
           stripe_customer_id: string | null
           subscription_tier: Database["public"]["Enums"]["subscription_tier"]
           trial_started_at: string | null
@@ -60,6 +61,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_subscribed?: boolean
+          is_subscription_exempt?: boolean
           stripe_customer_id?: string | null
           subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
           trial_started_at?: string | null
@@ -72,6 +74,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_subscribed?: boolean
+          is_subscription_exempt?: boolean
           stripe_customer_id?: string | null
           subscription_tier?: Database["public"]["Enums"]["subscription_tier"]
           trial_started_at?: string | null
@@ -136,6 +139,7 @@ export type Database = {
           display_name: string
           email: string
           is_subscribed: boolean
+          is_subscription_exempt: boolean
           stripe_customer_id: string
           subscription_tier: string
           updated_at: string
@@ -148,6 +152,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      set_subscription_exempt: {
+        Args: { _exempt: boolean; _target_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
