@@ -150,7 +150,12 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, o
           <ProfileToggle profile={profile} onChange={onProfileChange} lockedProfiles={lockedProfiles} onLockedClick={onLockedProfileClick} />
         </div>
 
-        {/* Phase Bars — moved UP */}
+        {/* Signal Toggle */}
+        <div className="flex justify-center mb-8 overflow-x-auto">
+          <SignalToggle activeSignal={signal} />
+        </div>
+
+        {/* Phase Bars */}
         <div className="mb-10 max-w-sm mx-auto space-y-3">
           {(() => {
             const weights = PROFILE_WEIGHTS[profile];
@@ -173,11 +178,6 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, o
           <p className="text-[10px] text-muted-foreground/40 text-center mt-1">
             How each analysis phase contributes to the signal.
           </p>
-        </div>
-
-        {/* Signal Toggle — moved BELOW bars */}
-        <div className="flex justify-center mb-8 overflow-x-auto">
-          <SignalToggle activeSignal={signal} />
         </div>
 
         {/* Summary */}
