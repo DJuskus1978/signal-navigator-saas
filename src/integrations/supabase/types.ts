@@ -47,6 +47,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          is_blocked: boolean
           is_subscribed: boolean
           is_subscription_exempt: boolean
           stripe_customer_id: string | null
@@ -60,6 +61,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_blocked?: boolean
           is_subscribed?: boolean
           is_subscription_exempt?: boolean
           stripe_customer_id?: string | null
@@ -73,6 +75,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_blocked?: boolean
           is_subscribed?: boolean
           is_subscription_exempt?: boolean
           stripe_customer_id?: string | null
