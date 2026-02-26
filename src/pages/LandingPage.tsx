@@ -625,6 +625,8 @@ export default function LandingPage() {
             <Link to="/terms" className="hover:text-foreground underline underline-offset-4">Terms of Use</Link>
             <span>·</span>
             <Link to="/privacy" className="hover:text-foreground underline underline-offset-4">Privacy Policy</Link>
+            <span>·</span>
+            <Link to="/brand" className="hover:text-foreground underline underline-offset-4">Brand Assets</Link>
           </div>
           <p className="text-xs">© {new Date().getFullYear()} StocksRadars — AI Stock Recommendations. All rights reserved.</p>
         </div>
