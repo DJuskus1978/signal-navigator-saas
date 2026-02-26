@@ -74,33 +74,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false;
   };
 
+  const runPostAuthTasks = (nextUser: User | null) => {
+    if (!nextUser) {
+      clearGAUser();
+      return;
+    }
+
+    // Keep onAuthStateChange callback synchronous to avoid auth lock deadlocks
+    setTimeout(async () => {
+      const blocked = await checkBlocked(nextUser);
+      if (blocked) return;
+      await syncSubscription();
+      await setGAUser(nextUser);
+    }, 0);
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      (_event, nextSession) => {
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
         setLoading(false);
-        if (session?.user) {
-          const blocked = await checkBlocked(session.user);
-          if (blocked) return;
-          setTimeout(syncSubscription, 0);
-          setGAUser(session.user);
-        } else {
-          clearGAUser();
-        }
+        runPostAuthTasks(nextSession?.user ?? null);
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    void supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
       setLoading(false);
-      if (session?.user) {
-        const blocked = await checkBlocked(session.user);
-        if (blocked) return;
-        syncSubscription();
-        setGAUser(session.user);
-      }
+      runPostAuthTasks(initialSession?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
