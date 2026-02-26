@@ -72,7 +72,7 @@ export default function AdminLogin() {
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2 justify-center mb-8">
           <RadarLogo />
-          <span className="font-display font-bold text-xl">StocksRadars</span>
+          <span className="font-display font-bold text-xl">Stocks<span className="text-primary">Radars</span></span>
         </div>
 
         <Card>
