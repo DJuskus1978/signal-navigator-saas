@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,11 +7,10 @@ const corsHeaders = {
 
 const FMP_BASE = "https://financialmodelingprep.com";
 
-// Cache TTL in minutes per request type
 const CACHE_TTL = {
-  batch: 5,   // Dashboard batch quotes — 5 min shared across all users
-  search: 3,  // Search results — 3 min
-  detail: 2,  // Single stock detail — 2 min
+  batch: 5,
+  search: 3,
+  detail: 2,
 };
 
 async function fmpFetch(path: string, apiKey: string) {
@@ -21,8 +20,6 @@ async function fmpFetch(path: string, apiKey: string) {
   if (!res.ok) throw new Error(`FMP ${res.status}: ${path}`);
   return res.json();
 }
-
-// ─── Cache helpers (uses service role client) ────────────────────────────────
 
 function getServiceClient() {
   return createClient(
@@ -41,7 +38,7 @@ async function getCached<T>(key: string): Promise<T | null> {
       .gt('expires_at', new Date().toISOString())
       .single();
     return data?.data as T ?? null;
-  } catch {
+  } catch (_e) {
     return null;
   }
 }
@@ -62,16 +59,14 @@ async function setCache(key: string, data: unknown, ttlMinutes: number) {
   }
 }
 
-// Cleanup expired entries (fire-and-forget, runs occasionally)
 async function cleanupExpired() {
-  if (Math.random() > 0.1) return; // Run ~10% of requests
+  if (Math.random() > 0.1) return;
   try {
     const db = getServiceClient();
     await db.from('stock_cache').delete().lt('expires_at', new Date().toISOString());
-  } catch { /* ignore */ }
+  } catch (_e) { /* ignore */ }
 }
 
-// Convert analyst grade strings to a 1-5 numeric scale
 function gradeToScore(grade: string): number {
   const g = grade.toLowerCase();
   if (g.includes("strong buy") || g.includes("top pick")) return 5;
@@ -79,10 +74,9 @@ function gradeToScore(grade: string): number {
   if (g.includes("hold") || g.includes("neutral") || g.includes("equal") || g.includes("market perform") || g.includes("peer perform") || g.includes("sector perform") || g.includes("in-line")) return 3;
   if (g.includes("underperform") || g.includes("underweight") || g.includes("reduce")) return 2;
   if (g.includes("sell") || g.includes("strong sell")) return 1;
-  return 3; // default neutral
+  return 3;
 }
 
-// Compute an analyst consensus rating from recent grades (1-5 scale)
 function computeAnalystRating(grades: any[]): number {
   if (!grades || grades.length === 0) return 3;
   const recent = grades.slice(0, 10);
@@ -90,7 +84,6 @@ function computeAnalystRating(grades: any[]): number {
   return Math.round((sum / recent.length) * 10) / 10;
 }
 
-// Compute insider-like activity from grade actions
 function computeGradeAction(grades: any[]): number {
   if (!grades || grades.length === 0) return 0;
   const recent = grades.slice(0, 10);
@@ -108,7 +101,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth check — lightweight getUser instead of getClaims
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -133,17 +125,15 @@ Deno.serve(async (req) => {
     const { searchParams } = new URL(req.url);
     const symbolsParam = searchParams.get('symbols');
     const singleSymbol = searchParams.get('symbol');
-    const typeFilter = searchParams.get('type'); // "crypto" to search only crypto
+    const typeFilter = searchParams.get('type');
 
-    // Fire-and-forget cleanup
     cleanupExpired();
 
-    // ─── Single stock/crypto detail: quote + technicals + fundamentals + sentiment ───
+    // ─── Single stock detail ───
     if (singleSymbol) {
       const symbol = singleSymbol.toUpperCase();
       const cacheKey = `detail:${symbol}`;
 
-      // Check cache first
       const cached = await getCached<any>(cacheKey);
       if (cached) {
         return new Response(JSON.stringify(cached), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -151,8 +141,6 @@ Deno.serve(async (req) => {
 
       const isCrypto = symbol.endsWith("USD") && symbol.length <= 10;
 
-      // All API calls in a single Promise.all for maximum parallelism
-      const isCrypto = symbol.endsWith("USD") && symbol.length <= 10;
       const [quoteArr, rsiArr, sma50Arr, sma200Arr, ema20Arr, ema12Arr, ema26Arr, keyMetricsArr, growthArr, newsArr, gradesArr] = await Promise.all([
         fmpFetch(`/stable/quote?symbol=${symbol}`, apiKey),
         fmpFetch(`/stable/technical-indicators/rsi?symbol=${symbol}&periodLength=14&timeframe=1day`, apiKey).catch(() => []),
@@ -245,15 +233,12 @@ Deno.serve(async (req) => {
         },
       };
 
-      // Cache the result
       await setCache(cacheKey, result, CACHE_TTL.detail);
-
       return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // ─── Batch quote mode for dashboard ───
+    // ─── Batch quote mode ───
     if (symbolsParam) {
-      // Use FMP batch quote endpoint — single API call instead of N individual calls
       const allSymbols = symbolsParam.split(',').slice(0, 30);
       const cacheKey = `batch:${allSymbols.sort().join(',')}`;
 
@@ -264,55 +249,38 @@ Deno.serve(async (req) => {
       }
       console.log(`Cache MISS for ${cacheKey}`);
 
-      const batchData = await fmpFetch(`/stable/batch-quote?symbols=${allSymbols.join(',')}`, apiKey).catch(() => null);
-      
-      let stocks: any[];
-      if (batchData && Array.isArray(batchData) && batchData.length > 0) {
-        stocks = batchData
-          .filter((q: any) => q && !q.error && q.symbol)
-          .map((q: any) => ({
-            symbol: q.symbol,
-            name: q.name || q.symbol,
-            exchange: q.exchange || '',
-            price: q.price ?? 0,
-            previousClose: q.previousClose ?? 0,
-            change: q.change ?? 0,
-            changePercent: q.changePercentage ?? 0,
-            volume: q.volume ?? 0,
-            avgVolume: q.avgVolume ?? q.volume ?? 0,
-          }));
-      } else {
-        // Fallback: individual quotes in parallel
-        const quotePromises = allSymbols.map(sym =>
-          fmpFetch(`/stable/quote?symbol=${sym.trim()}`, apiKey)
-            .then((data: any) => {
-              const q = Array.isArray(data) ? data[0] : data;
-              if (!q || q.error || !q.symbol) return null;
-              return {
-                symbol: q.symbol,
-                name: q.name || q.symbol,
-                exchange: q.exchange || '',
-                price: q.price ?? 0,
-                previousClose: q.previousClose ?? 0,
-                change: q.change ?? 0,
-                changePercent: q.changePercentage ?? 0,
-                volume: q.volume ?? 0,
-                avgVolume: q.avgVolume ?? q.volume ?? 0,
-              };
-            })
-            .catch(() => null)
-        );
-        const results = await Promise.all(quotePromises);
-        stocks = results.filter(Boolean);
-      }
+      const quotePromises = allSymbols.map(sym =>
+        fmpFetch(`/stable/quote?symbol=${sym.trim()}`, apiKey)
+          .then((data: any) => {
+            const q = Array.isArray(data) ? data[0] : data;
+            if (!q || q.error || !q.symbol) return null;
+            return {
+              symbol: q.symbol,
+              name: q.name || q.symbol,
+              exchange: q.exchange || '',
+              price: q.price ?? 0,
+              previousClose: q.previousClose ?? 0,
+              change: q.change ?? 0,
+              changePercent: q.changePercentage ?? 0,
+              volume: q.volume ?? 0,
+              avgVolume: q.avgVolume ?? q.volume ?? 0,
+            };
+          })
+          .catch((err: Error) => {
+            console.error(`FMP quote error for ${sym}:`, err.message);
+            return null;
+          })
+      );
 
+      const results = await Promise.all(quotePromises);
+      const stocks = results.filter(Boolean);
       const responseData = { stocks };
-      await setCache(cacheKey, responseData, CACHE_TTL.batch);
 
+      await setCache(cacheKey, responseData, CACHE_TTL.batch);
       return new Response(JSON.stringify(responseData), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // ─── Search mode: find tickers by query string ───
+    // ─── Search mode ───
     const searchQuery = searchParams.get('search');
     if (searchQuery && searchQuery.length >= 1) {
       const isCryptoSearch = typeFilter === "crypto";
@@ -326,7 +294,6 @@ Deno.serve(async (req) => {
       let stockItems: any[] = [];
 
       if (isCryptoSearch) {
-        // For crypto search, use FMP's crypto search endpoint
         const [symbolResults, nameResults] = await Promise.all([
           fmpFetch(`/stable/search-symbol?query=${encodeURIComponent(searchQuery)}&limit=30`, apiKey).catch(() => []),
           fmpFetch(`/stable/search-name?query=${encodeURIComponent(searchQuery)}&limit=30`, apiKey).catch(() => []),
@@ -340,10 +307,7 @@ Deno.serve(async (req) => {
             items.push(item);
           }
         }
-        // Log raw items to debug filtering
-        console.log(`Crypto search "${searchQuery}": ${allItems.length} raw, ${items.length} unique. Sample types:`, items.slice(0, 3).map((i: any) => ({ symbol: i.symbol, type: i.type, exchange: i.exchangeShortName })));
-        
-        // Accept items that look like crypto: type=crypto, exchange contains CRYPTO, or symbol ends with USD/USDT
+        console.log(`Crypto search "${searchQuery}": ${allItems.length} raw, ${items.length} unique.`);
         stockItems = items
           .filter((item: any) => {
             const sym = (item.symbol || "").toUpperCase();
@@ -370,7 +334,7 @@ Deno.serve(async (req) => {
           .filter((item: any) => item.type === "stock" || item.type === "crypto" || !item.type)
           .slice(0, 8);
       }
-      
+
       if (stockItems.length === 0) {
         return new Response(JSON.stringify({ stocks: [] }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
@@ -400,7 +364,6 @@ Deno.serve(async (req) => {
       const responseData = { stocks };
 
       await setCache(cacheKey, responseData, CACHE_TTL.search);
-
       return new Response(JSON.stringify(responseData), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
