@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,11 +18,59 @@ const contactSchema = z.object({
   message: z.string().trim().min(1, "Message is required").max(2000),
 });
 
+const DRAFT_KEY = "contact_form_draft";
+
 export default function ContactPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sending, setSending] = useState(false);
+  const autoSendAttempted = useRef(false);
+
+  // Restore draft from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (saved) {
+      try {
+        const draft = JSON.parse(saved);
+        setForm(draft);
+      } catch { /* ignore */ }
+    }
+  }, []);
+
+  // Auto-send after login if there's a pending draft
+  useEffect(() => {
+    if (!user || autoSendAttempted.current) return;
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (!saved) return;
+
+    autoSendAttempted.current = true;
+    try {
+      const draft = JSON.parse(saved) as { name: string; email: string; message: string };
+      const result = contactSchema.safeParse(draft);
+      if (result.success) {
+        sendMessage({ name: result.data.name, email: result.data.email, message: result.data.message });
+      }
+    } catch { /* ignore */ }
+  }, [user]);
+
+  const sendMessage = async (data: { name: string; email: string; message: string }) => {
+    setSending(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-contact", {
+        body: data,
+      });
+      if (error) throw error;
+      toast.success("Message sent! We'll get back to you soon.");
+      setForm({ name: "", email: "", message: "" });
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      toast.error("Failed to send message. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,19 +86,14 @@ export default function ContactPage() {
       return;
     }
 
-    setSending(true);
-    try {
-      const { error } = await supabase.functions.invoke("send-contact", {
-        body: result.data,
-      });
-      if (error) throw error;
-      toast.success("Message sent! We'll get back to you soon.");
-      setForm({ name: "", email: "", message: "" });
-    } catch {
-      toast.error("Failed to send message. Please try again.");
-    } finally {
-      setSending(false);
+    if (!user) {
+      // Save draft and redirect to auth
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+      navigate("/auth?redirect=/contact");
+      return;
     }
+
+    await sendMessage({ name: result.data.name, email: result.data.email, message: result.data.message });
   };
 
   return (
@@ -116,55 +159,49 @@ export default function ContactPage() {
         {/* Contact form */}
         <Card className="bg-card border-border">
           <CardContent className="p-6">
-            {user ? (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                <div className="space-y-1.5">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="Your name"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  />
-                  {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  />
-                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="message">Message</Label>
-                  <Textarea
-                    id="message"
-                    placeholder="How can we help?"
-                    rows={5}
-                    value={form.message}
-                    onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  />
-                  {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
-                </div>
-                <Button type="submit" disabled={sending} className="gap-2 self-start">
-                  {sending ? "Sending…" : <><Send className="w-4 h-4" /> Send Message</>}
-                </Button>
-              </form>
-            ) : (
-              <div className="flex flex-col items-center gap-4 py-6 text-center">
-                <LogIn className="w-8 h-8 text-muted-foreground" />
-                <p className="text-muted-foreground">Sign up or log in to send us a message.</p>
-                <Link to="/auth">
-                  <Button className="gap-2">
-                    <LogIn className="w-4 h-4" /> Sign Up / Log In
-                  </Button>
-                </Link>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              <div className="space-y-1.5">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  placeholder="Your name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+                {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
               </div>
-            )}
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="message">Message</Label>
+                <Textarea
+                  id="message"
+                  placeholder="How can we help?"
+                  rows={5}
+                  value={form.message}
+                  onChange={(e) => setForm({ ...form, message: e.target.value })}
+                />
+                {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
+              </div>
+              <Button type="submit" disabled={sending} className="gap-2 self-start">
+                {sending ? (
+                  "Sending…"
+                ) : user ? (
+                  <><Send className="w-4 h-4" /> Send Message</>
+                ) : (
+                  <><LogIn className="w-4 h-4" /> Sign Up / Log In to Send</>
+                )}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </main>
