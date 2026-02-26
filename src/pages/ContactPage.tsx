@@ -82,27 +82,33 @@ export default function ContactPage() {
 
         {/* Support channels */}
         <div className="grid gap-4 sm:grid-cols-3 mb-10">
-          <Card className="bg-card border-border cursor-pointer hover:border-primary transition-colors" onClick={() => window.open("tel:+37060039999")}>
-            <CardContent className="flex flex-col items-center gap-2 p-5 text-center">
-              <Phone className="w-6 h-6 text-primary" />
-              <span className="text-xs font-medium text-muted-foreground">WhatsApp / Call</span>
-              <span className="text-sm font-semibold">+370 600 39999</span>
-            </CardContent>
-          </Card>
-          <Card className="bg-card border-border cursor-pointer hover:border-primary transition-colors" onClick={() => window.open("tel:+34671880069")}>
-            <CardContent className="flex flex-col items-center gap-2 p-5 text-center">
-              <Phone className="w-6 h-6 text-primary" />
-              <span className="text-xs font-medium text-muted-foreground">WhatsApp / Call</span>
-              <span className="text-sm font-semibold">+34 671 880069</span>
-            </CardContent>
-          </Card>
-          <Card className="bg-card border-border cursor-pointer hover:border-primary transition-colors" onClick={() => window.location.href = "mailto:donatasjuskus@icloud.com"}>
-            <CardContent className="flex flex-col items-center gap-2 p-5 text-center">
-              <Mail className="w-6 h-6 text-primary" />
-              <span className="text-xs font-medium text-muted-foreground">Email</span>
-              <span className="text-sm font-semibold break-all">donatasjuskus@icloud.com</span>
-            </CardContent>
-          </Card>
+          <a href="tel:+37060039999" className="block">
+            <Card className="bg-card border-border cursor-pointer hover:border-primary transition-colors">
+              <CardContent className="flex flex-col items-center gap-2 p-5 text-center">
+                <Phone className="w-6 h-6 text-primary" />
+                <span className="text-xs font-medium text-muted-foreground">WhatsApp / Call</span>
+                <span className="text-sm font-semibold">+370 600 39999</span>
+              </CardContent>
+            </Card>
+          </a>
+          <a href="tel:+34671880069" className="block">
+            <Card className="bg-card border-border cursor-pointer hover:border-primary transition-colors">
+              <CardContent className="flex flex-col items-center gap-2 p-5 text-center">
+                <Phone className="w-6 h-6 text-primary" />
+                <span className="text-xs font-medium text-muted-foreground">WhatsApp / Call</span>
+                <span className="text-sm font-semibold">+34 671 880069</span>
+              </CardContent>
+            </Card>
+          </a>
+          <a href="mailto:donatasjuskus@icloud.com" className="block">
+            <Card className="bg-card border-border cursor-pointer hover:border-primary transition-colors">
+              <CardContent className="flex flex-col items-center gap-2 p-5 text-center">
+                <Mail className="w-6 h-6 text-primary" />
+                <span className="text-xs font-medium text-muted-foreground">Email</span>
+                <span className="text-sm font-semibold break-all">donatasjuskus@icloud.com</span>
+              </CardContent>
+            </Card>
+          </a>
         </div>
 
         {/* Contact form */}
