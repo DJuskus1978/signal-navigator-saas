@@ -62,7 +62,7 @@ export default function ContactPage() {
         body: data,
       });
       if (error) throw error;
-      toast.success("Message sent! We'll get back to you soon.");
+      toast.success("Your message was sent! We will get in contact soon.");
       setForm({ name: "", email: "", message: "" });
       localStorage.removeItem(DRAFT_KEY);
     } catch {

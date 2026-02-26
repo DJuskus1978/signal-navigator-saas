@@ -27,7 +27,7 @@ export default function AuthPage() {
 
   const handleOAuth = async (provider: "google" | "apple") => {
     const { error } = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}${redirectTo}`,
     });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -49,7 +49,7 @@ export default function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: `${window.location.origin}${redirectTo}` },
         });
         if (error) throw error;
         toast({
