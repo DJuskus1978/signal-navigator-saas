@@ -170,6 +170,9 @@ export default function LandingPage() {
                 <a href="#pricing" className="px-3 py-2 rounded-lg hover:bg-accent transition-colors text-sm font-medium" onClick={() => setMenuOpen(false)}>
                   Pricing
                 </a>
+                <Link to="/contact" className="px-3 py-2 rounded-lg hover:bg-accent transition-colors text-sm font-medium" onClick={() => setMenuOpen(false)}>
+                  Contact Us
+                </Link>
                 <Link to="/auth" className="px-3 py-2 rounded-lg hover:bg-accent transition-colors text-sm font-medium sm:hidden" onClick={() => setMenuOpen(false)}>
                   Sign In
                 </Link>

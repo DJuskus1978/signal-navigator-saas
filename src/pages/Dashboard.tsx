@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StockCard } from "@/components/StockCard";
 import { Exchange } from "@/lib/types";
-import { Search, LogOut, Loader2, Lock, CreditCard, ArrowRight, Menu } from "lucide-react";
+import { Search, LogOut, Loader2, Lock, CreditCard, ArrowRight, Menu, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -119,6 +119,11 @@ export default function Dashboard() {
                     <CreditCard className="w-4 h-4" /> Manage Plan
                   </Button>
                 )}
+                <Link to="/contact">
+                  <Button variant="ghost" className="justify-start gap-2 w-full">
+                    <MessageCircle className="w-4 h-4" /> Contact Us
+                  </Button>
+                </Link>
                 <Button variant="ghost" className="justify-start gap-2 text-destructive" onClick={signOut}>
                   <LogOut className="w-4 h-4" /> Sign Out
                 </Button>
