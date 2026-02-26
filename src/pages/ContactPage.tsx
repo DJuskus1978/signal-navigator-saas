@@ -6,10 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadarLogo } from "@/components/RadarLogo";
-import { ArrowLeft, Send, Mail, MessageCircle, Phone } from "lucide-react";
+import { ArrowLeft, Send, Mail, MessageCircle, Phone, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
@@ -18,6 +19,7 @@ const contactSchema = z.object({
 });
 
 export default function ContactPage() {
+  const { user } = useAuth();
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sending, setSending] = useState(false);
@@ -114,43 +116,55 @@ export default function ContactPage() {
         {/* Contact form */}
         <Card className="bg-card border-border">
           <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Your name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
-                {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+            {user ? (
+              <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                <div className="space-y-1.5">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="Your name"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  />
+                  {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  />
+                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="message">Message</Label>
+                  <Textarea
+                    id="message"
+                    placeholder="How can we help?"
+                    rows={5}
+                    value={form.message}
+                    onChange={(e) => setForm({ ...form, message: e.target.value })}
+                  />
+                  {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
+                </div>
+                <Button type="submit" disabled={sending} className="gap-2 self-start">
+                  {sending ? "Sending…" : <><Send className="w-4 h-4" /> Send Message</>}
+                </Button>
+              </form>
+            ) : (
+              <div className="flex flex-col items-center gap-4 py-6 text-center">
+                <LogIn className="w-8 h-8 text-muted-foreground" />
+                <p className="text-muted-foreground">Please log in to send us a message.</p>
+                <Link to="/auth">
+                  <Button className="gap-2">
+                    <LogIn className="w-4 h-4" /> Log In
+                  </Button>
+                </Link>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                />
-                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="message">Message</Label>
-                <Textarea
-                  id="message"
-                  placeholder="How can we help?"
-                  rows={5}
-                  value={form.message}
-                  onChange={(e) => setForm({ ...form, message: e.target.value })}
-                />
-                {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
-              </div>
-              <Button type="submit" disabled={sending} className="gap-2 self-start">
-                {sending ? "Sending…" : <><Send className="w-4 h-4" /> Send Message</>}
-              </Button>
-            </form>
+            )}
           </CardContent>
         </Card>
       </main>
