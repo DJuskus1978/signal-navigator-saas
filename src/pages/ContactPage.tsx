@@ -6,9 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadarLogo } from "@/components/RadarLogo";
-import { ArrowLeft, Send, Phone, Mail, MessageCircle } from "lucide-react";
+import { ArrowLeft, Send, Mail, MessageCircle, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
@@ -36,11 +37,18 @@ export default function ContactPage() {
     }
 
     setSending(true);
-    // Simulate sending — can be replaced with an edge function later
-    await new Promise((r) => setTimeout(r, 1200));
-    setSending(false);
-    toast.success("Message sent! We'll get back to you soon.");
-    setForm({ name: "", email: "", message: "" });
+    try {
+      const { error } = await supabase.functions.invoke("send-contact", {
+        body: result.data,
+      });
+      if (error) throw error;
+      toast.success("Message sent! We'll get back to you soon.");
+      setForm({ name: "", email: "", message: "" });
+    } catch {
+      toast.error("Failed to send message. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -66,29 +74,33 @@ export default function ContactPage() {
           Have a question or feedback? Reach out and we'll get back to you as soon as possible.
         </p>
 
+        {/* Live support title */}
+        <div className="flex items-center gap-2 mb-4">
+          <MessageCircle className="w-5 h-5 text-primary" />
+          <h2 className="text-lg font-semibold">Live Support Numbers</h2>
+        </div>
+
         {/* Support channels */}
         <div className="grid gap-4 sm:grid-cols-3 mb-10">
-          <Card className="bg-card border-border">
-            <CardContent className="flex flex-col items-center gap-2 p-5 text-center">
-              <MessageCircle className="w-6 h-6 text-primary" />
-              <span className="text-xs font-medium text-muted-foreground">WhatsApp</span>
-              <a href="https://wa.me/37060039999" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:text-primary transition-colors">+370 600 39999</a>
-              <a href="https://wa.me/34671880069" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:text-primary transition-colors">+34 671 880069</a>
-            </CardContent>
-          </Card>
-          <Card className="bg-card border-border">
+          <Card className="bg-card border-border cursor-pointer hover:border-primary transition-colors" onClick={() => window.open("tel:+37060039999")}>
             <CardContent className="flex flex-col items-center gap-2 p-5 text-center">
               <Phone className="w-6 h-6 text-primary" />
-              <span className="text-xs font-medium text-muted-foreground">Telephone</span>
-              <a href="tel:+37060039999" className="text-sm font-semibold hover:text-primary transition-colors">+370 600 39999</a>
-              <a href="tel:+34671880069" className="text-sm font-semibold hover:text-primary transition-colors">+34 671 880069</a>
+              <span className="text-xs font-medium text-muted-foreground">WhatsApp / Call</span>
+              <span className="text-sm font-semibold">+370 600 39999</span>
             </CardContent>
           </Card>
-          <Card className="bg-card border-border">
+          <Card className="bg-card border-border cursor-pointer hover:border-primary transition-colors" onClick={() => window.open("tel:+34671880069")}>
+            <CardContent className="flex flex-col items-center gap-2 p-5 text-center">
+              <Phone className="w-6 h-6 text-primary" />
+              <span className="text-xs font-medium text-muted-foreground">WhatsApp / Call</span>
+              <span className="text-sm font-semibold">+34 671 880069</span>
+            </CardContent>
+          </Card>
+          <Card className="bg-card border-border cursor-pointer hover:border-primary transition-colors" onClick={() => window.location.href = "mailto:donatasjuskus@icloud.com"}>
             <CardContent className="flex flex-col items-center gap-2 p-5 text-center">
               <Mail className="w-6 h-6 text-primary" />
               <span className="text-xs font-medium text-muted-foreground">Email</span>
-              <a href="mailto:donatasjuskus@icloud.com" className="text-sm font-semibold hover:text-primary transition-colors break-all">donatasjuskus@icloud.com</a>
+              <span className="text-sm font-semibold break-all">donatasjuskus@icloud.com</span>
             </CardContent>
           </Card>
         </div>
