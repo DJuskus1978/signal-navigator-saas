@@ -157,10 +157,10 @@ export default function ContactPage() {
             ) : (
               <div className="flex flex-col items-center gap-4 py-6 text-center">
                 <LogIn className="w-8 h-8 text-muted-foreground" />
-                <p className="text-muted-foreground">Please log in to send us a message.</p>
+                <p className="text-muted-foreground">Sign up or log in to send us a message.</p>
                 <Link to="/auth">
                   <Button className="gap-2">
-                    <LogIn className="w-4 h-4" /> Log In
+                    <LogIn className="w-4 h-4" /> Sign Up / Log In
                   </Button>
                 </Link>
               </div>
