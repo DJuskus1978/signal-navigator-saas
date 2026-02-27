@@ -142,7 +142,7 @@ serve(async (req) => {
 
       const isCrypto = symbol.endsWith("USD") && symbol.length <= 10;
 
-      const [quoteArr, rsiArr, sma50Arr, sma200Arr, ema20Arr, ema12Arr, ema26Arr, keyMetricsArr, growthArr, newsArr, gradesArr] = await Promise.all([
+      const [quoteArr, rsiArr, sma50Arr, sma200Arr, ema20Arr, ema12Arr, ema26Arr, keyMetricsArr, growthArr, newsArr, gradesArr, analystEstimatesArr, consensusArr] = await Promise.all([
         fmpFetch(`/stable/quote?symbol=${symbol}`, apiKey),
         fmpFetch(`/stable/technical-indicators/rsi?symbol=${symbol}&periodLength=14&timeframe=1day`, apiKey).catch(() => []),
         fmpFetch(`/stable/technical-indicators/sma?symbol=${symbol}&periodLength=50&timeframe=1day`, apiKey).catch(() => []),
@@ -156,6 +156,8 @@ serve(async (req) => {
           ? fmpFetch(`/stable/news/crypto?symbol=${symbol}&limit=20`, apiKey).catch(() => [])
           : fmpFetch(`/stable/news/stock?symbol=${symbol}&limit=20`, apiKey).catch(() => []),
         isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/grades?symbol=${symbol}&limit=10`, apiKey).catch(() => []),
+        isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/price-target-consensus?symbol=${symbol}`, apiKey).catch(() => []),
+        isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/upgrades-downgrades-consensus?symbol=${symbol}`, apiKey).catch(() => []),
       ]);
 
       const q = Array.isArray(quoteArr) ? quoteArr[0] : quoteArr;
@@ -183,6 +185,35 @@ serve(async (req) => {
       const analystRating = computeAnalystRating(grades);
       const gradeActivity = computeGradeAction(grades);
       const topHeadline = news.length > 0 ? news[0].title : `${q.name || symbol} trades at $${q.price?.toFixed(2)}`;
+
+      // Process analyst price targets and consensus
+      const priceTargetData = Array.isArray(analystEstimatesArr) ? analystEstimatesArr[0] : (typeof analystEstimatesArr === 'object' ? analystEstimatesArr : null);
+      const consensusData = Array.isArray(consensusArr) ? consensusArr[0] : (typeof consensusArr === 'object' ? consensusArr : null);
+
+      // Build analyst data
+      const analystData: any = {};
+      
+      if (priceTargetData && priceTargetData.targetConsensus) {
+        analystData.priceTarget = {
+          targetHigh: priceTargetData.targetHigh ?? null,
+          targetLow: priceTargetData.targetLow ?? null,
+          targetConsensus: priceTargetData.targetConsensus ?? null,
+          targetMedian: priceTargetData.targetMedian ?? null,
+          totalAnalysts: priceTargetData.totalAnalysts ?? 0,
+        };
+      }
+
+      if (consensusData && consensusData.consensus) {
+        analystData.consensus = consensusData.consensus ?? "Hold";
+        analystData.ratingsDistribution = {
+          strongBuy: consensusData.strongBuy ?? 0,
+          buy: consensusData.buy ?? 0,
+          hold: consensusData.hold ?? 0,
+          sell: consensusData.sell ?? 0,
+          strongSell: consensusData.strongSell ?? 0,
+          totalAnalysts: (consensusData.strongBuy ?? 0) + (consensusData.buy ?? 0) + (consensusData.hold ?? 0) + (consensusData.sell ?? 0) + (consensusData.strongSell ?? 0),
+        };
+      }
 
       const result = {
         symbol,
@@ -232,6 +263,7 @@ serve(async (req) => {
             date: g.date,
           })),
         },
+        analystData: Object.keys(analystData).length > 0 ? analystData : null,
       };
 
       await setCache(cacheKey, result, CACHE_TTL.detail);

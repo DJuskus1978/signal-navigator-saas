@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { AIRadarSignalCard } from "@/components/stock-detail/AIRadarSignalCard";
 import { PhaseCard } from "@/components/stock-detail/PhaseCard";
 import { AIDecisionGuidance } from "@/components/stock-detail/AIDecisionGuidance";
+import { AnalystRatingsSection } from "@/components/stock-detail/AnalystRatingsSection";
 import { getFundamentalPhase, getSentimentPhase, getTechnicalPhase } from "@/components/stock-detail/phase-data";
 
 function ViewModeToggle({ simple, onToggle, advancedLocked, onLockedClick }: { simple: boolean; onToggle: () => void; advancedLocked?: boolean; onLockedClick?: () => void }) {
@@ -154,6 +155,13 @@ export default function StockDetail() {
         <div className="mt-8 mb-6">
           <AIDecisionGuidance stock={stock} isCrypto={isCrypto} profile={profile} />
         </div>
+
+        {/* External Analyst Ratings */}
+        {!isCrypto && stock.analystData && (
+          <div className="mb-8">
+            <AnalystRatingsSection analystData={stock.analystData} currentPrice={stock.price} />
+          </div>
+        )}
 
         {/* 3-Phase Breakdown */}
         <div ref={breakdownRef} className="space-y-6 mb-8">

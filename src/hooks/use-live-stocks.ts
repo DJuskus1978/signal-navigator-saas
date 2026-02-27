@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Stock, Exchange, TechnicalIndicators, FundamentalIndicators, SentimentIndicators, SentimentRating, CryptoMarketIndicators } from "@/lib/types";
+import type { Stock, Exchange, TechnicalIndicators, FundamentalIndicators, SentimentIndicators, SentimentRating, CryptoMarketIndicators, AnalystData } from "@/lib/types";
 import { calculatePhaseScores, getRecommendation, getConfidence } from "@/lib/recommendation-engine";
 import { calculateCryptoPhaseScores } from "@/lib/crypto-scoring-engine";
 import { calculateAllRadarScores } from "@/lib/radar-scoring";
@@ -72,6 +72,24 @@ interface DetailResponse extends QuoteResponse {
     freeCashFlowYield: number | null;
   };
   sentiment: DetailSentiment;
+  analystData?: {
+    consensus?: string;
+    priceTarget?: {
+      targetHigh: number | null;
+      targetLow: number | null;
+      targetConsensus: number | null;
+      targetMedian: number | null;
+      totalAnalysts: number;
+    };
+    ratingsDistribution?: {
+      strongBuy: number;
+      buy: number;
+      hold: number;
+      sell: number;
+      strongSell: number;
+      totalAnalysts: number;
+    };
+  } | null;
 }
 
 // ─── API helpers ─────────────────────────────────────────────────────────────
@@ -177,6 +195,29 @@ function buildSentiment(s?: DetailSentiment): SentimentIndicators {
     insiderActivity: s.insiderActivity ?? 0,
     headline: s.headline ?? "",
     sentimentRating: deriveSentimentRating(analystRating),
+  };
+}
+
+function buildAnalystData(a?: DetailResponse["analystData"]): AnalystData | undefined {
+  if (!a) return undefined;
+  const consensus = (a.consensus as AnalystData["consensus"]) ?? "Hold";
+  return {
+    consensus,
+    priceTarget: a.priceTarget ? {
+      targetHigh: a.priceTarget.targetHigh ?? 0,
+      targetLow: a.priceTarget.targetLow ?? 0,
+      targetConsensus: a.priceTarget.targetConsensus ?? 0,
+      targetMedian: a.priceTarget.targetMedian ?? 0,
+      totalAnalysts: a.priceTarget.totalAnalysts ?? 0,
+    } : null,
+    ratingsDistribution: a.ratingsDistribution ? {
+      strongBuy: a.ratingsDistribution.strongBuy ?? 0,
+      buy: a.ratingsDistribution.buy ?? 0,
+      hold: a.ratingsDistribution.hold ?? 0,
+      sell: a.ratingsDistribution.sell ?? 0,
+      strongSell: a.ratingsDistribution.strongSell ?? 0,
+      totalAnalysts: a.ratingsDistribution.totalAnalysts ?? 0,
+    } : null,
   };
 }
 
@@ -338,6 +379,7 @@ function detailToStock(detail: DetailResponse, exchange: Exchange): Stock {
     sentiment,
     hasDetailData: true,
     radarScores,
+    analystData: buildAnalystData(detail.analystData),
   };
 }
 
