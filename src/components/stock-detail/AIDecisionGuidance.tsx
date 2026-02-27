@@ -44,7 +44,7 @@ export function AIDecisionGuidance({ stock, isCrypto, profile }: Props) {
           {generateGuidance(stock, isCrypto, profile)}
         </p>
         <p className="text-[10px] text-primary/50 mt-4">
-          This signal reflects algorithmic analysis and is not personalized investment advice.
+          This information is not a personal recommendation or investment advice. Conduct your own research and consider your financial situation before making any investment decisions.
         </p>
       </CardContent>
     </Card>
