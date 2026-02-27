@@ -86,6 +86,31 @@ export interface RadarScore {
   profile: InvestorProfile;
 }
 
+export interface AnalystRatingsDistribution {
+  strongBuy: number;
+  buy: number;
+  hold: number;
+  sell: number;
+  strongSell: number;
+  totalAnalysts: number;
+}
+
+export interface AnalystPriceTarget {
+  targetHigh: number;
+  targetLow: number;
+  targetConsensus: number;
+  targetMedian: number;
+  totalAnalysts: number;
+}
+
+export type AnalystConsensus = "Strong Buy" | "Buy" | "Hold" | "Sell" | "Strong Sell";
+
+export interface AnalystData {
+  consensus: AnalystConsensus;
+  priceTarget: AnalystPriceTarget | null;
+  ratingsDistribution: AnalystRatingsDistribution | null;
+}
+
 export interface Stock {
   ticker: string;
   name: string;
@@ -104,4 +129,5 @@ export interface Stock {
   cryptoMarket?: CryptoMarketIndicators;
   hasDetailData?: boolean;
   radarScores?: Record<InvestorProfile, RadarScore>;
+  analystData?: AnalystData;
 }
