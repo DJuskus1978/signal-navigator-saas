@@ -96,7 +96,7 @@ function computeGradeAction(grades: any[]): number {
   return Math.max(-1, Math.min(1, score / recent.length));
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -130,7 +130,7 @@ serve(async (req) => {
 
     cleanupExpired();
 
-    // ─── Single stock detail ───
+    // Single stock detail
     if (singleSymbol) {
       const symbol = singleSymbol.toUpperCase();
       const cacheKey = `detail:${symbol}`;
@@ -186,11 +186,9 @@ serve(async (req) => {
       const gradeActivity = computeGradeAction(grades);
       const topHeadline = news.length > 0 ? news[0].title : `${q.name || symbol} trades at $${q.price?.toFixed(2)}`;
 
-      // Process analyst price targets and consensus
       const priceTargetData = Array.isArray(analystEstimatesArr) ? analystEstimatesArr[0] : (typeof analystEstimatesArr === 'object' ? analystEstimatesArr : null);
       const consensusData = Array.isArray(consensusArr) ? consensusArr[0] : (typeof consensusArr === 'object' ? consensusArr : null);
 
-      // Build analyst data
       const analystData: any = {};
       
       if (priceTargetData && priceTargetData.targetConsensus) {
@@ -270,7 +268,7 @@ serve(async (req) => {
       return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // ─── Batch quote mode ───
+    // Batch quote mode
     if (symbolsParam) {
       const allSymbols = symbolsParam.split(',').slice(0, 30);
       const cacheKey = `batch:${allSymbols.sort().join(',')}`;
@@ -313,7 +311,7 @@ serve(async (req) => {
       return new Response(JSON.stringify(responseData), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // ─── Search mode ───
+    // Search mode
     const searchQuery = searchParams.get('search');
     if (searchQuery && searchQuery.length >= 1) {
       const isCryptoSearch = typeFilter === "crypto";
@@ -340,7 +338,6 @@ serve(async (req) => {
             items.push(item);
           }
         }
-        console.log(`Crypto search "${searchQuery}": ${allItems.length} raw, ${items.length} unique.`);
         stockItems = items
           .filter((item: any) => {
             const sym = (item.symbol || "").toUpperCase();
@@ -402,7 +399,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ error: 'Provide ?symbols=AAPL,MSFT or ?symbol=AAPL or ?search=query' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error('Edge function error:', err);
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
