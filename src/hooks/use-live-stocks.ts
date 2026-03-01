@@ -110,7 +110,7 @@ function edgeFnUrl(fn: string, path: string) {
 
 async function fetchBatchQuotes(symbols: string[]): Promise<QuoteResponse[]> {
   const headers = await getAuthHeaders();
-  const res = await fetch(edgeFnUrl("quotes", `?symbols=${symbols.join(",")}`), { headers });
+  const res = await fetch(edgeFnUrl("get-quotes", `?symbols=${symbols.join(",")}`), { headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || `HTTP ${res.status}`);
@@ -121,7 +121,7 @@ async function fetchBatchQuotes(symbols: string[]): Promise<QuoteResponse[]> {
 
 async function fetchStockDetail(symbol: string): Promise<DetailResponse> {
   const headers = await getAuthHeaders();
-  const res = await fetch(edgeFnUrl("detail", `?symbol=${symbol}`), { headers });
+  const res = await fetch(edgeFnUrl("get-detail", `?symbol=${symbol}`), { headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || `HTTP ${res.status}`);
@@ -412,7 +412,7 @@ export function useSearchStocks(query: string, assetType: "stock" | "crypto" = "
     queryFn: async () => {
       const headers = await getAuthHeaders();
       const typeParam = assetType === "crypto" ? "&type=crypto" : "";
-      const res = await fetch(edgeFnUrl("quotes", `?search=${encodeURIComponent(query)}${typeParam}`), { headers });
+      const res = await fetch(edgeFnUrl("get-quotes", `?search=${encodeURIComponent(query)}${typeParam}`), { headers });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || `HTTP ${res.status}`);

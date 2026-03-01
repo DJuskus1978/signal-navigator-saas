@@ -1,9 +1,18 @@
 project_id = "wgzztskdrmikvklawllr"
 
+[functions.stock-quote]
+verify_jwt = false
+
 [functions.quotes]
 verify_jwt = false
 
 [functions.detail]
+verify_jwt = false
+
+[functions.get-quotes]
+verify_jwt = false
+
+[functions.get-detail]
 verify_jwt = false
 
 [functions.create-checkout]
