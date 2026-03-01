@@ -1,4 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,21 +14,8 @@ const CACHE_TTL_DETAIL = 2;
 async function fmpFetch(path: string, apiKey: string) {
   const sep = path.includes("?") ? "&" : "?";
   const url = `${FMP_BASE}${path}${sep}apikey=${apiKey}`;
-  console.log(`FMP requesting: ${FMP_BASE}${path} (key: ${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)})`);
   const res = await fetch(url);
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`FMP ${res.status} ${path}: ${body.substring(0, 300)}`);
-    // Try header auth as fallback
-    const url2 = `${FMP_BASE}${path}`;
-    const res2 = await fetch(url2, { headers: { "apikey": apiKey } });
-    if (!res2.ok) {
-      const body2 = await res2.text();
-      console.error(`FMP header auth also failed ${res2.status}: ${body2.substring(0, 300)}`);
-      throw new Error(`FMP ${res.status}: ${path}`);
-    }
-    return res2.json();
-  }
+  if (!res.ok) throw new Error(`FMP ${res.status}: ${path}`);
   return res.json();
 }
 
@@ -77,7 +65,7 @@ function jsonRes(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 }
 
-Deno.serve(async (req: Request) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
@@ -90,7 +78,6 @@ Deno.serve(async (req: Request) => {
 
     const apiKey = Deno.env.get('FMP_API_KEY');
     if (!apiKey) return jsonRes({ error: 'FMP API key not configured' }, 500);
-    console.log(`FMP key starts with: ${apiKey.substring(0, 6)}... len=${apiKey.length}`);
 
     const { searchParams } = new URL(req.url);
     const symbolsParam = searchParams.get('symbols');
