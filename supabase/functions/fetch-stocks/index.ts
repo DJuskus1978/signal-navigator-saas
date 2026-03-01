@@ -5,19 +5,48 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const FMP_BASE = "https://financialmodelingprep.com/api/v3";
+const FMP_BASE = "https://financialmodelingprep.com";
 
 async function fmpFetch(path: string, apiKey: string) {
   const sep = path.includes("?") ? "&" : "?";
   const url = `${FMP_BASE}${path}${sep}apikey=${apiKey}`;
-  console.log(`FMP: ${path.substring(0, 80)}`);
+  console.log(`FMP: ${url.replace(apiKey, '***').substring(0, 120)}`);
   const res = await fetch(url);
   if (!res.ok) {
     const body = await res.text();
-    console.error(`FMP ${res.status}: ${body.substring(0, 200)}`);
+    console.error(`FMP ${res.status}: ${body.substring(0, 300)}`);
     throw new Error(`FMP ${res.status}`);
   }
   return res.json();
+}
+
+// Stable endpoint paths (query-parameter based)
+function quotePath(symbol: string) {
+  return `/stable/quote?symbol=${encodeURIComponent(symbol)}`;
+}
+function searchSymbolPath(query: string, limit: number) {
+  return `/stable/search-symbol?query=${encodeURIComponent(query)}&limit=${limit}`;
+}
+function technicalPath(indicator: string, symbol: string, period: number) {
+  return `/stable/technical-indicators/${indicator}?symbol=${encodeURIComponent(symbol)}&period=${period}`;
+}
+function keyMetricsPath(symbol: string) {
+  return `/stable/key-metrics?symbol=${encodeURIComponent(symbol)}&limit=1`;
+}
+function incomeGrowthPath(symbol: string) {
+  return `/stable/income-statement-growth?symbol=${encodeURIComponent(symbol)}&limit=1`;
+}
+function newsPath(symbol: string) {
+  return `/stable/news/stock?symbols=${encodeURIComponent(symbol)}&limit=20`;
+}
+function gradesPath(symbol: string) {
+  return `/stable/grades?symbol=${encodeURIComponent(symbol)}&limit=10`;
+}
+function priceTargetPath(symbol: string) {
+  return `/stable/price-target-consensus?symbol=${encodeURIComponent(symbol)}`;
+}
+function upgradeDowngradePath(symbol: string) {
+  return `/stable/upgrades-downgrades-consensus?symbol=${encodeURIComponent(symbol)}`;
 }
 
 function svc() {
@@ -75,19 +104,19 @@ async function handleDetail(sym: string, apiKey: string) {
   const isCrypto = sym.endsWith("USD") && sym.length <= 10;
 
   const fetches = [
-    fmpFetch(`/quote/${sym}`, apiKey),
-    fmpFetch(`/technical_indicator/daily/${sym}?type=rsi&period=14`, apiKey).catch(() => []),
-    fmpFetch(`/technical_indicator/daily/${sym}?type=sma&period=50`, apiKey).catch(() => []),
-    fmpFetch(`/technical_indicator/daily/${sym}?type=sma&period=200`, apiKey).catch(() => []),
-    fmpFetch(`/technical_indicator/daily/${sym}?type=ema&period=20`, apiKey).catch(() => []),
-    fmpFetch(`/technical_indicator/daily/${sym}?type=ema&period=12`, apiKey).catch(() => []),
-    fmpFetch(`/technical_indicator/daily/${sym}?type=ema&period=26`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/key-metrics/${sym}?limit=1`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/income-statement-growth/${sym}?limit=1`, apiKey).catch(() => []),
-    fmpFetch(`/stock_news?tickers=${sym}&limit=20`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/grade/${sym}?limit=10`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/price-target-consensus/${sym}`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/upgrades-downgrades-consensus/${sym}`, apiKey).catch(() => []),
+    fmpFetch(quotePath(sym), apiKey),
+    fmpFetch(technicalPath("rsi", sym, 14), apiKey).catch(() => []),
+    fmpFetch(technicalPath("sma", sym, 50), apiKey).catch(() => []),
+    fmpFetch(technicalPath("sma", sym, 200), apiKey).catch(() => []),
+    fmpFetch(technicalPath("ema", sym, 20), apiKey).catch(() => []),
+    fmpFetch(technicalPath("ema", sym, 12), apiKey).catch(() => []),
+    fmpFetch(technicalPath("ema", sym, 26), apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(keyMetricsPath(sym), apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(incomeGrowthPath(sym), apiKey).catch(() => []),
+    fmpFetch(newsPath(sym), apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(gradesPath(sym), apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(priceTargetPath(sym), apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(upgradeDowngradePath(sym), apiKey).catch(() => []),
   ];
   const results = await Promise.all(fetches);
 
@@ -145,7 +174,7 @@ async function handleBatch(symbolsParam: string, apiKey: string) {
   if (cached) return jsonRes(cached);
 
   const stocks = (await Promise.all(syms.map(s =>
-    fmpFetch(`/quote/${s.trim()}`, apiKey)
+    fmpFetch(quotePath(s.trim()), apiKey)
       .then((d: unknown) => {
         const q = Array.isArray(d) ? d[0] : d as Record<string, unknown>;
         if (!q?.symbol) return null;
@@ -164,7 +193,7 @@ async function handleSearch(sq: string, isCrypto: boolean, apiKey: string) {
   const cached = await getCache(ck);
   if (cached) return jsonRes(cached);
 
-  const sr = await fmpFetch(`/search?query=${encodeURIComponent(sq)}&limit=${isCrypto ? 30 : 10}`, apiKey).catch(() => []);
+  const sr = await fmpFetch(searchSymbolPath(sq, isCrypto ? 30 : 10), apiKey).catch(() => []);
   const all = Array.isArray(sr) ? sr : [];
   const seen = new Set<string>();
   const items: Record<string, unknown>[] = [];
@@ -180,7 +209,7 @@ async function handleSearch(sq: string, isCrypto: boolean, apiKey: string) {
   if (!filtered.length) return jsonRes({ stocks: [] });
 
   const stocks = (await Promise.all(filtered.map(i =>
-    fmpFetch(`/quote/${i.symbol}`, apiKey)
+    fmpFetch(quotePath(String(i.symbol)), apiKey)
       .then((d: unknown) => {
         const q = Array.isArray(d) ? d[0] : d as Record<string, unknown>;
         if (!q?.symbol) return null;
@@ -207,7 +236,6 @@ Deno.serve(async (req: Request) => {
 
     const apiKey = Deno.env.get('FMP_API_KEY');
     if (!apiKey) return jsonRes({ error: 'FMP API key not configured' }, 500);
-    console.log(`API key loaded: ${apiKey.substring(0, 6)}...${apiKey.substring(apiKey.length - 4)} (len=${apiKey.length})`);
 
     const { searchParams } = new URL(req.url);
     const symbolsParam = searchParams.get('symbols');
@@ -216,19 +244,6 @@ Deno.serve(async (req: Request) => {
     const typeFilter = searchParams.get('type');
 
     if (Math.random() < 0.1) svc().from('stock_cache').delete().lt('expires_at', new Date().toISOString()).then(() => {});
-
-    // Diagnostic mode
-    if (searchParams.get('diag') === '1') {
-      const testUrl = `https://financialmodelingprep.com/api/v3/quote/AAPL?apikey=${apiKey}`;
-      const testUrl2 = `https://financialmodelingprep.com/stable/quote?symbol=AAPL&apikey=${apiKey}`;
-      const testUrl3 = `https://financialmodelingprep.com/api/v3/quote-short/AAPL?apikey=${apiKey}`;
-      const [r1, r2, r3] = await Promise.all([
-        fetch(testUrl).then(async r => ({ status: r.status, body: (await r.text()).substring(0, 200) })),
-        fetch(testUrl2).then(async r => ({ status: r.status, body: (await r.text()).substring(0, 200) })),
-        fetch(testUrl3).then(async r => ({ status: r.status, body: (await r.text()).substring(0, 200) })),
-      ]);
-      return jsonRes({ v3_quote: r1, stable_quote: r2, v3_quote_short: r3, keyPrefix: apiKey.substring(0, 8), keyLen: apiKey.length });
-    }
 
     if (singleSymbol) return handleDetail(singleSymbol.toUpperCase(), apiKey);
     if (symbolsParam) return handleBatch(symbolsParam, apiKey);
