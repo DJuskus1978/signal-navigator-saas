@@ -3,6 +3,9 @@ project_id = "wgzztskdrmikvklawllr"
 [functions.fetch-stocks]
 verify_jwt = false
 
+[functions.market-data]
+verify_jwt = false
+
 [functions.create-checkout]
 verify_jwt = false
 
