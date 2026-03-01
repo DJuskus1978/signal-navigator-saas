@@ -207,6 +207,7 @@ Deno.serve(async (req: Request) => {
 
     const apiKey = Deno.env.get('FMP_API_KEY');
     if (!apiKey) return jsonRes({ error: 'FMP API key not configured' }, 500);
+    console.log(`API key loaded: ${apiKey.substring(0, 6)}...${apiKey.substring(apiKey.length - 4)} (len=${apiKey.length})`);
 
     const { searchParams } = new URL(req.url);
     const symbolsParam = searchParams.get('symbols');
