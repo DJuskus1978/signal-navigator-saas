@@ -1,4 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,23 +7,20 @@ const corsHeaders = {
 };
 
 const FMP_BASE = "https://financialmodelingprep.com";
-const CACHE_TTL_BATCH = 5;
-const CACHE_TTL_SEARCH = 3;
-const CACHE_TTL_DETAIL = 2;
 
 async function fmpFetch(path: string, apiKey: string) {
   const sep = path.includes("?") ? "&" : "?";
   const url = `${FMP_BASE}${path}${sep}apikey=${apiKey}`;
+  console.log(`FMP: ${url.replace(apiKey, '***').substring(0, 120)}`);
   const res = await fetch(url);
   if (!res.ok) {
     const body = await res.text();
-    console.error(`FMP ${res.status} ${path}: ${body.substring(0, 200)}`);
-    throw new Error(`FMP ${res.status}: ${path}`);
+    console.error(`FMP ${res.status}: ${body.substring(0, 300)}`);
+    throw new Error(`FMP ${res.status}`);
   }
   return res.json();
 }
 
-// Use FMP stable endpoints with query parameters
 function quotePath(symbol: string) {
   return `/stable/quote?symbol=${encodeURIComponent(symbol)}`;
 }
@@ -30,9 +28,7 @@ function searchSymbolPath(query: string, limit: number) {
   return `/stable/search-symbol?query=${encodeURIComponent(query)}&limit=${limit}`;
 }
 function technicalPath(indicator: string, symbol: string, period: number) {
-  const indicatorMap: Record<string, string> = { rsi: "rsi", sma: "sma", ema: "ema" };
-  const ind = indicatorMap[indicator] || indicator;
-  return `/stable/technical-indicators/${ind}?symbol=${encodeURIComponent(symbol)}&period=${period}`;
+  return `/stable/technical-indicators/${indicator}?symbol=${encodeURIComponent(symbol)}&period=${period}`;
 }
 function keyMetricsPath(symbol: string) {
   return `/stable/key-metrics?symbol=${encodeURIComponent(symbol)}&limit=1`;
@@ -68,26 +64,31 @@ async function setCache(key: string, val: unknown, mins: number) {
   try {
     const now = new Date();
     await svc().from('stock_cache').upsert({ cache_key: key, data: val, fetched_at: now.toISOString(), expires_at: new Date(now.getTime() + mins * 60000).toISOString() }, { onConflict: 'cache_key' });
-  } catch (e) { console.error('cache write:', e); }
+  } catch { /* ignore */ }
+}
+
+function jsonRes(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 }
 
 function gradeScore(g: string): number {
   const l = g.toLowerCase();
   if (l.includes("strong buy") || l.includes("top pick")) return 5;
   if (l.includes("outperform") || l.includes("overweight") || l.includes("buy")) return 4;
-  if (l.includes("hold") || l.includes("neutral") || l.includes("equal") || l.includes("market perform") || l.includes("peer perform") || l.includes("sector perform") || l.includes("in-line")) return 3;
+  if (l.includes("hold") || l.includes("neutral") || l.includes("equal") || l.includes("market perform")) return 3;
   if (l.includes("underperform") || l.includes("underweight") || l.includes("reduce")) return 2;
   if (l.includes("sell")) return 1;
   return 3;
 }
 
-function analystRating(grades: any[]): number {
+function calcAnalystRating(grades: Record<string, unknown>[]): number {
   if (!grades?.length) return 3;
   const r = grades.slice(0, 10);
-  return Math.round(r.reduce((a: number, g: any) => a + gradeScore(g.newGrade || ""), 0) / r.length * 10) / 10;
+  const sum = r.reduce((a: number, g: Record<string, unknown>) => a + gradeScore(String(g.newGrade || "")), 0);
+  return Math.round(sum / r.length * 10) / 10;
 }
 
-function gradeAction(grades: any[]): number {
+function calcGradeAction(grades: Record<string, unknown>[]): number {
   if (!grades?.length) return 0;
   const r = grades.slice(0, 10);
   let s = 0;
@@ -95,11 +96,7 @@ function gradeAction(grades: any[]): number {
   return Math.max(-1, Math.min(1, s / r.length));
 }
 
-function jsonRes(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-}
-
-Deno.serve(async (req: Request) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
@@ -116,20 +113,23 @@ Deno.serve(async (req: Request) => {
     const { searchParams } = new URL(req.url);
     const symbolsParam = searchParams.get('symbols');
     const singleSymbol = searchParams.get('symbol');
+    const sq = searchParams.get('search');
     const typeFilter = searchParams.get('type');
 
-    // cleanup expired cache ~10% of requests
-    if (Math.random() < 0.1) svc().from('stock_cache').delete().lt('expires_at', new Date().toISOString()).then(() => {});
+    // Cleanup expired cache ~10% of requests
+    if (Math.random() < 0.1) {
+      svc().from('stock_cache').delete().lt('expires_at', new Date().toISOString()).then(() => {});
+    }
 
     // ── Detail ──
     if (singleSymbol) {
       const sym = singleSymbol.toUpperCase();
       const ck = `detail:${sym}`;
-      const c = await getCache(ck);
-      if (c) return jsonRes(c);
+      const cached = await getCache(ck);
+      if (cached) return jsonRes(cached);
 
       const isCrypto = sym.endsWith("USD") && sym.length <= 10;
-      const [qArr, rsiA, s50A, s200A, e20A, e12A, e26A, kmA, grA, nwA, gdA, ptA, csA] = await Promise.all([
+      const results = await Promise.all([
         fmpFetch(quotePath(sym), apiKey),
         fmpFetch(technicalPath("rsi", sym, 14), apiKey).catch(() => []),
         fmpFetch(technicalPath("sma", sym, 50), apiKey).catch(() => []),
@@ -145,36 +145,70 @@ Deno.serve(async (req: Request) => {
         isCrypto ? Promise.resolve([]) : fmpFetch(upgradeDowngradePath(sym), apiKey).catch(() => []),
       ]);
 
-      const q = Array.isArray(qArr) ? qArr[0] : qArr;
+      const first = (v: unknown) => Array.isArray(v) ? v[0] ?? null : v;
+      const q: Record<string, unknown> = first(results[0]) as Record<string, unknown>;
       if (!q || q.error) return jsonRes({ error: q?.error || 'No quote data' }, 400);
 
-      const r0 = Array.isArray(rsiA) ? rsiA[0] : null;
-      const s50 = Array.isArray(s50A) ? s50A[0] : null;
-      const s200 = Array.isArray(s200A) ? s200A[0] : null;
-      const e20 = Array.isArray(e20A) ? e20A[0] : null;
-      const e12 = Array.isArray(e12A) ? e12A[0] : null;
-      const e26 = Array.isArray(e26A) ? e26A[0] : null;
-      const km = Array.isArray(kmA) ? kmA[0] : null;
-      const gr = Array.isArray(grA) ? grA[0] : null;
-      const news = Array.isArray(nwA) ? nwA : [];
-      const grades = Array.isArray(gdA) ? gdA : [];
+      const r0 = first(results[1]) as Record<string, unknown> | null;
+      const s50 = first(results[2]) as Record<string, unknown> | null;
+      const s200 = first(results[3]) as Record<string, unknown> | null;
+      const e20 = first(results[4]) as Record<string, unknown> | null;
+      const e12 = first(results[5]) as Record<string, unknown> | null;
+      const e26 = first(results[6]) as Record<string, unknown> | null;
+      const km = first(results[7]) as Record<string, unknown> | null;
+      const gr = first(results[8]) as Record<string, unknown> | null;
+      const news = Array.isArray(results[9]) ? results[9] : [];
+      const grades = Array.isArray(results[10]) ? results[10] : [];
+      const ptD = first(results[11]) as Record<string, unknown> | null;
+      const csD = first(results[12]) as Record<string, unknown> | null;
 
-      const macd = (e12?.ema != null && e26?.ema != null) ? e12.ema - e26.ema : null;
+      const ema12Val = e12?.ema as number | undefined;
+      const ema26Val = e26?.ema as number | undefined;
+      const macd = (ema12Val != null && ema26Val != null) ? ema12Val - ema26Val : null;
 
-      const ptD = Array.isArray(ptA) ? ptA[0] : (typeof ptA === 'object' ? ptA : null);
-      const csD = Array.isArray(csA) ? csA[0] : (typeof csA === 'object' ? csA : null);
-      const ad: any = {};
-      if (ptD?.targetConsensus) ad.priceTarget = { targetHigh: ptD.targetHigh ?? null, targetLow: ptD.targetLow ?? null, targetConsensus: ptD.targetConsensus ?? null, targetMedian: ptD.targetMedian ?? null, totalAnalysts: ptD.totalAnalysts ?? 0 };
-      if (csD?.consensus) { ad.consensus = csD.consensus; ad.ratingsDistribution = { strongBuy: csD.strongBuy ?? 0, buy: csD.buy ?? 0, hold: csD.hold ?? 0, sell: csD.sell ?? 0, strongSell: csD.strongSell ?? 0, totalAnalysts: (csD.strongBuy ?? 0) + (csD.buy ?? 0) + (csD.hold ?? 0) + (csD.sell ?? 0) + (csD.strongSell ?? 0) }; }
+      const ad: Record<string, unknown> = {};
+      if (ptD?.targetConsensus) {
+        ad.priceTarget = { targetHigh: ptD.targetHigh ?? null, targetLow: ptD.targetLow ?? null, targetConsensus: ptD.targetConsensus ?? null, targetMedian: ptD.targetMedian ?? null, totalAnalysts: ptD.totalAnalysts ?? 0 };
+      }
+      if (csD?.consensus) {
+        ad.consensus = csD.consensus;
+        const sb2 = csD.strongBuy as number ?? 0;
+        const b = csD.buy as number ?? 0;
+        const h = csD.hold as number ?? 0;
+        const se = csD.sell as number ?? 0;
+        const ss = csD.strongSell as number ?? 0;
+        ad.ratingsDistribution = { strongBuy: sb2, buy: b, hold: h, sell: se, strongSell: ss, totalAnalysts: sb2 + b + h + se + ss };
+      }
 
+      const price = q.price as number ?? 0;
       const result = {
-        symbol: sym, name: q.name || sym, exchange: q.exchange || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.avgVolume ?? q.volume ?? 0,
-        technical: { rsi: r0?.rsi ?? null, macd, macdSignal: macd != null ? macd * 0.8 : null, sma50: s50?.sma ?? null, sma200: s200?.sma ?? null, ema20: e20?.ema ?? null, bollingerUpper: null, bollingerLower: null, atr: null },
-        fundamental: { peRatio: q.pe ?? km?.peRatio ?? null, forwardPE: km?.forwardPeRatio ?? null, earningsGrowth: gr?.growthNetIncome != null ? gr.growthNetIncome * 100 : null, debtToEquity: km?.debtToEquity ?? null, revenueGrowth: gr?.growthRevenue != null ? gr.growthRevenue * 100 : null, profitMargin: km?.netIncomePerRevenue != null ? km.netIncomePerRevenue * 100 : null, returnOnEquity: km?.roe != null ? km.roe * 100 : null, freeCashFlowYield: km?.freeCashFlowYield != null ? km.freeCashFlowYield * 100 : null },
-        sentiment: { newsCount: news.length, analystRating: analystRating(grades), insiderActivity: gradeAction(grades), headline: news[0]?.title || `${q.name || sym} at $${q.price?.toFixed(2)}`, recentNews: news.slice(0, 5).map((n: any) => ({ title: n.title, publisher: n.publisher || n.site, date: n.publishedDate })), grades: grades.slice(0, 5).map((g: any) => ({ company: g.gradingCompany, grade: g.newGrade, action: g.action, date: g.date })) },
+        symbol: sym, name: q.name || sym, exchange: q.exchange || '',
+        price, previousClose: q.previousClose ?? 0,
+        change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0,
+        volume: q.volume ?? 0, avgVolume: q.avgVolume ?? q.volume ?? 0,
+        technical: {
+          rsi: r0?.rsi ?? null, macd, macdSignal: macd != null ? macd * 0.8 : null,
+          sma50: s50?.sma ?? null, sma200: s200?.sma ?? null, ema20: e20?.ema ?? null,
+          bollingerUpper: null, bollingerLower: null, atr: null
+        },
+        fundamental: {
+          peRatio: q.pe ?? km?.peRatio ?? null, forwardPE: km?.forwardPeRatio ?? null,
+          earningsGrowth: gr?.growthNetIncome != null ? (gr.growthNetIncome as number) * 100 : null,
+          debtToEquity: km?.debtToEquity ?? null,
+          revenueGrowth: gr?.growthRevenue != null ? (gr.growthRevenue as number) * 100 : null,
+          profitMargin: km?.netIncomePerRevenue != null ? (km.netIncomePerRevenue as number) * 100 : null,
+          returnOnEquity: km?.roe != null ? (km.roe as number) * 100 : null,
+          freeCashFlowYield: km?.freeCashFlowYield != null ? (km.freeCashFlowYield as number) * 100 : null
+        },
+        sentiment: {
+          newsCount: news.length, analystRating: calcAnalystRating(grades), insiderActivity: calcGradeAction(grades),
+          headline: news[0]?.title || `${q.name || sym} at $${price.toFixed(2)}`,
+          recentNews: news.slice(0, 5).map((n: Record<string, string>) => ({ title: n.title, publisher: n.publisher || n.site, date: n.publishedDate })),
+          grades: grades.slice(0, 5).map((g: Record<string, string>) => ({ company: g.gradingCompany, grade: g.newGrade, action: g.action, date: g.date })),
+        },
         analystData: Object.keys(ad).length ? ad : null,
       };
-      await setCache(ck, result, CACHE_TTL_DETAIL);
+      await setCache(ck, result, 2);
       return jsonRes(result);
     }
 
@@ -182,58 +216,70 @@ Deno.serve(async (req: Request) => {
     if (symbolsParam) {
       const syms = symbolsParam.split(',').slice(0, 30);
       const ck = `batch:${syms.sort().join(',')}`;
-      const c = await getCache(ck);
-      if (c) { console.log(`Cache HIT ${ck}`); return jsonRes(c); }
-      console.log(`Cache MISS ${ck}`);
+      const cached = await getCache(ck);
+      if (cached) return jsonRes(cached);
 
       const stocks = (await Promise.all(syms.map(s =>
         fmpFetch(quotePath(s.trim()), apiKey)
-          .then((d: any) => { const q = Array.isArray(d) ? d[0] : d; if (!q?.symbol) return null; return { symbol: q.symbol, name: q.name || q.symbol, exchange: q.exchange || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.avgVolume ?? q.volume ?? 0 }; })
-          .catch((e: Error) => { console.error(`FMP err ${s}:`, e.message); return null; })
-      ))).filter(Boolean);
-
-      const rd = { stocks };
-      await setCache(ck, rd, CACHE_TTL_BATCH);
-      return jsonRes(rd);
-    }
-
-    // ── Search ──
-    const sq = searchParams.get('search');
-    if (sq && sq.length >= 1) {
-      const isCrypto = typeFilter === "crypto";
-      const ck = `search:${isCrypto ? "crypto:" : ""}${sq.toLowerCase()}`;
-      const c = await getCache(ck);
-      if (c) return jsonRes(c);
-
-      const sr = await fmpFetch(searchSymbolPath(sq, isCrypto ? 30 : 10), apiKey).catch(() => []);
-      const all = Array.isArray(sr) ? sr : [];
-      const seen = new Set<string>();
-      const items: any[] = [];
-      for (const i of all) { if (i?.symbol && !seen.has(i.symbol)) { seen.add(i.symbol); items.push(i); } }
-
-      let filtered: any[];
-      if (isCrypto) {
-        filtered = items.filter((i: any) => { const s = (i.symbol || "").toUpperCase(); const t = (i.type || "").toLowerCase(); const e = (i.exchangeShortName || i.exchange || "").toUpperCase(); return t === "crypto" || e.includes("CRYPTO") || e === "CCC" || s.endsWith("USD") || s.endsWith("USDT"); }).slice(0, 12);
-      } else {
-        filtered = items.filter((i: any) => i.type === "stock" || i.type === "crypto" || !i.type).slice(0, 8);
-      }
-
-      if (!filtered.length) return jsonRes({ stocks: [] });
-
-      const stocks = (await Promise.all(filtered.map((i: any) =>
-        fmpFetch(quotePath(i.symbol), apiKey)
-          .then((d: any) => { const q = Array.isArray(d) ? d[0] : d; if (!q?.symbol) return null; return { symbol: q.symbol, name: q.name || i.name || q.symbol, exchange: q.exchange || i.exchangeShortName || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.volume ?? 0 }; })
+          .then((d: unknown) => {
+            const q = Array.isArray(d) ? d[0] : d as Record<string, unknown>;
+            if (!q?.symbol) return null;
+            return { symbol: q.symbol, name: q.name || q.symbol, exchange: q.exchange || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.avgVolume ?? q.volume ?? 0 };
+          })
           .catch(() => null)
       ))).filter(Boolean);
 
       const rd = { stocks };
-      await setCache(ck, rd, CACHE_TTL_SEARCH);
+      await setCache(ck, rd, 5);
+      return jsonRes(rd);
+    }
+
+    // ── Search ──
+    if (sq && sq.length >= 1) {
+      const isCrypto = typeFilter === "crypto";
+      const ck = `search:${isCrypto ? "crypto:" : ""}${sq.toLowerCase()}`;
+      const cached = await getCache(ck);
+      if (cached) return jsonRes(cached);
+
+      const sr = await fmpFetch(searchSymbolPath(sq, isCrypto ? 30 : 10), apiKey).catch(() => []);
+      const all = Array.isArray(sr) ? sr : [];
+      const seen = new Set<string>();
+      const items: Record<string, unknown>[] = [];
+      for (const i of all) { if (i?.symbol && !seen.has(i.symbol)) { seen.add(i.symbol); items.push(i); } }
+
+      let filtered: Record<string, unknown>[];
+      if (isCrypto) {
+        filtered = items.filter(i => {
+          const s = String(i.symbol || "").toUpperCase();
+          const t = String(i.type || "").toLowerCase();
+          const e = String(i.exchangeShortName || i.exchange || "").toUpperCase();
+          return t === "crypto" || e.includes("CRYPTO") || e === "CCC" || s.endsWith("USD") || s.endsWith("USDT");
+        }).slice(0, 12);
+      } else {
+        filtered = items.filter(i => i.type === "stock" || i.type === "crypto" || !i.type).slice(0, 8);
+      }
+
+      if (!filtered.length) return jsonRes({ stocks: [] });
+
+      const stocks = (await Promise.all(filtered.map(i =>
+        fmpFetch(quotePath(String(i.symbol)), apiKey)
+          .then((d: unknown) => {
+            const q = Array.isArray(d) ? d[0] : d as Record<string, unknown>;
+            if (!q?.symbol) return null;
+            return { symbol: q.symbol, name: q.name || i.name || q.symbol, exchange: q.exchange || i.exchangeShortName || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.volume ?? 0 };
+          })
+          .catch(() => null)
+      ))).filter(Boolean);
+
+      const rd = { stocks };
+      await setCache(ck, rd, 3);
       return jsonRes(rd);
     }
 
     return jsonRes({ error: 'Provide ?symbols=AAPL,MSFT or ?symbol=AAPL or ?search=query' }, 400);
-  } catch (err: any) {
-    console.error('Edge fn error:', err);
-    return jsonRes({ error: err.message }, 500);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('Edge fn error:', msg);
+    return jsonRes({ error: msg }, 500);
   }
 });

@@ -1,3 +1,4 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
@@ -223,7 +224,7 @@ async function handleSearch(sq: string, isCrypto: boolean, apiKey: string) {
   return jsonRes(rd);
 }
 
-Deno.serve(async (req: Request) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
