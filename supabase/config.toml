@@ -9,6 +9,12 @@ verify_jwt = false
 [functions.market-data]
 verify_jwt = false
 
+[functions.fmp-api]
+verify_jwt = false
+
+[functions.fmp-test]
+verify_jwt = false
+
 [functions.create-checkout]
 verify_jwt = false
 
