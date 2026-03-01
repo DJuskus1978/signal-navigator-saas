@@ -5,12 +5,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const FMP_BASE = "https://financialmodelingprep.com/api/v3";
+const FMP_BASE = "https://financialmodelingprep.com";
 
 async function fmpFetch(path: string, apiKey: string) {
   const sep = path.includes("?") ? "&" : "?";
   const url = `${FMP_BASE}${path}${sep}apikey=${apiKey}`;
-  console.log(`FMP: ${url.replace(apiKey, "***").substring(0, 120)}`);
+  console.log(`FMP: ${path.substring(0, 80)}`);
   const res = await fetch(url);
   if (!res.ok) {
     const body = await res.text();
@@ -67,7 +67,6 @@ function calcGradeAction(grades: Record<string, unknown>[]): number {
   return Math.max(-1, Math.min(1, s / r.length));
 }
 
-// v3 endpoints use PATH-based parameters: /api/v3/quote/AAPL
 async function handleDetail(sym: string, apiKey: string) {
   const ck = `detail:${sym}`;
   const cached = await getCache(ck);
@@ -76,19 +75,19 @@ async function handleDetail(sym: string, apiKey: string) {
   const isCrypto = sym.endsWith("USD") && sym.length <= 10;
 
   const fetches = [
-    fmpFetch(`/quote/${sym}`, apiKey),
-    fmpFetch(`/technical_indicator/daily/${sym}?type=rsi&period=14`, apiKey).catch(() => []),
-    fmpFetch(`/technical_indicator/daily/${sym}?type=sma&period=50`, apiKey).catch(() => []),
-    fmpFetch(`/technical_indicator/daily/${sym}?type=sma&period=200`, apiKey).catch(() => []),
-    fmpFetch(`/technical_indicator/daily/${sym}?type=ema&period=20`, apiKey).catch(() => []),
-    fmpFetch(`/technical_indicator/daily/${sym}?type=ema&period=12`, apiKey).catch(() => []),
-    fmpFetch(`/technical_indicator/daily/${sym}?type=ema&period=26`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/key-metrics/${sym}?limit=1`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/income-statement-growth/${sym}?limit=1`, apiKey).catch(() => []),
-    fmpFetch(`/stock_news?tickers=${sym}&limit=20`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/grade/${sym}?limit=10`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/price-target-consensus/${sym}`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/upgrades-downgrades-consensus/${sym}`, apiKey).catch(() => []),
+    fmpFetch(`/stable/quote?symbol=${sym}`, apiKey),
+    fmpFetch(`/stable/technical-indicators/rsi?symbol=${sym}&period=14`, apiKey).catch(() => []),
+    fmpFetch(`/stable/technical-indicators/sma?symbol=${sym}&period=50`, apiKey).catch(() => []),
+    fmpFetch(`/stable/technical-indicators/sma?symbol=${sym}&period=200`, apiKey).catch(() => []),
+    fmpFetch(`/stable/technical-indicators/ema?symbol=${sym}&period=20`, apiKey).catch(() => []),
+    fmpFetch(`/stable/technical-indicators/ema?symbol=${sym}&period=12`, apiKey).catch(() => []),
+    fmpFetch(`/stable/technical-indicators/ema?symbol=${sym}&period=26`, apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/key-metrics?symbol=${sym}&limit=1`, apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/income-statement-growth?symbol=${sym}&limit=1`, apiKey).catch(() => []),
+    fmpFetch(`/stable/news/stock?symbols=${sym}&limit=20`, apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/grades?symbol=${sym}&limit=10`, apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/price-target-consensus?symbol=${sym}`, apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/upgrades-downgrades-consensus?symbol=${sym}`, apiKey).catch(() => []),
   ];
   const results = await Promise.all(fetches);
 
@@ -139,24 +138,21 @@ async function handleDetail(sym: string, apiKey: string) {
   return jsonRes(result);
 }
 
-// v3 batch: /api/v3/quote/AAPL,MSFT (comma-separated in path)
 async function handleBatch(symbolsParam: string, apiKey: string) {
   const syms = symbolsParam.split(',').slice(0, 30);
   const ck = `batch:${syms.sort().join(',')}`;
   const cached = await getCache(ck);
   if (cached) return jsonRes(cached);
 
-  // v3 supports comma-separated symbols in one call
-  const joined = syms.map(s => s.trim()).join(',');
-  const data = await fmpFetch(`/quote/${joined}`, apiKey).catch(() => []);
-  const arr = Array.isArray(data) ? data : [data];
-
-  const stocks = arr.filter(q => q?.symbol).map(q => ({
-    symbol: q.symbol, name: q.name || q.symbol, exchange: q.exchange || '',
-    price: q.price ?? 0, previousClose: q.previousClose ?? 0,
-    change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0,
-    volume: q.volume ?? 0, avgVolume: q.avgVolume ?? q.volume ?? 0,
-  }));
+  const stocks = (await Promise.all(syms.map(s =>
+    fmpFetch(`/stable/quote?symbol=${s.trim()}`, apiKey)
+      .then((d: unknown) => {
+        const q = Array.isArray(d) ? d[0] : d as Record<string, unknown>;
+        if (!q?.symbol) return null;
+        return { symbol: q.symbol, name: q.name || q.symbol, exchange: q.exchange || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.avgVolume ?? q.volume ?? 0 };
+      })
+      .catch(() => null)
+  ))).filter(Boolean);
 
   const rd = { stocks };
   await setCache(ck, rd, 5);
@@ -168,7 +164,7 @@ async function handleSearch(sq: string, isCrypto: boolean, apiKey: string) {
   const cached = await getCache(ck);
   if (cached) return jsonRes(cached);
 
-  const sr = await fmpFetch(`/search?query=${encodeURIComponent(sq)}&limit=${isCrypto ? 30 : 10}`, apiKey).catch(() => []);
+  const sr = await fmpFetch(`/stable/search-symbol?query=${encodeURIComponent(sq)}&limit=${isCrypto ? 30 : 10}`, apiKey).catch(() => []);
   const all = Array.isArray(sr) ? sr : [];
   const seen = new Set<string>();
   const items: Record<string, unknown>[] = [];
@@ -183,17 +179,15 @@ async function handleSearch(sq: string, isCrypto: boolean, apiKey: string) {
 
   if (!filtered.length) return jsonRes({ stocks: [] });
 
-  // Batch quote for all filtered symbols
-  const syms = filtered.map(i => i.symbol).join(',');
-  const quotes = await fmpFetch(`/quote/${syms}`, apiKey).catch(() => []);
-  const qArr = Array.isArray(quotes) ? quotes : [];
-  const qMap = new Map(qArr.map(q => [q.symbol, q]));
-
-  const stocks = filtered.map(i => {
-    const q = qMap.get(i.symbol as string);
-    if (!q) return null;
-    return { symbol: q.symbol, name: q.name || i.name || q.symbol, exchange: q.exchange || i.exchangeShortName || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.volume ?? 0 };
-  }).filter(Boolean);
+  const stocks = (await Promise.all(filtered.map(i =>
+    fmpFetch(`/stable/quote?symbol=${i.symbol}`, apiKey)
+      .then((d: unknown) => {
+        const q = Array.isArray(d) ? d[0] : d as Record<string, unknown>;
+        if (!q?.symbol) return null;
+        return { symbol: q.symbol, name: q.name || i.name || q.symbol, exchange: q.exchange || i.exchangeShortName || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.volume ?? 0 };
+      })
+      .catch(() => null)
+  ))).filter(Boolean);
 
   const rd = { stocks };
   await setCache(ck, rd, 3);
