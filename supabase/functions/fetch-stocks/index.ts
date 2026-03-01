@@ -22,38 +22,35 @@ async function fmpFetch(path: string, apiKey: string) {
   return res.json();
 }
 
-// Map stable paths to v3 equivalents for plans that don't include /stable/
+// Use FMP stable endpoints with query parameters
 function quotePath(symbol: string) {
-  return `/api/v3/quote/${symbol}`;
+  return `/stable/quote?symbol=${encodeURIComponent(symbol)}`;
 }
 function searchSymbolPath(query: string, limit: number) {
-  return `/api/v3/search?query=${encodeURIComponent(query)}&limit=${limit}`;
-}
-function searchNamePath(query: string, limit: number) {
-  return `/api/v3/search-name?query=${encodeURIComponent(query)}&limit=${limit}`;
+  return `/stable/search-symbol?query=${encodeURIComponent(query)}&limit=${limit}`;
 }
 function technicalPath(indicator: string, symbol: string, period: number) {
-  return `/api/v3/technical_indicator/daily/${symbol}?type=${indicator}&period=${period}`;
+  const indicatorMap: Record<string, string> = { rsi: "rsi", sma: "sma", ema: "ema" };
+  const ind = indicatorMap[indicator] || indicator;
+  return `/stable/technical-indicators/${ind}?symbol=${encodeURIComponent(symbol)}&period=${period}`;
 }
 function keyMetricsPath(symbol: string) {
-  return `/api/v3/key-metrics/${symbol}?limit=1`;
+  return `/stable/key-metrics?symbol=${encodeURIComponent(symbol)}&limit=1`;
 }
 function incomeGrowthPath(symbol: string) {
-  return `/api/v3/income-statement-growth/${symbol}?limit=1`;
+  return `/stable/income-statement-growth?symbol=${encodeURIComponent(symbol)}&limit=1`;
 }
-function newsPath(symbol: string, type: string) {
-  return type === "crypto"
-    ? `/api/v3/stock_news?tickers=${symbol}&limit=20`
-    : `/api/v3/stock_news?tickers=${symbol}&limit=20`;
+function newsPath(symbol: string) {
+  return `/stable/news/stock?symbols=${encodeURIComponent(symbol)}&limit=20`;
 }
 function gradesPath(symbol: string) {
-  return `/api/v3/grade/${symbol}?limit=10`;
+  return `/stable/grades?symbol=${encodeURIComponent(symbol)}&limit=10`;
 }
 function priceTargetPath(symbol: string) {
-  return `/api/v4/price-target-consensus?symbol=${symbol}`;
+  return `/stable/price-target-consensus?symbol=${encodeURIComponent(symbol)}`;
 }
 function upgradeDowngradePath(symbol: string) {
-  return `/api/v4/upgrades-downgrades-consensus?symbol=${symbol}`;
+  return `/stable/upgrades-downgrades-consensus?symbol=${encodeURIComponent(symbol)}`;
 }
 
 function svc() {
@@ -142,7 +139,7 @@ Deno.serve(async (req: Request) => {
         fmpFetch(technicalPath("ema", sym, 26), apiKey).catch(() => []),
         isCrypto ? Promise.resolve([]) : fmpFetch(keyMetricsPath(sym), apiKey).catch(() => []),
         isCrypto ? Promise.resolve([]) : fmpFetch(incomeGrowthPath(sym), apiKey).catch(() => []),
-        fmpFetch(newsPath(sym, isCrypto ? "crypto" : "stock"), apiKey).catch(() => []),
+        fmpFetch(newsPath(sym), apiKey).catch(() => []),
         isCrypto ? Promise.resolve([]) : fmpFetch(gradesPath(sym), apiKey).catch(() => []),
         isCrypto ? Promise.resolve([]) : fmpFetch(priceTargetPath(sym), apiKey).catch(() => []),
         isCrypto ? Promise.resolve([]) : fmpFetch(upgradeDowngradePath(sym), apiKey).catch(() => []),
@@ -208,11 +205,8 @@ Deno.serve(async (req: Request) => {
       const c = await getCache(ck);
       if (c) return jsonRes(c);
 
-      const [sr, nr] = await Promise.all([
-        fmpFetch(searchSymbolPath(sq, isCrypto ? 30 : 10), apiKey).catch(() => []),
-        fmpFetch(searchNamePath(sq, isCrypto ? 30 : 10), apiKey).catch(() => []),
-      ]);
-      const all = [...(Array.isArray(sr) ? sr : []), ...(Array.isArray(nr) ? nr : [])];
+      const sr = await fmpFetch(searchSymbolPath(sq, isCrypto ? 30 : 10), apiKey).catch(() => []);
+      const all = Array.isArray(sr) ? sr : [];
       const seen = new Set<string>();
       const items: any[] = [];
       for (const i of all) { if (i?.symbol && !seen.has(i.symbol)) { seen.add(i.symbol); items.push(i); } }
