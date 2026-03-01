@@ -105,7 +105,7 @@ async function getAuthHeaders() {
 
 function edgeFnUrl(path: string) {
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  return `https://${projectId}.supabase.co/functions/v1/fetch-stocks${path}`;
+  return `https://${projectId}.supabase.co/functions/v1/fmp-test${path}`;
 }
 
 async function fetchBatchQuotes(symbols: string[]): Promise<QuoteResponse[]> {
