@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const FMP_BASE = "https://financialmodelingprep.com";
+const FMP_BASE = "https://financialmodelingprep.com/api/v3";
 
 async function fmpFetch(path: string, apiKey: string) {
   const sep = path.includes("?") ? "&" : "?";
@@ -75,19 +75,19 @@ async function handleDetail(sym: string, apiKey: string) {
   const isCrypto = sym.endsWith("USD") && sym.length <= 10;
 
   const fetches = [
-    fmpFetch(`/stable/quote?symbol=${sym}`, apiKey),
-    fmpFetch(`/stable/technical-indicators/rsi?symbol=${sym}&period=14`, apiKey).catch(() => []),
-    fmpFetch(`/stable/technical-indicators/sma?symbol=${sym}&period=50`, apiKey).catch(() => []),
-    fmpFetch(`/stable/technical-indicators/sma?symbol=${sym}&period=200`, apiKey).catch(() => []),
-    fmpFetch(`/stable/technical-indicators/ema?symbol=${sym}&period=20`, apiKey).catch(() => []),
-    fmpFetch(`/stable/technical-indicators/ema?symbol=${sym}&period=12`, apiKey).catch(() => []),
-    fmpFetch(`/stable/technical-indicators/ema?symbol=${sym}&period=26`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/key-metrics?symbol=${sym}&limit=1`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/income-statement-growth?symbol=${sym}&limit=1`, apiKey).catch(() => []),
-    fmpFetch(`/stable/news/stock?symbols=${sym}&limit=20`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/grades?symbol=${sym}&limit=10`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/price-target-consensus?symbol=${sym}`, apiKey).catch(() => []),
-    isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/upgrades-downgrades-consensus?symbol=${sym}`, apiKey).catch(() => []),
+    fmpFetch(`/quote/${sym}`, apiKey),
+    fmpFetch(`/technical_indicator/daily/${sym}?type=rsi&period=14`, apiKey).catch(() => []),
+    fmpFetch(`/technical_indicator/daily/${sym}?type=sma&period=50`, apiKey).catch(() => []),
+    fmpFetch(`/technical_indicator/daily/${sym}?type=sma&period=200`, apiKey).catch(() => []),
+    fmpFetch(`/technical_indicator/daily/${sym}?type=ema&period=20`, apiKey).catch(() => []),
+    fmpFetch(`/technical_indicator/daily/${sym}?type=ema&period=12`, apiKey).catch(() => []),
+    fmpFetch(`/technical_indicator/daily/${sym}?type=ema&period=26`, apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(`/key-metrics/${sym}?limit=1`, apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(`/income-statement-growth/${sym}?limit=1`, apiKey).catch(() => []),
+    fmpFetch(`/stock_news?tickers=${sym}&limit=20`, apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(`/grade/${sym}?limit=10`, apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(`/price-target-consensus/${sym}`, apiKey).catch(() => []),
+    isCrypto ? Promise.resolve([]) : fmpFetch(`/upgrades-downgrades-consensus/${sym}`, apiKey).catch(() => []),
   ];
   const results = await Promise.all(fetches);
 
@@ -145,7 +145,7 @@ async function handleBatch(symbolsParam: string, apiKey: string) {
   if (cached) return jsonRes(cached);
 
   const stocks = (await Promise.all(syms.map(s =>
-    fmpFetch(`/stable/quote?symbol=${s.trim()}`, apiKey)
+    fmpFetch(`/quote/${s.trim()}`, apiKey)
       .then((d: unknown) => {
         const q = Array.isArray(d) ? d[0] : d as Record<string, unknown>;
         if (!q?.symbol) return null;
@@ -164,7 +164,7 @@ async function handleSearch(sq: string, isCrypto: boolean, apiKey: string) {
   const cached = await getCache(ck);
   if (cached) return jsonRes(cached);
 
-  const sr = await fmpFetch(`/stable/search-symbol?query=${encodeURIComponent(sq)}&limit=${isCrypto ? 30 : 10}`, apiKey).catch(() => []);
+  const sr = await fmpFetch(`/search?query=${encodeURIComponent(sq)}&limit=${isCrypto ? 30 : 10}`, apiKey).catch(() => []);
   const all = Array.isArray(sr) ? sr : [];
   const seen = new Set<string>();
   const items: Record<string, unknown>[] = [];
@@ -180,7 +180,7 @@ async function handleSearch(sq: string, isCrypto: boolean, apiKey: string) {
   if (!filtered.length) return jsonRes({ stocks: [] });
 
   const stocks = (await Promise.all(filtered.map(i =>
-    fmpFetch(`/stable/quote?symbol=${i.symbol}`, apiKey)
+    fmpFetch(`/quote/${i.symbol}`, apiKey)
       .then((d: unknown) => {
         const q = Array.isArray(d) ? d[0] : d as Record<string, unknown>;
         if (!q?.symbol) return null;
@@ -216,6 +216,19 @@ Deno.serve(async (req: Request) => {
     const typeFilter = searchParams.get('type');
 
     if (Math.random() < 0.1) svc().from('stock_cache').delete().lt('expires_at', new Date().toISOString()).then(() => {});
+
+    // Diagnostic mode
+    if (searchParams.get('diag') === '1') {
+      const testUrl = `https://financialmodelingprep.com/api/v3/quote/AAPL?apikey=${apiKey}`;
+      const testUrl2 = `https://financialmodelingprep.com/stable/quote?symbol=AAPL&apikey=${apiKey}`;
+      const testUrl3 = `https://financialmodelingprep.com/api/v3/quote-short/AAPL?apikey=${apiKey}`;
+      const [r1, r2, r3] = await Promise.all([
+        fetch(testUrl).then(async r => ({ status: r.status, body: (await r.text()).substring(0, 200) })),
+        fetch(testUrl2).then(async r => ({ status: r.status, body: (await r.text()).substring(0, 200) })),
+        fetch(testUrl3).then(async r => ({ status: r.status, body: (await r.text()).substring(0, 200) })),
+      ]);
+      return jsonRes({ v3_quote: r1, stable_quote: r2, v3_quote_short: r3, keyPrefix: apiKey.substring(0, 8), keyLen: apiKey.length });
+    }
 
     if (singleSymbol) return handleDetail(singleSymbol.toUpperCase(), apiKey);
     if (symbolsParam) return handleBatch(symbolsParam, apiKey);
