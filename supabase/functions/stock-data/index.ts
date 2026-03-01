@@ -1,5 +1,4 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,8 +14,46 @@ async function fmpFetch(path: string, apiKey: string) {
   const sep = path.includes("?") ? "&" : "?";
   const url = `${FMP_BASE}${path}${sep}apikey=${apiKey}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`FMP ${res.status}: ${path}`);
+  if (!res.ok) {
+    const body = await res.text();
+    console.error(`FMP ${res.status} ${path}: ${body.substring(0, 200)}`);
+    throw new Error(`FMP ${res.status}: ${path}`);
+  }
   return res.json();
+}
+
+// Map stable paths to v3 equivalents for plans that don't include /stable/
+function quotePath(symbol: string) {
+  return `/api/v3/quote/${symbol}`;
+}
+function searchSymbolPath(query: string, limit: number) {
+  return `/api/v3/search?query=${encodeURIComponent(query)}&limit=${limit}`;
+}
+function searchNamePath(query: string, limit: number) {
+  return `/api/v3/search-name?query=${encodeURIComponent(query)}&limit=${limit}`;
+}
+function technicalPath(indicator: string, symbol: string, period: number) {
+  return `/api/v3/technical_indicator/daily/${symbol}?type=${indicator}&period=${period}`;
+}
+function keyMetricsPath(symbol: string) {
+  return `/api/v3/key-metrics/${symbol}?limit=1`;
+}
+function incomeGrowthPath(symbol: string) {
+  return `/api/v3/income-statement-growth/${symbol}?limit=1`;
+}
+function newsPath(symbol: string, type: string) {
+  return type === "crypto"
+    ? `/api/v3/stock_news?tickers=${symbol}&limit=20`
+    : `/api/v3/stock_news?tickers=${symbol}&limit=20`;
+}
+function gradesPath(symbol: string) {
+  return `/api/v3/grade/${symbol}?limit=10`;
+}
+function priceTargetPath(symbol: string) {
+  return `/api/v4/price-target-consensus?symbol=${symbol}`;
+}
+function upgradeDowngradePath(symbol: string) {
+  return `/api/v4/upgrades-downgrades-consensus?symbol=${symbol}`;
 }
 
 function svc() {
@@ -65,7 +102,7 @@ function jsonRes(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
@@ -96,19 +133,19 @@ serve(async (req: Request) => {
 
       const isCrypto = sym.endsWith("USD") && sym.length <= 10;
       const [qArr, rsiA, s50A, s200A, e20A, e12A, e26A, kmA, grA, nwA, gdA, ptA, csA] = await Promise.all([
-        fmpFetch(`/stable/quote?symbol=${sym}`, apiKey),
-        fmpFetch(`/stable/technical-indicators/rsi?symbol=${sym}&periodLength=14&timeframe=1day`, apiKey).catch(() => []),
-        fmpFetch(`/stable/technical-indicators/sma?symbol=${sym}&periodLength=50&timeframe=1day`, apiKey).catch(() => []),
-        fmpFetch(`/stable/technical-indicators/sma?symbol=${sym}&periodLength=200&timeframe=1day`, apiKey).catch(() => []),
-        fmpFetch(`/stable/technical-indicators/ema?symbol=${sym}&periodLength=20&timeframe=1day`, apiKey).catch(() => []),
-        fmpFetch(`/stable/technical-indicators/ema?symbol=${sym}&periodLength=12&timeframe=1day`, apiKey).catch(() => []),
-        fmpFetch(`/stable/technical-indicators/ema?symbol=${sym}&periodLength=26&timeframe=1day`, apiKey).catch(() => []),
-        isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/key-metrics?symbol=${sym}&limit=1`, apiKey).catch(() => []),
-        isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/income-statement-growth?symbol=${sym}&limit=1`, apiKey).catch(() => []),
-        isCrypto ? fmpFetch(`/stable/news/crypto?symbol=${sym}&limit=20`, apiKey).catch(() => []) : fmpFetch(`/stable/news/stock?symbol=${sym}&limit=20`, apiKey).catch(() => []),
-        isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/grades?symbol=${sym}&limit=10`, apiKey).catch(() => []),
-        isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/price-target-consensus?symbol=${sym}`, apiKey).catch(() => []),
-        isCrypto ? Promise.resolve([]) : fmpFetch(`/stable/upgrades-downgrades-consensus?symbol=${sym}`, apiKey).catch(() => []),
+        fmpFetch(quotePath(sym), apiKey),
+        fmpFetch(technicalPath("rsi", sym, 14), apiKey).catch(() => []),
+        fmpFetch(technicalPath("sma", sym, 50), apiKey).catch(() => []),
+        fmpFetch(technicalPath("sma", sym, 200), apiKey).catch(() => []),
+        fmpFetch(technicalPath("ema", sym, 20), apiKey).catch(() => []),
+        fmpFetch(technicalPath("ema", sym, 12), apiKey).catch(() => []),
+        fmpFetch(technicalPath("ema", sym, 26), apiKey).catch(() => []),
+        isCrypto ? Promise.resolve([]) : fmpFetch(keyMetricsPath(sym), apiKey).catch(() => []),
+        isCrypto ? Promise.resolve([]) : fmpFetch(incomeGrowthPath(sym), apiKey).catch(() => []),
+        fmpFetch(newsPath(sym, isCrypto ? "crypto" : "stock"), apiKey).catch(() => []),
+        isCrypto ? Promise.resolve([]) : fmpFetch(gradesPath(sym), apiKey).catch(() => []),
+        isCrypto ? Promise.resolve([]) : fmpFetch(priceTargetPath(sym), apiKey).catch(() => []),
+        isCrypto ? Promise.resolve([]) : fmpFetch(upgradeDowngradePath(sym), apiKey).catch(() => []),
       ]);
 
       const q = Array.isArray(qArr) ? qArr[0] : qArr;
@@ -134,10 +171,10 @@ serve(async (req: Request) => {
       if (csD?.consensus) { ad.consensus = csD.consensus; ad.ratingsDistribution = { strongBuy: csD.strongBuy ?? 0, buy: csD.buy ?? 0, hold: csD.hold ?? 0, sell: csD.sell ?? 0, strongSell: csD.strongSell ?? 0, totalAnalysts: (csD.strongBuy ?? 0) + (csD.buy ?? 0) + (csD.hold ?? 0) + (csD.sell ?? 0) + (csD.strongSell ?? 0) }; }
 
       const result = {
-        symbol: sym, name: q.name || sym, exchange: q.exchange || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.avgVolume ?? q.volume ?? 0,
+        symbol: sym, name: q.name || sym, exchange: q.exchange || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.avgVolume ?? q.volume ?? 0,
         technical: { rsi: r0?.rsi ?? null, macd, macdSignal: macd != null ? macd * 0.8 : null, sma50: s50?.sma ?? null, sma200: s200?.sma ?? null, ema20: e20?.ema ?? null, bollingerUpper: null, bollingerLower: null, atr: null },
         fundamental: { peRatio: q.pe ?? km?.peRatio ?? null, forwardPE: km?.forwardPeRatio ?? null, earningsGrowth: gr?.growthNetIncome != null ? gr.growthNetIncome * 100 : null, debtToEquity: km?.debtToEquity ?? null, revenueGrowth: gr?.growthRevenue != null ? gr.growthRevenue * 100 : null, profitMargin: km?.netIncomePerRevenue != null ? km.netIncomePerRevenue * 100 : null, returnOnEquity: km?.roe != null ? km.roe * 100 : null, freeCashFlowYield: km?.freeCashFlowYield != null ? km.freeCashFlowYield * 100 : null },
-        sentiment: { newsCount: news.length, analystRating: analystRating(grades), insiderActivity: gradeAction(grades), headline: news[0]?.title || `${q.name || sym} at $${q.price?.toFixed(2)}`, recentNews: news.slice(0, 5).map((n: any) => ({ title: n.title, publisher: n.publisher, date: n.publishedDate })), grades: grades.slice(0, 5).map((g: any) => ({ company: g.gradingCompany, grade: g.newGrade, action: g.action, date: g.date })) },
+        sentiment: { newsCount: news.length, analystRating: analystRating(grades), insiderActivity: gradeAction(grades), headline: news[0]?.title || `${q.name || sym} at $${q.price?.toFixed(2)}`, recentNews: news.slice(0, 5).map((n: any) => ({ title: n.title, publisher: n.publisher || n.site, date: n.publishedDate })), grades: grades.slice(0, 5).map((g: any) => ({ company: g.gradingCompany, grade: g.newGrade, action: g.action, date: g.date })) },
         analystData: Object.keys(ad).length ? ad : null,
       };
       await setCache(ck, result, CACHE_TTL_DETAIL);
@@ -153,8 +190,8 @@ serve(async (req: Request) => {
       console.log(`Cache MISS ${ck}`);
 
       const stocks = (await Promise.all(syms.map(s =>
-        fmpFetch(`/stable/quote?symbol=${s.trim()}`, apiKey)
-          .then((d: any) => { const q = Array.isArray(d) ? d[0] : d; if (!q?.symbol) return null; return { symbol: q.symbol, name: q.name || q.symbol, exchange: q.exchange || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.avgVolume ?? q.volume ?? 0 }; })
+        fmpFetch(quotePath(s.trim()), apiKey)
+          .then((d: any) => { const q = Array.isArray(d) ? d[0] : d; if (!q?.symbol) return null; return { symbol: q.symbol, name: q.name || q.symbol, exchange: q.exchange || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.avgVolume ?? q.volume ?? 0 }; })
           .catch((e: Error) => { console.error(`FMP err ${s}:`, e.message); return null; })
       ))).filter(Boolean);
 
@@ -172,8 +209,8 @@ serve(async (req: Request) => {
       if (c) return jsonRes(c);
 
       const [sr, nr] = await Promise.all([
-        fmpFetch(`/stable/search-symbol?query=${encodeURIComponent(sq)}&limit=${isCrypto ? 30 : 10}`, apiKey).catch(() => []),
-        fmpFetch(`/stable/search-name?query=${encodeURIComponent(sq)}&limit=${isCrypto ? 30 : 10}`, apiKey).catch(() => []),
+        fmpFetch(searchSymbolPath(sq, isCrypto ? 30 : 10), apiKey).catch(() => []),
+        fmpFetch(searchNamePath(sq, isCrypto ? 30 : 10), apiKey).catch(() => []),
       ]);
       const all = [...(Array.isArray(sr) ? sr : []), ...(Array.isArray(nr) ? nr : [])];
       const seen = new Set<string>();
@@ -190,8 +227,8 @@ serve(async (req: Request) => {
       if (!filtered.length) return jsonRes({ stocks: [] });
 
       const stocks = (await Promise.all(filtered.map((i: any) =>
-        fmpFetch(`/stable/quote?symbol=${i.symbol}`, apiKey)
-          .then((d: any) => { const q = Array.isArray(d) ? d[0] : d; if (!q?.symbol) return null; return { symbol: q.symbol, name: q.name || i.name || q.symbol, exchange: q.exchange || i.exchangeShortName || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.volume ?? 0 }; })
+        fmpFetch(quotePath(i.symbol), apiKey)
+          .then((d: any) => { const q = Array.isArray(d) ? d[0] : d; if (!q?.symbol) return null; return { symbol: q.symbol, name: q.name || i.name || q.symbol, exchange: q.exchange || i.exchangeShortName || '', price: q.price ?? 0, previousClose: q.previousClose ?? 0, change: q.change ?? 0, changePercent: q.changesPercentage ?? q.changePercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.volume ?? 0 }; })
           .catch(() => null)
       ))).filter(Boolean);
 
