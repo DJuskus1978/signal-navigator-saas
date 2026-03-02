@@ -19,7 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TrafficLight } from "@/components/TrafficLight";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { ArrowRight, BarChart3, Shield, Zap, Menu, X, TrendingUp, Crown, ChevronLeft, ChevronRight } from "lucide-react";
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+
 import { RadarLogo } from "@/components/RadarLogo";
 import { IPhoneFrame } from "@/components/IPhoneFrame";
 
@@ -36,6 +36,7 @@ export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [insideIndex, setInsideIndex] = useState(0);
   const { user } = useAuth();
   const navigate = useNavigate();
   const pricingRef = useRef<HTMLElement>(null);
@@ -264,32 +265,65 @@ export default function LandingPage() {
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
             Choose your investor profile: <em>Conservative</em>, <em>Balanced</em>, or <em>Active</em> — and get personalized stocks radars.
           </p>
-          <div className="flex justify-center">
-            <div className="w-full max-w-xs mx-auto">
-              <Carousel opts={{ loop: true }} className="w-full">
-                <CarouselContent>
-                  {[
-                    { src: insideRadarSignalImg, alt: "StocksRadars signal card showing AAPL stock with Buy recommendation, Balanced profile selected, and Fundamentals/News/Technical weight bars" },
-                    { src: insideRadarPhasesImg, alt: "StocksRadars analysis phases showing Fundamental Strength, News & Sentiment, and Technical Momentum breakdowns with Decision Guidance" },
-                    { src: insideRadarDashboardImg, alt: "StocksRadars dashboard showing stock list with AAPL and MSFT, search bar, and index tabs for Nasdaq, Dow Jones, S&P 500 and Crypto" },
-                  ].map((item, i) => (
-                    <CarouselItem key={i}>
-                      <IPhoneFrame>
-                        <img
-                          src={item.src}
-                          alt={item.alt}
-                          className="w-full h-auto"
-                          loading="lazy"
-                        />
-                      </IPhoneFrame>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="border-border" />
-                <CarouselNext className="border-border" />
-              </Carousel>
-            </div>
-          </div>
+          {(() => {
+            const insideSlides = [
+              { src: insideRadarSignalImg, alt: "StocksRadars signal card showing AAPL stock with Buy recommendation, Balanced profile selected, and Fundamentals/News/Technical weight bars" },
+              { src: insideRadarPhasesImg, alt: "StocksRadars analysis phases showing Fundamental Strength, News & Sentiment, and Technical Momentum breakdowns with Decision Guidance" },
+              { src: insideRadarDashboardImg, alt: "StocksRadars dashboard showing stock list with AAPL and MSFT, search bar, and index tabs for Nasdaq, Dow Jones, S&P 500 and Crypto" },
+            ];
+            return (
+              <>
+                <div className="flex justify-center">
+                  <div className="w-full max-w-xs mx-auto">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={insideIndex}
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -50 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <IPhoneFrame>
+                          <img
+                            src={insideSlides[insideIndex].src}
+                            alt={insideSlides[insideIndex].alt}
+                            className="w-full h-auto"
+                            loading="lazy"
+                          />
+                        </IPhoneFrame>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center gap-4 mt-6">
+                  <button
+                    onClick={() => setInsideIndex((prev) => (prev - 1 + insideSlides.length) % insideSlides.length)}
+                    className="p-2 rounded-full border border-border hover:bg-accent transition-colors"
+                    aria-label="Previous screenshot"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <div className="flex gap-2">
+                    {insideSlides.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setInsideIndex(i)}
+                        className={`w-2.5 h-2.5 rounded-full transition-colors ${i === insideIndex ? "bg-primary" : "bg-border"}`}
+                        aria-label={`Go to screenshot ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setInsideIndex((prev) => (prev + 1) % insideSlides.length)}
+                    className="p-2 rounded-full border border-border hover:bg-accent transition-colors"
+                    aria-label="Next screenshot"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </>
+            );
+          })()}
         </motion.div>
       </section>
 
