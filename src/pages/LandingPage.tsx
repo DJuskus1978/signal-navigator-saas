@@ -19,6 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TrafficLight } from "@/components/TrafficLight";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { ArrowRight, BarChart3, Shield, Zap, Menu, X, TrendingUp, Crown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { RadarLogo } from "@/components/RadarLogo";
 import { IPhoneFrame } from "@/components/IPhoneFrame";
 
@@ -263,31 +264,31 @@ export default function LandingPage() {
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
             Choose your investor profile: <em>Conservative</em>, <em>Balanced</em>, or <em>Active</em> — and get personalized stocks radars.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-            <IPhoneFrame>
-              <img
-                src={insideRadarSignalImg}
-                alt="StocksRadars signal card showing AAPL stock with Buy recommendation, Balanced profile selected, and Fundamentals/News/Technical weight bars"
-                className="w-full h-auto"
-                loading="lazy"
-              />
-            </IPhoneFrame>
-            <IPhoneFrame>
-              <img
-                src={insideRadarPhasesImg}
-                alt="StocksRadars analysis phases showing Fundamental Strength, News & Sentiment, and Technical Momentum breakdowns with Decision Guidance"
-                className="w-full h-auto"
-                loading="lazy"
-              />
-            </IPhoneFrame>
-            <IPhoneFrame>
-              <img
-                src={insideRadarDashboardImg}
-                alt="StocksRadars dashboard showing stock list with AAPL and MSFT, search bar, and index tabs for Nasdaq, Dow Jones, S&P 500 and Crypto"
-                className="w-full h-auto"
-                loading="lazy"
-              />
-            </IPhoneFrame>
+          <div className="flex justify-center">
+            <div className="w-full max-w-xs mx-auto">
+              <Carousel opts={{ loop: true }} className="w-full">
+                <CarouselContent>
+                  {[
+                    { src: insideRadarSignalImg, alt: "StocksRadars signal card showing AAPL stock with Buy recommendation, Balanced profile selected, and Fundamentals/News/Technical weight bars" },
+                    { src: insideRadarPhasesImg, alt: "StocksRadars analysis phases showing Fundamental Strength, News & Sentiment, and Technical Momentum breakdowns with Decision Guidance" },
+                    { src: insideRadarDashboardImg, alt: "StocksRadars dashboard showing stock list with AAPL and MSFT, search bar, and index tabs for Nasdaq, Dow Jones, S&P 500 and Crypto" },
+                  ].map((item, i) => (
+                    <CarouselItem key={i}>
+                      <IPhoneFrame>
+                        <img
+                          src={item.src}
+                          alt={item.alt}
+                          className="w-full h-auto"
+                          loading="lazy"
+                        />
+                      </IPhoneFrame>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="border-border" />
+                <CarouselNext className="border-border" />
+              </Carousel>
+            </div>
           </div>
         </motion.div>
       </section>
