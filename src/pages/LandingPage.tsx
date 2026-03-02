@@ -342,14 +342,16 @@ export default function LandingPage() {
             AI-powered news analysis and market sentiment scoring to help you make informed stock trading decisions
           </p>
           <div className="flex justify-center">
-            <IPhoneFrame>
-              <img
-                src={newsSentimentImg}
-                alt="StocksRadars real-time stock news sentiment analysis showing headline scoring, analyst ratings, and insider trading activity for S&P 500 stocks"
-                className="w-full h-auto"
-                loading="lazy"
-              />
-            </IPhoneFrame>
+            <div className="w-full max-w-xs mx-auto">
+              <IPhoneFrame>
+                <img
+                  src={newsSentimentImg}
+                  alt="StocksRadars real-time stock news sentiment analysis showing headline scoring, analyst ratings, and insider trading activity for S&P 500 stocks"
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+              </IPhoneFrame>
+            </div>
           </div>
         </motion.div>
       </section>
