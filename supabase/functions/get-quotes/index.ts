@@ -4,6 +4,7 @@ const H = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+const FMP = "https://financialmodelingprep.com";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: H });
@@ -25,10 +26,18 @@ serve(async (req) => {
     const stocks = [];
     for (const s of list) {
       try {
-        const r = await fetch(`https://financialmodelingprep.com/stable/quote?symbol=${s.trim()}&apikey=${key}`);
+        const r = await fetch(`${FMP}/stable/technical-indicators/rsi?symbol=${s.trim()}&periodLength=14&timeframe=1day&apikey=${key}`);
         const d = await r.json();
-        const q = Array.isArray(d) ? d[0] : d;
-        if (q?.symbol) stocks.push({ symbol: q.symbol, name: q.name || q.symbol, price: q.price ?? 0, change: q.change ?? 0, changePercent: q.changesPercentage ?? 0 });
+        const arr = Array.isArray(d) ? d : [];
+        const latest = arr[0];
+        const prev = arr[1];
+        if (latest?.close) {
+          const price = latest.close;
+          const previousClose = prev?.close ?? price;
+          const change = Math.round((price - previousClose) * 100) / 100;
+          const changePercent = previousClose > 0 ? Math.round((change / previousClose) * 10000) / 100 : 0;
+          stocks.push({ symbol: s.trim().toUpperCase(), name: s.trim().toUpperCase(), price, change, changePercent });
+        }
       } catch { /* skip */ }
     }
     return j({ stocks });

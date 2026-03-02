@@ -35,24 +35,36 @@ serve(async (req) => {
     const ic = S.endsWith("USD") && S.length <= 10;
     const f = (p: string) => fetch(`${FMP}${p}${p.includes('?') ? '&' : '?'}apikey=${key}`).then(r => r.json()).catch(() => []);
 
-    const [qd, rsi, sma50, sma200, ema20, e12, e26, km, gr, news, grades, pt, cs] = await Promise.all([
-      f(`/stable/quote?symbol=${S}`),
-      f(`/stable/technical-indicators/rsi?symbol=${S}&period=14`),
-      f(`/stable/technical-indicators/sma?symbol=${S}&period=50`),
-      f(`/stable/technical-indicators/sma?symbol=${S}&period=200`),
-      f(`/stable/technical-indicators/ema?symbol=${S}&period=20`),
-      f(`/stable/technical-indicators/ema?symbol=${S}&period=12`),
-      f(`/stable/technical-indicators/ema?symbol=${S}&period=26`),
+    const [rsiData, sma50, sma200, ema20, e12, e26, km, gr, news, grades, pt, cs, searchData] = await Promise.all([
+      f(`/stable/technical-indicators/rsi?symbol=${S}&periodLength=14&timeframe=1day`),
+      f(`/stable/technical-indicators/sma?symbol=${S}&periodLength=50&timeframe=1day`),
+      f(`/stable/technical-indicators/sma?symbol=${S}&periodLength=200&timeframe=1day`),
+      f(`/stable/technical-indicators/ema?symbol=${S}&periodLength=20&timeframe=1day`),
+      f(`/stable/technical-indicators/ema?symbol=${S}&periodLength=12&timeframe=1day`),
+      f(`/stable/technical-indicators/ema?symbol=${S}&periodLength=26&timeframe=1day`),
       ic ? [] : f(`/stable/key-metrics?symbol=${S}&limit=1`),
       ic ? [] : f(`/stable/income-statement-growth?symbol=${S}&limit=1`),
       f(`/stable/news/stock?symbols=${S}&limit=20`),
       ic ? [] : f(`/stable/grades?symbol=${S}&limit=10`),
       ic ? [] : f(`/stable/price-target-consensus?symbol=${S}`),
       ic ? [] : f(`/stable/upgrades-downgrades-consensus?symbol=${S}`),
+      f(`/stable/search-symbol?query=${S}&limit=5`),
     ]);
 
-    const q = F(qd);
-    if (!q?.symbol) return new Response(JSON.stringify({ error: 'No data' }), { status: 400, headers: { ...H, 'Content-Type': 'application/json' } });
+    const rsiArr = Array.isArray(rsiData) ? rsiData : [];
+    const latest = rsiArr[0];
+    const prev = rsiArr[1];
+    if (!latest?.close) return new Response(JSON.stringify({ error: 'No data' }), { status: 400, headers: { ...H, 'Content-Type': 'application/json' } });
+
+    const p = latest.close;
+    const previousClose = prev?.close ?? p;
+    const change = Math.round((p - previousClose) * 100) / 100;
+    const changePercent = previousClose > 0 ? Math.round((change / previousClose) * 10000) / 100 : 0;
+
+    const searchArr = Array.isArray(searchData) ? searchData : [];
+    const matchedMeta = searchArr.find((x: Record<string, string>) => x.symbol === S);
+    const name = matchedMeta?.name || S;
+    const exchange = matchedMeta?.exchangeShortName || '';
 
     const macd = (F(e12)?.ema != null && F(e26)?.ema != null) ? F(e12).ema - F(e26).ema : null;
     const k = F(km), g = F(gr), ptD = F(pt), csD = F(cs);
@@ -64,13 +76,12 @@ serve(async (req) => {
     if (ptD?.targetConsensus) ad.priceTarget = { targetHigh: ptD.targetHigh, targetLow: ptD.targetLow, targetConsensus: ptD.targetConsensus, targetMedian: ptD.targetMedian, totalAnalysts: ptD.totalAnalysts ?? 0 };
     if (csD?.consensus) { ad.consensus = csD.consensus; ad.ratingsDistribution = { strongBuy: csD.strongBuy ?? 0, buy: csD.buy ?? 0, hold: csD.hold ?? 0, sell: csD.sell ?? 0, strongSell: csD.strongSell ?? 0, totalAnalysts: (csD.strongBuy ?? 0) + (csD.buy ?? 0) + (csD.hold ?? 0) + (csD.sell ?? 0) + (csD.strongSell ?? 0) }; }
 
-    const p = q.price ?? 0;
     const res = {
-      symbol: S, name: q.name || S, exchange: q.exchange || '', price: p, previousClose: q.previousClose ?? 0,
-      change: q.change ?? 0, changePercent: q.changesPercentage ?? 0, volume: q.volume ?? 0, avgVolume: q.avgVolume ?? 0,
-      technical: { rsi: F(rsi)?.rsi ?? null, macd, macdSignal: macd != null ? macd * 0.8 : null, sma50: F(sma50)?.sma ?? null, sma200: F(sma200)?.sma ?? null, ema20: F(ema20)?.ema ?? null, bollingerUpper: null, bollingerLower: null, atr: null },
-      fundamental: { peRatio: q.pe ?? k?.peRatio ?? null, forwardPE: k?.forwardPeRatio ?? null, earningsGrowth: g?.growthNetIncome != null ? g.growthNetIncome * 100 : null, debtToEquity: k?.debtToEquity ?? null, revenueGrowth: g?.growthRevenue != null ? g.growthRevenue * 100 : null, profitMargin: k?.netIncomePerRevenue != null ? k.netIncomePerRevenue * 100 : null, returnOnEquity: k?.roe != null ? k.roe * 100 : null, freeCashFlowYield: k?.freeCashFlowYield != null ? k.freeCashFlowYield * 100 : null },
-      sentiment: { newsCount: nl.length, analystRating: ar, insiderActivity: 0, headline: nl[0]?.title || `${q.name || S} at $${p.toFixed(2)}`, recentNews: nl.slice(0, 5).map((n: Record<string, string>) => ({ title: n.title, publisher: n.publisher || n.site, date: n.publishedDate })), grades: gl.slice(0, 5).map((x: Record<string, string>) => ({ company: x.gradingCompany, grade: x.newGrade, action: x.action, date: x.date })) },
+      symbol: S, name, exchange, price: p, previousClose,
+      change, changePercent, volume: latest.volume ?? 0, avgVolume: latest.volume ?? 0,
+      technical: { rsi: latest.rsi ?? null, macd, macdSignal: macd != null ? macd * 0.8 : null, sma50: F(sma50)?.sma ?? null, sma200: F(sma200)?.sma ?? null, ema20: F(ema20)?.ema ?? null, bollingerUpper: null, bollingerLower: null, atr: null },
+      fundamental: { peRatio: k?.peRatio ?? null, forwardPE: k?.forwardPeRatio ?? null, earningsGrowth: g?.growthNetIncome != null ? g.growthNetIncome * 100 : null, debtToEquity: k?.debtToEquity ?? null, revenueGrowth: g?.growthRevenue != null ? g.growthRevenue * 100 : null, profitMargin: k?.netIncomePerRevenue != null ? k.netIncomePerRevenue * 100 : null, returnOnEquity: k?.roe != null ? k.roe * 100 : null, freeCashFlowYield: k?.freeCashFlowYield != null ? k.freeCashFlowYield * 100 : null },
+      sentiment: { newsCount: nl.length, analystRating: ar, insiderActivity: 0, headline: nl[0]?.title || `${name} at $${p.toFixed(2)}`, recentNews: nl.slice(0, 5).map((n: Record<string, string>) => ({ title: n.title, publisher: n.publisher || n.site, date: n.publishedDate })), grades: gl.slice(0, 5).map((x: Record<string, string>) => ({ company: x.gradingCompany, grade: x.newGrade, action: x.action, date: x.date })) },
       analystData: Object.keys(ad).length ? ad : null,
     };
     return new Response(JSON.stringify(res), { headers: { ...H, 'Content-Type': 'application/json' } });
