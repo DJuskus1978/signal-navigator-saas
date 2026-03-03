@@ -7,7 +7,7 @@ import insideRadarSignalImg from "@/assets/inside-radar-signal.jpeg";
 import insideRadarPhasesImg from "@/assets/inside-radar-phases.jpeg";
 import insideRadarDashboardImg from "@/assets/inside-radar-dashboard.jpeg";
 import newsSentimentImg from "@/assets/news-sentiment.jpeg";
-import fmpLogo from "@/assets/fmp-logo-full.svg";
+
 
 import avatarSarah from "@/assets/avatar-sarah.jpg";
 import avatarJames from "@/assets/avatar-james.jpg";
@@ -573,18 +573,6 @@ export default function LandingPage() {
             Founder - D. Juskus
           </motion.p>
 
-          <motion.div
-            className="flex flex-col items-center justify-center gap-6"
-            initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} variants={fadeUp}
-          >
-            <p className="font-display text-2xl md:text-3xl font-bold text-foreground">
-              Our global partner for financial & stocks data
-            </p>
-            <a href="https://financialmodelingprep.com" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity">
-              <img src={fmpLogo} alt="Financial Modeling Prep logo" className="h-10" />
-              <span className="font-display text-xl text-muted-foreground">Financial Modeling Prep</span>
-            </a>
-          </motion.div>
         </div>
       </section>
 
