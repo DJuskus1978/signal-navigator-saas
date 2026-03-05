@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Line, ComposedChart } from "recharts";
+import { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis } from "recharts";
 import { Loader2 } from "lucide-react";
 
 interface SentimentData {
@@ -29,56 +29,77 @@ function useMarketSentiment() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.json();
     },
-    staleTime: 30 * 60_000, // 30 min
+    staleTime: 30 * 60_000,
     refetchInterval: 30 * 60_000,
     retry: 1,
   });
 }
 
-// Gauge SVG component
+// Gauge matching the ConsensusGauge style from AnalystRatingsSection
 function SentimentGauge({ value, label }: { value: number; label: string }) {
-  // value 0-100, maps to angle -135 to +135 (270° arc)
-  const angle = -135 + (value / 100) * 270;
-  const needleLength = 52;
-  const cx = 70, cy = 70;
-  const rad = (angle * Math.PI) / 180;
-  const nx = cx + needleLength * Math.cos(rad - Math.PI / 2);
-  const ny = cy + needleLength * Math.sin(rad - Math.PI / 2);
+  // value 0-100: 0=bearish, 50=neutral, 100=bullish
+  // Map to needle angle: -90 (bearish) to +90 (bullish)
+  const needleRotation = -90 + (value / 100) * 180;
 
-  // Color based on sentiment
-  const color = value > 55 ? "hsl(var(--signal-buy))" : value < 45 ? "hsl(var(--signal-sell))" : "hsl(var(--muted-foreground))";
+  const color =
+    value > 55 ? "text-signal-buy" :
+    value < 45 ? "text-signal-sell" :
+    "text-signal-hold";
 
   return (
-    <div className="flex flex-col items-center">
-      <svg viewBox="0 0 140 95" className="w-44 h-auto">
-        {/* Background arc */}
-        <path
-          d="M 15 70 A 55 55 0 0 1 125 70"
-          fill="none"
-          stroke="hsl(var(--muted) / 0.4)"
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-        {/* Colored arc — green portion based on value */}
-        <path
-          d="M 15 70 A 55 55 0 0 1 125 70"
-          fill="none"
-          stroke={color}
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeDasharray={`${(value / 100) * 173} 173`}
-          className="transition-all duration-700"
-        />
-        {/* Needle */}
-        <line x1={cx} y1={cy} x2={nx} y2={ny} stroke="hsl(var(--foreground))" strokeWidth="2.5" strokeLinecap="round" />
-        <circle cx={cx} cy={cy} r="4" fill="hsl(var(--foreground))" />
-        {/* Labels */}
-        <text x="10" y="90" fill="hsl(var(--muted-foreground))" fontSize="8" textAnchor="start">Bearish</text>
-        <text x={cx} y="12" fill="hsl(var(--muted-foreground))" fontSize="8" textAnchor="middle">Neutral</text>
-        <text x="130" y="90" fill="hsl(var(--muted-foreground))" fontSize="8" textAnchor="end">Bullish</text>
-      </svg>
-      <p className="font-display font-bold text-lg -mt-1">{label}</p>
-    </div>
+    <Card>
+      <div className="p-6 text-center">
+        <div className="relative w-48 h-28 mx-auto mb-4">
+          <svg viewBox="0 0 200 110" className="w-full h-full">
+            {/* Gray arc background */}
+            <path
+              d="M 20 100 A 80 80 0 0 1 180 100"
+              fill="none"
+              stroke="hsl(var(--muted))"
+              strokeWidth="16"
+              strokeLinecap="round"
+            />
+            {/* Colored gradient arc */}
+            <defs>
+              <linearGradient id="sentimentGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="hsl(0, 75%, 50%)" />
+                <stop offset="25%" stopColor="hsl(25, 90%, 50%)" />
+                <stop offset="50%" stopColor="hsl(45, 95%, 50%)" />
+                <stop offset="75%" stopColor="hsl(145, 65%, 42%)" />
+                <stop offset="100%" stopColor="hsl(150, 80%, 35%)" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M 20 100 A 80 80 0 0 1 180 100"
+              fill="none"
+              stroke="url(#sentimentGaugeGradient)"
+              strokeWidth="16"
+              strokeLinecap="round"
+            />
+            {/* Needle */}
+            <g transform={`rotate(${needleRotation}, 100, 100)`}>
+              <line
+                x1="100"
+                y1="100"
+                x2="100"
+                y2="30"
+                stroke="hsl(var(--foreground))"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              <circle cx="100" cy="100" r="5" fill="hsl(var(--foreground))" />
+            </g>
+          </svg>
+          {/* Labels around arc */}
+          <span className="absolute -left-2 -bottom-5 text-[10px] text-muted-foreground whitespace-nowrap">Bearish</span>
+          <span className="absolute left-1/2 -translate-x-1/2 -top-4 text-[10px] text-muted-foreground">Neutral</span>
+          <span className="absolute -right-2 -bottom-5 text-[10px] text-muted-foreground whitespace-nowrap">Bullish</span>
+        </div>
+        <p className={`text-3xl font-display font-bold ${color}`}>
+          {label}
+        </p>
+      </div>
+    </Card>
   );
 }
 
@@ -121,9 +142,7 @@ export function MarketSentiment() {
       <h2 className="font-display text-xl font-bold">Sentiment</h2>
 
       {/* Gauge card */}
-      <Card className="p-5 bg-card border-border">
-        <SentimentGauge value={data.gaugeValue} label={data.sentiment} />
-      </Card>
+      <SentimentGauge value={data.gaugeValue} label={data.sentiment} />
 
       {/* S&P 500 tracker card */}
       <Card className="p-5 bg-card border-border">
@@ -136,7 +155,7 @@ export function MarketSentiment() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-signal-hold inline-block" />
             <div>
               <p className="text-xs text-muted-foreground">125-day moving average</p>
               <p className="font-display font-bold text-lg">{(data.ma / 10).toFixed(3)}</p>
@@ -147,20 +166,35 @@ export function MarketSentiment() {
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data.chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <XAxis dataKey="date" tickFormatter={tickFormatter} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-              <YAxis domain={[priceMin - yPad, priceMax + yPad]} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={50} tickFormatter={(v: number) => v.toFixed(0)} />
-              <Area type="monotone" dataKey="close" stroke="hsl(var(--signal-buy))" fill="hsl(var(--signal-buy) / 0.1)" strokeWidth={1.5} dot={false} />
-              <Line type="monotone" dataKey="ma" stroke="#f59e0b" strokeWidth={2} dot={false} />
+              <XAxis
+                dataKey="date"
+                tickFormatter={tickFormatter}
+                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                axisLine={false}
+                tickLine={false}
+                orientation="top"
+              />
+              <YAxis
+                domain={[priceMin - yPad, priceMax + yPad]}
+                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                axisLine={false}
+                tickLine={false}
+                width={45}
+                orientation="right"
+                tickFormatter={(v: number) => v.toFixed(0)}
+              />
+              <Line type="monotone" dataKey="close" stroke="hsl(var(--signal-buy))" strokeWidth={1.5} dot={false} />
+              <Line type="monotone" dataKey="ma" stroke="hsl(var(--signal-hold))" strokeWidth={2} dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
 
-        <p className="text-xs text-muted-foreground mt-3 text-center leading-relaxed">
+        <p className="text-[10px] text-muted-foreground/60 mt-3 text-center leading-relaxed">
           When the S&P 500 tracker is above its moving average of the prior 125 days, that's a sign of positive momentum. If it's below, it could indicate that the market is more cautious.
         </p>
       </Card>
 
-      <p className="text-xs text-muted-foreground text-center">
+      <p className="text-[10px] text-muted-foreground/60 text-center">
         The data is provided by Alpha Vantage and should not be considered investment advice.
       </p>
     </div>
