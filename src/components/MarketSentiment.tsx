@@ -119,21 +119,33 @@ export function MarketSentiment() {
 
   if (error || !data) return null;
 
-  const formatDate = (d: string) => {
+  // Build 4 specific ticks: Aug, Oct, Dec, Today
+  const chartEntries = data.chartData;
+  const lastDate = chartEntries[chartEntries.length - 1]?.date;
+
+  // Find first entry in target months
+  const findMonthEntry = (targetMonth: number) => {
+    return chartEntries.find(e => {
+      const d = new Date(e.date);
+      return d.getMonth() === targetMonth;
+    });
+  };
+
+  const augEntry = findMonthEntry(7); // August = 7
+  const octEntry = findMonthEntry(9); // October = 9
+  const decEntry = findMonthEntry(11); // December = 11
+
+  const monthTicks: string[] = [];
+  if (augEntry) monthTicks.push(augEntry.date);
+  if (octEntry) monthTicks.push(octEntry.date);
+  if (decEntry) monthTicks.push(decEntry.date);
+  if (lastDate) monthTicks.push(lastDate);
+
+  const formatTick = (d: string) => {
+    if (d === lastDate) return "Today";
     const m = new Date(d);
     return m.toLocaleDateString("en-US", { month: "short" });
   };
-
-  // Build unique month ticks for the X-axis
-  const monthTicks: string[] = [];
-  const seenMonths = new Set<string>();
-  for (const entry of data.chartData) {
-    const label = formatDate(entry.date);
-    if (!seenMonths.has(label)) {
-      seenMonths.add(label);
-      monthTicks.push(entry.date);
-    }
-  }
 
   const priceMin = Math.min(...data.chartData.map(d => Math.min(d.close, d.ma)));
   const priceMax = Math.max(...data.chartData.map(d => Math.max(d.close, d.ma)));
@@ -170,7 +182,7 @@ export function MarketSentiment() {
             <ComposedChart data={data.chartData} margin={{ top: 5, right: 5, left: 0, bottom: 20 }}>
                <XAxis
                 dataKey="date"
-                tickFormatter={formatDate}
+                tickFormatter={formatTick}
                 ticks={monthTicks}
                 tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                 axisLine={false}

@@ -51,8 +51,8 @@ serve(async (req) => {
     if (cached) return j(cached);
 
     const key = Deno.env.get('ALPHA_VANTAGE_API_KEY')!;
-    // Fetch daily time series for SPY (S&P 500 ETF), compact = last 100 trading days
-    const r = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=SPY&outputsize=compact&apikey=${key}`);
+    // Fetch daily time series for SPY (S&P 500 ETF), full output for 125-day MA
+    const r = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=SPY&outputsize=full&apikey=${key}`);
     const d = await r.json();
     const ts = d?.["Time Series (Daily)"];
     if (!ts) return j({ error: 'No data from provider' }, 502);
@@ -65,15 +65,14 @@ serve(async (req) => {
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    // We only have ~100 days from compact; compute a simple moving average from all available
-    const maWindow = Math.min(entries.length, 100); // approximate 125-day with what we have
+    const MA_WINDOW = 125;
     const closes = entries.map(e => e.close);
     
-    // Compute rolling MA for chart display
-    const chartData = entries.slice(-60).map((entry, i, arr) => {
-      // Use last maWindow values ending at this point's position in the full array
+    // We need at least MA_WINDOW + display days. Show ~150 trading days (~7 months from Aug)
+    const displayDays = 150;
+    const chartData = entries.slice(-displayDays).map((entry) => {
       const fullIdx = entries.indexOf(entry);
-      const start = Math.max(0, fullIdx - maWindow + 1);
+      const start = Math.max(0, fullIdx - MA_WINDOW + 1);
       const slice = closes.slice(start, fullIdx + 1);
       const ma = slice.reduce((a, b) => a + b, 0) / slice.length;
       return { date: entry.date, close: entry.close, ma: Math.round(ma * 100) / 100 };
