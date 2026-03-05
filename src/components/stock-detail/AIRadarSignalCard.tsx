@@ -180,11 +180,6 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, o
           </p>
         </div>
 
-        {/* Summary */}
-        <p className="text-center text-muted-foreground leading-relaxed mb-8 max-w-lg mx-auto">
-          {summary}
-        </p>
-
         {/* CTA */}
         <div className="flex justify-center">
           <Button variant="outline" onClick={onViewBreakdown} className="font-display">
