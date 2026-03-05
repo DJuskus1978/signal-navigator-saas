@@ -6,13 +6,45 @@ const H = {
 };
 const AV = "https://www.alphavantage.co/query";
 
+// ─── Cache helpers (stock_cache table via REST) ──────────────────────────────
+const SB_URL = () => Deno.env.get('SUPABASE_URL')!;
+const SB_KEY = () => Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+async function cacheGet(key: string): Promise<unknown | null> {
+  try {
+    const r = await fetch(
+      `${SB_URL()}/rest/v1/stock_cache?cache_key=eq.${encodeURIComponent(key)}&select=data,expires_at&limit=1`,
+      { headers: { apikey: SB_KEY(), Authorization: `Bearer ${SB_KEY()}` } }
+    );
+    const rows = await r.json();
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    if (new Date(rows[0].expires_at) < new Date()) return null; // expired
+    return rows[0].data;
+  } catch { return null; }
+}
+
+async function cacheSet(key: string, data: unknown, ttlSeconds: number) {
+  try {
+    const expires_at = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+    await fetch(`${SB_URL()}/rest/v1/stock_cache`, {
+      method: 'POST',
+      headers: {
+        apikey: SB_KEY(), Authorization: `Bearer ${SB_KEY()}`,
+        'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({ cache_key: key, data, expires_at, fetched_at: new Date().toISOString() }),
+    });
+  } catch { /* silent */ }
+}
+
+// ─── Main ────────────────────────────────────────────────────────────────────
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: H });
   const j = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...H, 'Content-Type': 'application/json' } });
   try {
     const ah = req.headers.get('Authorization');
     if (!ah?.startsWith('Bearer ')) return j({ error: 'Unauthorized' }, 401);
-    const ur = await fetch(`${Deno.env.get('SUPABASE_URL')}/auth/v1/user`, { headers: { Authorization: ah, apikey: Deno.env.get('SUPABASE_ANON_KEY')! } });
+    const ur = await fetch(`${SB_URL()}/auth/v1/user`, { headers: { Authorization: ah, apikey: Deno.env.get('SUPABASE_ANON_KEY')! } });
     if (!ur.ok) return j({ error: 'Unauthorized' }, 401);
     const u = await ur.json();
     if (!u?.id) return j({ error: 'Unauthorized' }, 401);
@@ -21,20 +53,22 @@ serve(async (req) => {
     const sp = new URL(req.url).searchParams;
     const syms = sp.get('symbols');
     const sq = sp.get('search');
-    const assetType = sp.get('type'); // "crypto" or default stock
+    const assetType = sp.get('type');
 
-    // Batch quotes
+    // ─── Batch quotes ────────────────────────────────────────────────
     if (syms) {
+      const cacheKey = `quotes:${syms.split(',').sort().join(',')}`;
+      const cached = await cacheGet(cacheKey);
+      if (cached) return j(cached);
+
       const list = syms.split(',').slice(0, 30);
       const stocks = (await Promise.all(list.map(async (s) => {
         try {
           const sym = s.trim().toUpperCase();
           const isCrypto = sym.endsWith("USD") && sym.length <= 10;
-
           let price = 0, previousClose = 0, volume = 0, name = sym;
 
           if (isCrypto) {
-            // Use CURRENCY_EXCHANGE_RATE for crypto
             const fromCurrency = sym.replace("USD", "");
             const r = await fetch(`${AV}?function=CURRENCY_EXCHANGE_RATE&from_currency=${fromCurrency}&to_currency=USD&apikey=${key}`);
             const d = await r.json();
@@ -42,9 +76,8 @@ serve(async (req) => {
             if (!rate) return null;
             price = parseFloat(rate["5. Exchange Rate"] || "0");
             name = rate["2. From_Currency Name"] || sym;
-            previousClose = price; // AV doesn't give previous close for crypto in this endpoint
+            previousClose = price;
           } else {
-            // Use GLOBAL_QUOTE for stocks
             const r = await fetch(`${AV}?function=GLOBAL_QUOTE&symbol=${sym}&apikey=${key}`);
             const d = await r.json();
             const gq = d?.["Global Quote"];
@@ -56,19 +89,24 @@ serve(async (req) => {
 
           const change = Math.round((price - previousClose) * 100) / 100;
           const changePercent = previousClose > 0 ? Math.round((change / previousClose) * 10000) / 100 : 0;
-
           return { symbol: sym, name, price, previousClose, change, changePercent, volume, avgVolume: volume, exchange: "" };
         } catch { return null; }
       }))).filter(Boolean);
-      return j({ stocks });
+
+      const result = { stocks };
+      cacheSet(cacheKey, result, 300); // 5-min cache
+      return j(result);
     }
 
-    // Search
+    // ─── Search ──────────────────────────────────────────────────────
     if (sq && sq.length >= 1) {
+      const cacheKey = `search:${assetType || 'stock'}:${sq.toLowerCase()}`;
+      const cached = await cacheGet(cacheKey);
+      if (cached) return j(cached);
+
       const isCryptoSearch = assetType === "crypto";
 
       if (isCryptoSearch) {
-        // For crypto search, use a predefined list since AV search doesn't cover crypto well
         const cryptoMap: Record<string, string> = {
           BTCUSD: "Bitcoin", ETHUSD: "Ethereum", BNBUSD: "BNB", SOLUSD: "Solana",
           XRPUSD: "XRP", ADAUSD: "Cardano", DOGEUSD: "Dogecoin", AVAXUSD: "Avalanche",
@@ -90,10 +128,12 @@ serve(async (req) => {
             return { symbol: sym, name, price, previousClose: price, change: 0, changePercent: 0, volume: 0, avgVolume: 0, exchange: "CRYPTO" };
           } catch { return null; }
         }))).filter(Boolean);
-        return j({ stocks });
+
+        const result = { stocks };
+        cacheSet(cacheKey, result, 180); // 3-min cache
+        return j(result);
       }
 
-      // Stock search via SYMBOL_SEARCH
       const sr = await fetch(`${AV}?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(sq)}&apikey=${key}`);
       const data = await sr.json();
       const matches = (data?.bestMatches || []).slice(0, 8);
@@ -115,7 +155,10 @@ serve(async (req) => {
           return { symbol: sym, name, price, previousClose, change, changePercent, volume, avgVolume: volume, exchange };
         } catch { return null; }
       }))).filter(Boolean);
-      return j({ stocks });
+
+      const result = { stocks };
+      cacheSet(cacheKey, result, 180); // 3-min cache
+      return j(result);
     }
 
     return j({ error: 'Provide ?symbols= or ?search=' }, 400);
