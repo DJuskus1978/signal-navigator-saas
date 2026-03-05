@@ -20,3 +20,12 @@ verify_jwt = false
 
 [functions.send-contact]
 verify_jwt = false
+
+[functions.get-quotes]
+verify_jwt = false
+
+[functions.get-detail]
+verify_jwt = false
+
+[functions.fmp-quotes]
+verify_jwt = false
