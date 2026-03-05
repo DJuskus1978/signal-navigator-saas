@@ -140,6 +140,13 @@ export default function StockDetail() {
           </div>
         </div>
 
+        {/* External Analyst Ratings — first block */}
+        {!isCrypto && stock.analystData && (
+          <div className="mb-8">
+            <AnalystRatingsSection analystData={stock.analystData} currentPrice={stock.price} />
+          </div>
+        )}
+
         {/* 1️⃣ AI Radar Signal Card */}
         <AIRadarSignalCard
           stock={stock}
@@ -155,13 +162,6 @@ export default function StockDetail() {
         <div className="mt-8 mb-6">
           <AIDecisionGuidance stock={stock} isCrypto={isCrypto} profile={profile} />
         </div>
-
-        {/* External Analyst Ratings */}
-        {!isCrypto && stock.analystData && (
-          <div className="mb-8">
-            <AnalystRatingsSection analystData={stock.analystData} currentPrice={stock.price} />
-          </div>
-        )}
 
         {/* 3-Phase Breakdown */}
         <div ref={breakdownRef} className="space-y-6 mb-8">
