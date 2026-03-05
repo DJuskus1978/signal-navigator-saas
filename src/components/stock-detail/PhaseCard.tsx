@@ -92,10 +92,7 @@ export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interp
       </CardHeader>
       <CardContent className="space-y-5">
         {/* Interpretation — always visible */}
-        <p className={cn(
-          "text-sm",
-          simple ? "text-foreground" : "text-foreground"
-        )}>
+        <p className="text-sm text-muted-foreground">
           {interpretation}
         </p>
 
