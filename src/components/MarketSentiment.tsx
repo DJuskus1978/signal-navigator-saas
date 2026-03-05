@@ -158,10 +158,6 @@ export function MarketSentiment() {
       {/* Gauge card */}
       <SentimentGauge value={data.gaugeValue} label={data.sentiment} />
 
-      <p className="text-sm text-muted-foreground leading-relaxed">
-        The General Market Sentiment answers one simple question for everyday investors:{" "}
-        <span className="italic">"Is now a good time to be in the stock market, or should I be cautious?"</span>
-      </p>
 
       {/* Traffic light explanation */}
       <Card className="p-4 bg-card border-border">
@@ -226,7 +222,7 @@ export function MarketSentiment() {
           </ResponsiveContainer>
         </div>
 
-        <p className="text-[10px] text-primary/70 mt-3 text-center leading-relaxed">
+        <p className="text-[10px] text-foreground/70 mt-3 text-center leading-relaxed">
           When the S&P 500 tracker is above its moving average of the prior 125 days, that's a sign of positive momentum. If it's below, it could indicate that the market is more cautious.
         </p>
       </Card>
