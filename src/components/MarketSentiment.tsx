@@ -217,6 +217,7 @@ export function MarketSentiment() {
                 tickLine={false}
                 width={45}
                 orientation="right"
+                tickCount={6}
                 tickFormatter={(v: number) => (v / 1000).toFixed(3)}
               />
               <Line type="monotone" dataKey="close" stroke="hsl(var(--signal-buy))" strokeWidth={1.5} dot={false} />
@@ -225,7 +226,7 @@ export function MarketSentiment() {
           </ResponsiveContainer>
         </div>
 
-        <p className="text-[10px] text-muted-foreground/60 mt-3 text-center leading-relaxed">
+        <p className="text-[10px] text-primary/70 mt-3 text-center leading-relaxed">
           When the S&P 500 tracker is above its moving average of the prior 125 days, that's a sign of positive momentum. If it's below, it could indicate that the market is more cautious.
         </p>
       </Card>
