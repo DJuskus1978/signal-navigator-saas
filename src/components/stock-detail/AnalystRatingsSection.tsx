@@ -187,7 +187,7 @@ function RatingsDistribution({ distribution }: {
   const rows = [
     { label: "Strong Buy", count: distribution.strongBuy, color: "bg-signal-buy" },
     { label: "Buy", count: distribution.buy, color: "bg-signal-buy/70" },
-    { label: "Hold", count: distribution.hold, color: "bg-primary" },
+    { label: "Hold", count: distribution.hold, color: "bg-signal-hold" },
     { label: "Sell", count: distribution.sell, color: "bg-signal-sell/70" },
     { label: "Strong Sell", count: distribution.strongSell, color: "bg-signal-sell" },
   ];
@@ -247,7 +247,7 @@ export function AnalystRatingsSection({ analystData, currentPrice }: Props) {
       )}
 
       <p className="text-[10px] text-muted-foreground/60 text-center">
-        The data is provided by Financial Modeling Prep and should not be considered investment advice. Analyst projections are not guarantees and the price can both go up or down.
+        The data is provided by Alpha Vantage and should not be considered investment advice. Analyst projections are not guarantees and the price can both go up or down.
       </p>
     </div>
   );
