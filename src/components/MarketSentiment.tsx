@@ -151,14 +151,14 @@ export function MarketSentiment() {
             <span className="w-2.5 h-2.5 rounded-sm bg-signal-buy inline-block" />
             <div>
               <p className="text-xs text-muted-foreground">S&P 500 tracker</p>
-              <p className="font-display font-bold text-lg">{(data.currentPrice / 10).toFixed(3)}</p>
+              <p className="font-display font-bold text-lg">{(data.currentPrice / 1000).toFixed(3)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-sm bg-signal-hold inline-block" />
             <div>
               <p className="text-xs text-muted-foreground">125-day moving average</p>
-              <p className="font-display font-bold text-lg">{(data.ma / 10).toFixed(3)}</p>
+              <p className="font-display font-bold text-lg">{(data.ma / 1000).toFixed(3)}</p>
             </div>
           </div>
         </div>
@@ -166,13 +166,13 @@ export function MarketSentiment() {
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data.chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <XAxis
+               <XAxis
                 dataKey="date"
                 tickFormatter={tickFormatter}
                 tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                 axisLine={false}
                 tickLine={false}
-                orientation="top"
+                orientation="bottom"
               />
               <YAxis
                 domain={[priceMin - yPad, priceMax + yPad]}
@@ -181,7 +181,7 @@ export function MarketSentiment() {
                 tickLine={false}
                 width={45}
                 orientation="right"
-                tickFormatter={(v: number) => v.toFixed(0)}
+                tickFormatter={(v: number) => (v / 1000).toFixed(3)}
               />
               <Line type="monotone" dataKey="close" stroke="hsl(var(--signal-buy))" strokeWidth={1.5} dot={false} />
               <Line type="monotone" dataKey="ma" stroke="hsl(var(--signal-hold))" strokeWidth={2} dot={false} />

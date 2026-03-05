@@ -253,7 +253,7 @@ export default function Dashboard() {
         )}
 
         {/* Market Sentiment */}
-        {!isSearchActive && <MarketSentiment />}
+        {!isSearchActive && <div className="mt-10"><MarketSentiment /></div>}
       </main>
     </div>
   );
