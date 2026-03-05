@@ -6,6 +6,30 @@ import { calculateCryptoPhaseScores } from "@/lib/crypto-scoring-engine";
 import { calculateAllRadarScores } from "@/lib/radar-scoring";
 
 // Tickers grouped by our exchange categories
+// Ticker-to-name mapping for local search
+const TICKER_NAMES: Record<string, string> = {
+  // Nasdaq
+  AAPL: "Apple", MSFT: "Microsoft", GOOGL: "Alphabet Google", AMZN: "Amazon", NVDA: "NVIDIA",
+  META: "Meta Platforms Facebook", TSLA: "Tesla", NFLX: "Netflix", AMD: "Advanced Micro Devices",
+  INTC: "Intel", ADBE: "Adobe", PYPL: "PayPal", QCOM: "Qualcomm", AVGO: "Broadcom",
+  CSCO: "Cisco", PEP: "PepsiCo", COST: "Costco", SBUX: "Starbucks", MDLZ: "Mondelez",
+  GILD: "Gilead Sciences", ISRG: "Intuitive Surgical", REGN: "Regeneron", ADP: "ADP", LRCX: "Lam Research",
+  // Dow
+  UNH: "UnitedHealth", GS: "Goldman Sachs", HD: "Home Depot", CAT: "Caterpillar",
+  CRM: "Salesforce", V: "Visa", JPM: "JPMorgan Chase", WMT: "Walmart",
+  MCD: "McDonald's", DIS: "Disney", NKE: "Nike", BA: "Boeing", IBM: "IBM",
+  AXP: "American Express", MMM: "3M", JNJ: "Johnson & Johnson", PG: "Procter & Gamble",
+  KO: "Coca-Cola", MRK: "Merck", TRV: "Travelers", DOW: "Dow Inc", AMGN: "Amgen",
+  HON: "Honeywell",
+  // S&P 500
+  "BRK-B": "Berkshire Hathaway", XOM: "Exxon Mobil", LLY: "Eli Lilly", MA: "Mastercard",
+  ABBV: "AbbVie", PFE: "Pfizer", T: "AT&T", CVX: "Chevron", BAC: "Bank of America",
+  WFC: "Wells Fargo", ORCL: "Oracle", TMO: "Thermo Fisher", ACN: "Accenture",
+  LIN: "Linde", DHR: "Danaher", PM: "Philip Morris", NEE: "NextEra Energy",
+  UPS: "UPS", RTX: "RTX Raytheon", LOW: "Lowe's", SPGI: "S&P Global", INTU: "Intuit",
+  SYK: "Stryker",
+};
+
 const EXCHANGE_TICKERS: Record<Exchange, string[]> = {
   nasdaq: [
     "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "NFLX",
@@ -418,15 +442,43 @@ export function useSearchStocks(query: string, assetType: "stock" | "crypto" = "
     queryKey: ["search-stocks", query, assetType],
     queryFn: async () => {
       const headers = await getAuthHeaders();
-      const typeParam = assetType === "crypto" ? "&type=crypto" : "";
-      const res = await fetch(edgeFnUrl("get-quotes", `?search=${encodeURIComponent(query)}${typeParam}`), { headers });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `HTTP ${res.status}`);
+      const lowerQ = query.toLowerCase();
+
+      // For stocks, find local matches by company name
+      let localMatchSymbols: string[] = [];
+      if (assetType === "stock") {
+        localMatchSymbols = Object.entries(TICKER_NAMES)
+          .filter(([ticker, name]) =>
+            name.toLowerCase().includes(lowerQ) || ticker.toLowerCase().includes(lowerQ)
+          )
+          .map(([ticker]) => ticker)
+          .slice(0, 8);
       }
-      const data = await res.json();
-      const quotes: QuoteResponse[] = data.stocks || [];
-      return quotes.map((q) => {
+
+      // Fetch API search + local batch quotes in parallel
+      const typeParam = assetType === "crypto" ? "&type=crypto" : "";
+      const [apiQuotes, localQuotes] = await Promise.all([
+        fetch(edgeFnUrl("get-quotes", `?search=${encodeURIComponent(query)}${typeParam}`), { headers })
+          .then(async (res) => {
+            if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
+            return ((await res.json()).stocks || []) as QuoteResponse[];
+          }),
+        localMatchSymbols.length > 0
+          ? fetchBatchQuotes(localMatchSymbols).catch(() => [] as QuoteResponse[])
+          : Promise.resolve([] as QuoteResponse[]),
+      ]);
+
+      // Merge: local name-matched results first, then API results, dedup
+      const seen = new Set<string>();
+      const merged: QuoteResponse[] = [];
+      for (const q of [...localQuotes, ...apiQuotes]) {
+        if (!seen.has(q.symbol)) {
+          seen.add(q.symbol);
+          merged.push(q);
+        }
+      }
+
+      return merged.map((q) => {
         if (assetType === "crypto") return cryptoQuoteToStock(q);
         const exchange = findExchangeForTicker(q.symbol);
         return quoteToStock(q, exchange);
