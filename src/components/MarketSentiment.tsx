@@ -44,7 +44,7 @@ function SentimentGauge({ value, label }: { value: number; label: string }) {
   const color =
     value > 55 ? "text-signal-buy" :
     value < 45 ? "text-signal-sell" :
-    "text-signal-hold";
+    "text-signal-hold"; // Neutral = hold/yellow color
 
   return (
     <Card>
