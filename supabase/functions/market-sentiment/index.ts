@@ -1,0 +1,108 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+
+const H = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
+
+const SB_URL = () => Deno.env.get('SUPABASE_URL')!;
+const SB_KEY = () => Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+async function cacheGet(key: string): Promise<unknown | null> {
+  try {
+    const r = await fetch(
+      `${SB_URL()}/rest/v1/stock_cache?cache_key=eq.${encodeURIComponent(key)}&select=data,expires_at&limit=1`,
+      { headers: { apikey: SB_KEY(), Authorization: `Bearer ${SB_KEY()}` } }
+    );
+    const rows = await r.json();
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    if (new Date(rows[0].expires_at) < new Date()) return null;
+    return rows[0].data;
+  } catch { return null; }
+}
+
+async function cacheSet(key: string, data: unknown, ttlSeconds: number) {
+  try {
+    const expires_at = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+    await fetch(`${SB_URL()}/rest/v1/stock_cache`, {
+      method: 'POST',
+      headers: {
+        apikey: SB_KEY(), Authorization: `Bearer ${SB_KEY()}`,
+        'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({ cache_key: key, data, expires_at, fetched_at: new Date().toISOString() }),
+    });
+  } catch { /* silent */ }
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response(null, { headers: H });
+  const j = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...H, 'Content-Type': 'application/json' } });
+
+  try {
+    // Auth check
+    const ah = req.headers.get('Authorization');
+    if (!ah?.startsWith('Bearer ')) return j({ error: 'Unauthorized' }, 401);
+    const ur = await fetch(`${SB_URL()}/auth/v1/user`, { headers: { Authorization: ah, apikey: Deno.env.get('SUPABASE_ANON_KEY')! } });
+    if (!ur.ok) return j({ error: 'Unauthorized' }, 401);
+
+    const cacheKey = 'market-sentiment:spy-daily';
+    const cached = await cacheGet(cacheKey);
+    if (cached) return j(cached);
+
+    const key = Deno.env.get('ALPHA_VANTAGE_API_KEY')!;
+    // Fetch daily time series for SPY (S&P 500 ETF), compact = last 100 trading days
+    const r = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=SPY&outputsize=compact&apikey=${key}`);
+    const d = await r.json();
+    const ts = d?.["Time Series (Daily)"];
+    if (!ts) return j({ error: 'No data from provider' }, 502);
+
+    // Convert to sorted array (oldest first)
+    const entries = Object.entries(ts)
+      .map(([date, vals]: [string, any]) => ({
+        date,
+        close: parseFloat(vals["4. close"]),
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // We only have ~100 days from compact; compute a simple moving average from all available
+    const maWindow = Math.min(entries.length, 100); // approximate 125-day with what we have
+    const closes = entries.map(e => e.close);
+    
+    // Compute rolling MA for chart display
+    const chartData = entries.slice(-60).map((entry, i, arr) => {
+      // Use last maWindow values ending at this point's position in the full array
+      const fullIdx = entries.indexOf(entry);
+      const start = Math.max(0, fullIdx - maWindow + 1);
+      const slice = closes.slice(start, fullIdx + 1);
+      const ma = slice.reduce((a, b) => a + b, 0) / slice.length;
+      return { date: entry.date, close: entry.close, ma: Math.round(ma * 100) / 100 };
+    });
+
+    const latest = entries[entries.length - 1];
+    const maValue = chartData[chartData.length - 1]?.ma ?? latest.close;
+    
+    // Sentiment: above MA = bullish, below = bearish
+    const diff = (latest.close - maValue) / maValue;
+    let sentiment: string;
+    let gaugeValue: number; // 0-100, 50 = neutral
+    if (diff > 0.03) { sentiment = "Bullish"; gaugeValue = 80; }
+    else if (diff > 0.01) { sentiment = "Bullish"; gaugeValue = 65; }
+    else if (diff > -0.01) { sentiment = "Neutral"; gaugeValue = 50; }
+    else if (diff > -0.03) { sentiment = "Bearish"; gaugeValue = 35; }
+    else { sentiment = "Bearish"; gaugeValue = 20; }
+
+    const result = {
+      sentiment,
+      gaugeValue,
+      currentPrice: latest.close,
+      ma: maValue,
+      chartData,
+    };
+
+    cacheSet(cacheKey, result, 3600); // 1-hour cache
+    return j(result);
+  } catch (e) {
+    return j({ error: String(e) }, 500);
+  }
+});

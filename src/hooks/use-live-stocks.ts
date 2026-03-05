@@ -392,11 +392,18 @@ function findExchangeForTicker(ticker: string): Exchange {
 
 // ─── Hooks ───────────────────────────────────────────────────────────────────
 
+// Pick 1 random ticker from the top 20 of each index to minimise API calls
+function pickRandomTicker(exchange: Exchange): string[] {
+  const pool = EXCHANGE_TICKERS[exchange].slice(0, 20);
+  const idx = Math.floor(Math.random() * pool.length);
+  return [pool[idx]];
+}
+
 export function useLiveStocks(exchange: Exchange) {
   return useQuery<Stock[]>({
     queryKey: ["live-stocks", exchange],
     queryFn: async () => {
-      const symbols = EXCHANGE_TICKERS[exchange];
+      const symbols = pickRandomTicker(exchange);
       const quotes = await fetchBatchQuotes(symbols);
       return quotes.map((q) => quoteToStock(q, exchange));
     },
