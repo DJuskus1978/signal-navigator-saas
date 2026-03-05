@@ -124,14 +124,16 @@ export function MarketSentiment() {
     return m.toLocaleDateString("en-US", { month: "short" });
   };
 
-  // Deduplicate month labels
-  const seen = new Set<string>();
-  const tickFormatter = (d: string) => {
-    const label = formatDate(d);
-    if (seen.has(label)) return "";
-    seen.add(label);
-    return label;
-  };
+  // Build unique month ticks for the X-axis
+  const monthTicks: string[] = [];
+  const seenMonths = new Set<string>();
+  for (const entry of data.chartData) {
+    const label = formatDate(entry.date);
+    if (!seenMonths.has(label)) {
+      seenMonths.add(label);
+      monthTicks.push(entry.date);
+    }
+  }
 
   const priceMin = Math.min(...data.chartData.map(d => Math.min(d.close, d.ma)));
   const priceMax = Math.max(...data.chartData.map(d => Math.max(d.close, d.ma)));
@@ -165,10 +167,11 @@ export function MarketSentiment() {
 
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data.chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+            <ComposedChart data={data.chartData} margin={{ top: 5, right: 5, left: 0, bottom: 20 }}>
                <XAxis
                 dataKey="date"
-                tickFormatter={tickFormatter}
+                tickFormatter={formatDate}
+                ticks={monthTicks}
                 tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                 axisLine={false}
                 tickLine={false}
