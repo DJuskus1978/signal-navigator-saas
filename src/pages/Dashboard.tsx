@@ -196,9 +196,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Market Sentiment */}
-        {!isSearchActive && <MarketSentiment />}
-
         {/* Tab view (hidden while searching) */}
         {!isSearchActive && (
           <Tabs defaultValue="nasdaq" onValueChange={(v) => setActiveTab(v as Exchange)}>
@@ -254,6 +251,9 @@ export default function Dashboard() {
             </TabsContent>
           </Tabs>
         )}
+
+        {/* Market Sentiment */}
+        {!isSearchActive && <MarketSentiment />}
       </main>
     </div>
   );
