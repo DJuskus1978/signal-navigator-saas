@@ -89,15 +89,14 @@ serve(async (req) => {
     const latestSP500 = latest.close * SPY_TO_SP500;
     const maValue = chartData[chartData.length - 1]?.ma ?? latestSP500;
     
-    // Sentiment: above MA = bullish, below = bearish
+    // Sentiment: above MA = bullish, below = bearish (matching Revolut-style logic)
     const diff = (latestSP500 - maValue) / maValue;
     let sentiment: string;
     let gaugeValue: number; // 0-100, 50 = neutral
-    if (diff > 0.03) { sentiment = "Bullish"; gaugeValue = 80; }
-    else if (diff > 0.01) { sentiment = "Bullish"; gaugeValue = 65; }
-    else if (diff > -0.01) { sentiment = "Neutral"; gaugeValue = 50; }
+    if (diff > 0.03) { sentiment = "Bullish"; gaugeValue = 85; }
+    else if (diff > 0) { sentiment = "Bullish"; gaugeValue = 65; }
     else if (diff > -0.03) { sentiment = "Bearish"; gaugeValue = 35; }
-    else { sentiment = "Bearish"; gaugeValue = 20; }
+    else { sentiment = "Bearish"; gaugeValue = 15; }
 
     const result = {
       sentiment,
