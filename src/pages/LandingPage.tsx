@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { startCheckout } from "@/lib/stripe-helpers";
 import heroBannerImg from "@/assets/hero-banner-new.jpg";
+import insideRadarStockDetailImg from "@/assets/inside-radar-stock-detail.jpeg";
+import insideRadarAnalystImg from "@/assets/inside-radar-analyst.jpeg";
 import insideRadarSignalImg from "@/assets/inside-radar-signal.jpeg";
 import insideRadarPhasesImg from "@/assets/inside-radar-phases.jpeg";
 import insideRadarDashboardImg from "@/assets/inside-radar-dashboard.jpeg";
@@ -267,6 +269,8 @@ export default function LandingPage() {
           </p>
           {(() => {
             const insideSlides = [
+              { src: insideRadarStockDetailImg, alt: "StocksRadars stock detail view showing TSLA price, analyst gauge, and price target bar" },
+              { src: insideRadarAnalystImg, alt: "StocksRadars external analyst ratings with gauge, price target, and ratings distribution breakdown" },
               { src: insideRadarSignalImg, alt: "StocksRadars signal card showing AAPL stock with Buy recommendation, Balanced profile selected, and Fundamentals/News/Technical weight bars" },
               { src: insideRadarPhasesImg, alt: "StocksRadars analysis phases showing Fundamental Strength, News & Sentiment, and Technical Momentum breakdowns with Decision Guidance" },
               { src: insideRadarDashboardImg, alt: "StocksRadars dashboard showing stock list with AAPL and MSFT, search bar, and index tabs for Nasdaq, Dow Jones, S&P 500 and Crypto" },
