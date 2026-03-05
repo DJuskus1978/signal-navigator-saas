@@ -9,25 +9,57 @@ interface Props {
   profile: InvestorProfile;
 }
 
-function generateGuidance(stock: Stock, isCrypto: boolean, profile: InvestorProfile): string {
-  const radar = stock.radarScores?.[profile];
-  const score = radar?.radarScore ?? 50;
-  const signal = radar?.signal ?? stock.recommendation;
-  const f = isCrypto ? "market structure" : "fundamentals";
+function describePhase(score: number): "strong" | "positive" | "neutral" | "weak" | "negative" {
+  if (score >= 75) return "strong";
+  if (score >= 60) return "positive";
+  if (score >= 40) return "neutral";
+  if (score >= 25) return "weak";
+  return "negative";
+}
 
-  if (score >= 80) {
-    return `Overall conditions suggest strong alignment across all analysis phases. ${isCrypto ? "Market structure" : "Fundamentals"} and technicals both support a constructive outlook. Long-term positioning appears favorable, while short-term momentum may offer entry opportunities.`;
-  }
-  if (score >= 65) {
-    return `Overall conditions suggest moderate-to-positive positioning. ${isCrypto ? "Market structure indicators" : "Underlying fundamentals"} provide a reasonable foundation, supported by favorable momentum signals.`;
-  }
-  if (score >= 45) {
-    return `Overall conditions are mixed, with no clear directional consensus across the three phases. Short-term traders may see volatility, while long-term investors may focus on underlying ${f} rather than near-term noise.`;
-  }
-  if (score >= 30) {
-    return `Caution is warranted. Weakening momentum and mixed sentiment create a challenging environment. Risk management should be prioritized while monitoring ${f} for stability signals.`;
-  }
-  return `Overall conditions suggest elevated caution. Multiple analysis phases are showing stress signals. Risk management should be prioritized, and ${f} developments should be monitored closely before considering new positions.`;
+const FUND_LABELS: Record<ReturnType<typeof describePhase>, string> = {
+  strong: "shows solid fundamentals",
+  positive: "shows reasonable fundamentals",
+  neutral: "presents mixed fundamentals",
+  weak: "shows weakening fundamentals",
+  negative: "shows concerning fundamentals",
+};
+const FUND_LABELS_CRYPTO: Record<ReturnType<typeof describePhase>, string> = {
+  strong: "shows strong market structure",
+  positive: "shows favorable market structure",
+  neutral: "presents mixed market structure signals",
+  weak: "shows weakening market structure",
+  negative: "shows stressed market structure",
+};
+const SENT_LABELS: Record<ReturnType<typeof describePhase>, string> = {
+  strong: "strongly positive sentiment",
+  positive: "positive sentiment",
+  neutral: "neutral sentiment",
+  weak: "cautious sentiment",
+  negative: "negative sentiment",
+};
+const TECH_LABELS: Record<ReturnType<typeof describePhase>, string> = {
+  strong: "strong technical momentum",
+  positive: "favorable technical trends",
+  neutral: "neutral technical signals",
+  weak: "weakening technical momentum",
+  negative: "bearish technical momentum",
+};
+
+function generateGuidance(stock: Stock, isCrypto: boolean, profile: InvestorProfile): string {
+  const ps = stock.phaseScores;
+  const fLevel = describePhase(ps.fundamental);
+  const sLevel = describePhase(ps.sentiment);
+  const tLevel = describePhase(ps.technical);
+
+  const fundDesc = isCrypto ? FUND_LABELS_CRYPTO[fLevel] : FUND_LABELS[fLevel];
+  const sentDesc = SENT_LABELS[sLevel];
+  const techDesc = TECH_LABELS[tLevel];
+
+  const name = stock.name;
+
+  // Build a coherent sentence reflecting all three phases accurately
+  return `${name} ${fundDesc}, with ${sentDesc} and ${techDesc}. Investors should weigh all three dimensions when evaluating positioning.`;
 }
 
 export function AIDecisionGuidance({ stock, isCrypto, profile }: Props) {
