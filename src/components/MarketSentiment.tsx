@@ -153,7 +153,11 @@ export function MarketSentiment() {
 
   return (
     <div className="mb-6 space-y-3">
-      <h2 className="font-display text-xl font-bold">Sentiment</h2>
+      <h2 className="font-display text-xl font-bold">General Market Sentiment</h2>
+      <p className="text-sm text-muted-foreground leading-relaxed">
+        The General Market Sentiment answers one simple question for everyday investors:{" "}
+        <span className="italic">"Is now a good time to be in the stock market, or should I be cautious?"</span>
+      </p>
 
       {/* Gauge card */}
       <SentimentGauge value={data.gaugeValue} label={data.sentiment} />
