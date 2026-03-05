@@ -163,7 +163,23 @@ export function MarketSentiment() {
         <span className="italic">"Is now a good time to be in the stock market, or should I be cautious?"</span>
       </p>
 
-      {/* S&P 500 tracker card */}
+      {/* Traffic light explanation */}
+      <Card className="p-4 bg-card border-border">
+        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
+          <span className="font-semibold text-muted-foreground col-span-1">Signal</span>
+          <span className="font-semibold text-muted-foreground">What it means for a normal investor</span>
+
+          <span className="text-lg leading-none">🟢</span>
+          <p className="text-muted-foreground"><span className="font-medium text-signal-buy">Bullish</span> — Market has positive momentum — generally a good environment to invest or hold stocks</p>
+
+          <span className="text-lg leading-none">🟡</span>
+          <p className="text-muted-foreground"><span className="font-medium text-signal-hold">Neutral</span> — Market is flat — no strong signal either way, stay the course</p>
+
+          <span className="text-lg leading-none">🔴</span>
+          <p className="text-muted-foreground"><span className="font-medium text-signal-sell">Bearish</span> — Market is trending down — be cautious, maybe hold off on new investments</p>
+        </div>
+      </Card>
+
       <Card className="p-5 bg-card border-border">
         <div className="flex gap-6 mb-4">
           <div className="flex items-center gap-2">
