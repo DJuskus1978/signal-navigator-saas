@@ -20,6 +20,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useLiveStocks, useSearchStocks } from "@/hooks/use-live-stocks";
+import { MarketSentiment } from "@/components/MarketSentiment";
 import { useSubscription } from "@/hooks/use-subscription";
 
 const TIER_LABELS: Record<string, string> = {
@@ -194,6 +195,9 @@ export default function Dashboard() {
             )}
           </div>
         )}
+
+        {/* Market Sentiment */}
+        {!isSearchActive && <MarketSentiment />}
 
         {/* Tab view (hidden while searching) */}
         {!isSearchActive && (
