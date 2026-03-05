@@ -9,11 +9,12 @@ interface Props {
   profile: InvestorProfile;
 }
 
+// Use the same thresholds as getPhaseStatus in types.ts to stay coherent with phase cards
 function describePhase(score: number): "strong" | "positive" | "neutral" | "weak" | "negative" {
-  if (score >= 75) return "strong";
-  if (score >= 60) return "positive";
-  if (score >= 40) return "neutral";
-  if (score >= 25) return "weak";
+  if (score >= 20) return "strong";
+  if (score >= 10) return "positive";
+  if (score >= 5) return "neutral";
+  if (score >= 0) return "weak";
   return "negative";
 }
 
