@@ -69,14 +69,14 @@ function ConsensusGauge({ consensus }: { consensus: AnalystConsensus }) {
             </g>
           </svg>
           {/* Labels around arc */}
-          <span className="absolute left-0 bottom-0 text-[10px] text-muted-foreground">Strong Sell</span>
-          <span className="absolute left-4 top-2 text-[10px] text-muted-foreground">Sell</span>
-          <span className="absolute left-1/2 -translate-x-1/2 -top-1 text-[10px] text-muted-foreground">Hold</span>
-          <span className="absolute right-4 top-2 text-[10px] text-muted-foreground">Buy</span>
-          <span className="absolute right-0 bottom-0 text-[10px] text-muted-foreground">Strong Buy</span>
+          <span className="absolute -left-2 -bottom-5 text-[10px] text-muted-foreground whitespace-nowrap">Strong Sell</span>
+          <span className="absolute left-2 -top-1 text-[10px] text-muted-foreground">Sell</span>
+          <span className="absolute left-1/2 -translate-x-1/2 -top-4 text-[10px] text-muted-foreground">Hold</span>
+          <span className="absolute right-2 -top-1 text-[10px] text-muted-foreground">Buy</span>
+          <span className="absolute -right-2 -bottom-5 text-[10px] text-muted-foreground whitespace-nowrap">Strong Buy</span>
         </div>
         <p className={cn(
-          "text-xl font-display font-bold",
+          "text-3xl font-display font-bold",
           consensus.includes("Buy") ? "text-signal-buy" :
           consensus.includes("Sell") ? "text-signal-sell" :
           "text-signal-hold"
