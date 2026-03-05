@@ -166,12 +166,14 @@ function PriceTargetCard({ priceTarget, currentPrice }: {
               {upsidePercent >= 0 ? "+" : ""}{upsidePercent.toFixed(1)}%
             </p>
           </div>
+        {Math.abs(high - consensus) > 0.01 && (
           <div className="text-right">
             <p className="text-muted-foreground">High · ${high.toFixed(2)}</p>
             <p className={cn("font-medium", highPercent >= 0 ? "text-signal-buy" : "text-signal-sell")}>
               {highPercent >= 0 ? "+" : ""}{highPercent.toFixed(1)}%
             </p>
           </div>
+        )}
         </div>
       </CardContent>
     </Card>
