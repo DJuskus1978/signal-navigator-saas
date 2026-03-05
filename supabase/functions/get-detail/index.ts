@@ -181,16 +181,18 @@ serve(async (req) => {
     }
 
     const ad: Record<string, unknown> = {};
-    const targetPrice = pf("AnalystTargetPrice");
-    if (targetPrice) {
-      ad.priceTarget = { targetHigh: targetPrice, targetLow: targetPrice * 0.85, targetConsensus: targetPrice, targetMedian: targetPrice, totalAnalysts: pf("NumberOfAnalystOpinions") ?? 0 };
-    }
     const strongBuy = pf("AnalystRatingStrongBuy") ?? 0;
     const buy = pf("AnalystRatingBuy") ?? 0;
     const hold = pf("AnalystRatingHold") ?? 0;
     const sell = pf("AnalystRatingSell") ?? 0;
     const strongSell = pf("AnalystRatingStrongSell") ?? 0;
     const totalAnalysts = strongBuy + buy + hold + sell + strongSell;
+
+    const targetPrice = pf("AnalystTargetPrice");
+    if (targetPrice) {
+      const numOpinions = pf("NumberOfAnalystOpinions") || totalAnalysts || 0;
+      ad.priceTarget = { targetHigh: targetPrice, targetLow: targetPrice * 0.85, targetConsensus: targetPrice, targetMedian: targetPrice, totalAnalysts: numOpinions };
+    }
     if (totalAnalysts > 0) {
       const weighted = (strongBuy * 5 + buy * 4 + hold * 3 + sell * 2 + strongSell * 1) / totalAnalysts;
       let consensus = "Hold";
