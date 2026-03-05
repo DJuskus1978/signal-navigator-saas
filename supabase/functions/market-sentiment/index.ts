@@ -89,13 +89,13 @@ serve(async (req) => {
     const latestSP500 = latest.close * SPY_TO_SP500;
     const maValue = chartData[chartData.length - 1]?.ma ?? latestSP500;
     
-    // Sentiment: matching Revolut-style logic with Neutral zone
+    // Sentiment: matching Revolut-style logic with narrow Neutral zone (±0.5%)
     const diff = (latestSP500 - maValue) / maValue;
     let sentiment: string;
     let gaugeValue: number; // 0-100, 50 = neutral
     if (diff > 0.03) { sentiment = "Bullish"; gaugeValue = 85; }
-    else if (diff > 0.01) { sentiment = "Bullish"; gaugeValue = 65; }
-    else if (diff > -0.01) { sentiment = "Neutral"; gaugeValue = 50; }
+    else if (diff > 0.005) { sentiment = "Bullish"; gaugeValue = 65; }
+    else if (diff > -0.005) { sentiment = "Neutral"; gaugeValue = 50; }
     else if (diff > -0.03) { sentiment = "Bearish"; gaugeValue = 35; }
     else { sentiment = "Bearish"; gaugeValue = 15; }
 
