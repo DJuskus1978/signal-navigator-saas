@@ -108,8 +108,8 @@ function PriceTargetCard({ priceTarget, currentPrice }: {
 
   return (
     <Card>
-      <CardContent className="p-6">
-        <div className="mb-4">
+      <CardContent className="p-5">
+        <div className="mb-3">
           <p className="font-display text-3xl font-bold">${consensus.toFixed(2)}</p>
           <p className="text-sm text-muted-foreground">
             12 month average target · {priceTarget.totalAnalysts} Analyst{priceTarget.totalAnalysts !== 1 ? "s" : ""}
@@ -117,7 +117,7 @@ function PriceTargetCard({ priceTarget, currentPrice }: {
         </div>
 
         {/* Price range bar */}
-        <div className="relative h-20 mt-8 mb-6">
+        <div className="relative h-16 mt-4 mb-4">
           {/* Range bar */}
           <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-2 bg-muted rounded-full">
             {/* Highlighted range between current and avg */}
