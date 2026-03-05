@@ -131,14 +131,14 @@ export function MarketSentiment() {
     });
   };
 
-  const augEntry = findMonthEntry(7); // August = 7
-  const octEntry = findMonthEntry(9); // October = 9
-  const decEntry = findMonthEntry(11); // December = 11
+  const sepEntry = findMonthEntry(8); // September = 8
+  const novEntry = findMonthEntry(10); // November = 10
+  const janEntry = findMonthEntry(0); // January = 0
 
   const monthTicks: string[] = [];
-  if (augEntry) monthTicks.push(augEntry.date);
-  if (octEntry) monthTicks.push(octEntry.date);
-  if (decEntry) monthTicks.push(decEntry.date);
+  if (sepEntry) monthTicks.push(sepEntry.date);
+  if (novEntry) monthTicks.push(novEntry.date);
+  if (janEntry) monthTicks.push(janEntry.date);
   if (lastDate) monthTicks.push(lastDate);
 
   const formatTick = (d: string) => {

@@ -68,21 +68,29 @@ serve(async (req) => {
     const MA_WINDOW = 125;
     const closes = entries.map(e => e.close);
     
-    // We need at least MA_WINDOW + display days. Show ~150 trading days (~7 months from Aug)
+    // SPY tracks S&P 500 at ~1/10th the value. Multiply by 10 to approximate S&P 500 index.
+    const SPY_TO_SP500 = 10;
+    
+    // Show ~150 trading days (~7 months from Sep)
     const displayDays = 150;
     const chartData = entries.slice(-displayDays).map((entry) => {
       const fullIdx = entries.indexOf(entry);
       const start = Math.max(0, fullIdx - MA_WINDOW + 1);
       const slice = closes.slice(start, fullIdx + 1);
       const ma = slice.reduce((a, b) => a + b, 0) / slice.length;
-      return { date: entry.date, close: entry.close, ma: Math.round(ma * 100) / 100 };
+      return {
+        date: entry.date,
+        close: Math.round(entry.close * SPY_TO_SP500 * 100) / 100,
+        ma: Math.round(ma * SPY_TO_SP500 * 100) / 100,
+      };
     });
 
     const latest = entries[entries.length - 1];
-    const maValue = chartData[chartData.length - 1]?.ma ?? latest.close;
+    const latestSP500 = latest.close * SPY_TO_SP500;
+    const maValue = chartData[chartData.length - 1]?.ma ?? latestSP500;
     
     // Sentiment: above MA = bullish, below = bearish
-    const diff = (latest.close - maValue) / maValue;
+    const diff = (latestSP500 - maValue) / maValue;
     let sentiment: string;
     let gaugeValue: number; // 0-100, 50 = neutral
     if (diff > 0.03) { sentiment = "Bullish"; gaugeValue = 80; }
@@ -94,8 +102,8 @@ serve(async (req) => {
     const result = {
       sentiment,
       gaugeValue,
-      currentPrice: latest.close,
-      ma: maValue,
+      currentPrice: Math.round(latestSP500 * 100) / 100,
+      ma: Math.round(maValue * 100) / 100,
       chartData,
     };
 
