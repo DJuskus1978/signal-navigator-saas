@@ -6,13 +6,44 @@ const H = {
 };
 const AV = "https://www.alphavantage.co/query";
 
+// ─── Cache helpers (stock_cache table via REST) ──────────────────────────────
+const SB_URL = () => Deno.env.get('SUPABASE_URL')!;
+const SB_KEY = () => Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+async function cacheGet(key: string): Promise<unknown | null> {
+  try {
+    const r = await fetch(
+      `${SB_URL()}/rest/v1/stock_cache?cache_key=eq.${encodeURIComponent(key)}&select=data,expires_at&limit=1`,
+      { headers: { apikey: SB_KEY(), Authorization: `Bearer ${SB_KEY()}` } }
+    );
+    const rows = await r.json();
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    if (new Date(rows[0].expires_at) < new Date()) return null;
+    return rows[0].data;
+  } catch { return null; }
+}
+
+async function cacheSet(key: string, data: unknown, ttlSeconds: number) {
+  try {
+    const expires_at = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+    await fetch(`${SB_URL()}/rest/v1/stock_cache`, {
+      method: 'POST',
+      headers: {
+        apikey: SB_KEY(), Authorization: `Bearer ${SB_KEY()}`,
+        'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({ cache_key: key, data, expires_at, fetched_at: new Date().toISOString() }),
+    });
+  } catch { /* silent */ }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: H });
   const j = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...H, 'Content-Type': 'application/json' } });
   try {
     const ah = req.headers.get('Authorization');
     if (!ah?.startsWith('Bearer ')) return j({ error: 'Unauthorized' }, 401);
-    const ur = await fetch(`${Deno.env.get('SUPABASE_URL')}/auth/v1/user`, { headers: { Authorization: ah, apikey: Deno.env.get('SUPABASE_ANON_KEY')! } });
+    const ur = await fetch(`${SB_URL()}/auth/v1/user`, { headers: { Authorization: ah, apikey: Deno.env.get('SUPABASE_ANON_KEY')! } });
     if (!ur.ok) return j({ error: 'Unauthorized' }, 401);
     const u = await ur.json();
     if (!u?.id) return j({ error: 'Unauthorized' }, 401);
@@ -21,10 +52,14 @@ serve(async (req) => {
     const S = (new URL(req.url).searchParams.get('symbol') || '').toUpperCase();
     if (!S) return j({ error: 'Provide ?symbol=' }, 400);
 
-    const ic = S.endsWith("USD") && S.length <= 10; // is crypto
+    // Check cache first (2-min TTL for detail)
+    const cacheKey = `detail:${S}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) return j(cached);
+
+    const ic = S.endsWith("USD") && S.length <= 10;
     const av = (params: string) => fetch(`${AV}?${params}&apikey=${key}`).then(r => r.json()).catch(() => ({}));
 
-    // Fetch data in parallel - different endpoints for crypto vs stock
     if (ic) {
       const fromCurrency = S.replace("USD", "");
       const [exchangeRate, rsiData, smaData50, emaData20, newsData] = await Promise.all([
@@ -38,38 +73,33 @@ serve(async (req) => {
       const rate = exchangeRate?.["Realtime Currency Exchange Rate"];
       const price = rate ? parseFloat(rate["5. Exchange Rate"] || "0") : 0;
       if (!price) return j({ error: 'No data for crypto symbol' }, 400);
-
       const name = rate?.["2. From_Currency Name"] || S;
 
-      // Extract latest RSI
       const rsiSeries = rsiData?.["Technical Analysis: RSI"];
       const rsiVal = rsiSeries ? parseFloat(Object.values(rsiSeries)[0]?.["RSI"] || "50") : null;
-
-      // Extract latest SMA50
       const smaSeries = smaData50?.["Technical Analysis: SMA"];
       const sma50Val = smaSeries ? parseFloat(Object.values(smaSeries)[0]?.["SMA"] || "0") : null;
-
-      // Extract latest EMA20
       const emaSeries = emaData20?.["Technical Analysis: EMA"];
       const ema20Val = emaSeries ? parseFloat(Object.values(emaSeries)[0]?.["EMA"] || "0") : null;
 
-      // News
       const feed = Array.isArray(newsData?.feed) ? newsData.feed : [];
       const recentNews = feed.slice(0, 5).map((n: Record<string, string>) => ({
         title: n.title || "", publisher: n.source || "", date: n.time_published || "",
       }));
 
-      return j({
+      const result = {
         symbol: S, name, exchange: "CRYPTO", price, previousClose: price,
         change: 0, changePercent: 0, volume: 0, avgVolume: 0,
         technical: { rsi: rsiVal, macd: null, macdSignal: null, sma50: sma50Val, sma200: null, ema20: ema20Val, bollingerUpper: null, bollingerLower: null, atr: null },
         fundamental: { peRatio: null, forwardPE: null, earningsGrowth: null, debtToEquity: null, revenueGrowth: null, profitMargin: null, returnOnEquity: null, freeCashFlowYield: null },
         sentiment: { newsCount: feed.length, analystRating: 3, insiderActivity: 0, headline: feed[0]?.title || `${name} at $${price.toFixed(2)}`, recentNews, grades: [] },
         analystData: null,
-      });
+      };
+      cacheSet(cacheKey, result, 120); // 2-min cache
+      return j(result);
     }
 
-    // ─── Stock detail ────────────────────────────────────────────────────
+    // ─── Stock detail ────────────────────────────────────────────────
     const [quoteData, overviewData, rsiData, sma50Data, sma200Data, ema20Data, macdData, bbandsData, atrData, newsData] = await Promise.all([
       av(`function=GLOBAL_QUOTE&symbol=${S}`),
       av(`function=OVERVIEW&symbol=${S}`),
@@ -96,14 +126,13 @@ serve(async (req) => {
     const name = ov["Name"] || S;
     const exchange = ov["Exchange"] || "";
 
-    // Helper to extract latest value from Alpha Vantage technical indicator response
-    const getLatest = (data: Record<string, unknown>, key: string): number | null => {
-      const analysisKey = Object.keys(data).find(k => k.startsWith("Technical Analysis"));
+    const getLatest = (data: Record<string, unknown>, k: string): number | null => {
+      const analysisKey = Object.keys(data).find(x => x.startsWith("Technical Analysis"));
       if (!analysisKey) return null;
       const series = data[analysisKey] as Record<string, Record<string, string>>;
       const firstDate = Object.keys(series)[0];
       if (!firstDate) return null;
-      const val = series[firstDate][key];
+      const val = series[firstDate][k];
       return val ? parseFloat(val) : null;
     };
 
@@ -117,7 +146,6 @@ serve(async (req) => {
     const bbLower = getLatest(bbandsData, "Real Lower Band");
     const atr = getLatest(atrData, "ATR");
 
-    // Fundamentals from OVERVIEW
     const pf = (field: string): number | null => {
       const v = ov[field];
       if (v === undefined || v === null || v === "None" || v === "-") return null;
@@ -131,15 +159,13 @@ serve(async (req) => {
     const returnOnEquity = pf("ReturnOnEquityTTM") != null ? pf("ReturnOnEquityTTM")! * 100 : null;
     const earningsGrowth = pf("QuarterlyEarningsGrowthYOY") != null ? pf("QuarterlyEarningsGrowthYOY")! * 100 : null;
     const revenueGrowth = pf("QuarterlyRevenueGrowthYOY") != null ? pf("QuarterlyRevenueGrowthYOY")! * 100 : null;
-    const debtToEquity = pf("DebtToEquity") != null ? pf("DebtToEquity")! / 100 : null; // AV returns as percentage
+    const debtToEquity = pf("DebtToEquity") != null ? pf("DebtToEquity")! / 100 : null;
 
-    // News sentiment
     const feed = Array.isArray(newsData?.feed) ? newsData.feed : [];
     const recentNews = feed.slice(0, 5).map((n: Record<string, string>) => ({
       title: n.title || "", publisher: n.source || "", date: n.time_published || "",
     }));
 
-    // Derive analyst rating from news sentiment scores
     let analystRating = 3;
     const tickerSentiments = feed
       .map((n: Record<string, unknown>) => {
@@ -148,15 +174,12 @@ serve(async (req) => {
         return match ? parseFloat((match as Record<string, string>).ticker_sentiment_score || "0") : null;
       })
       .filter((v: number | null): v is number => v !== null);
-
     if (tickerSentiments.length > 0) {
       const avgSentiment = tickerSentiments.reduce((a: number, b: number) => a + b, 0) / tickerSentiments.length;
-      // Map -1..+1 sentiment to 1..5 analyst rating scale
-      analystRating = Math.round((avgSentiment + 1) * 2.5 * 10) / 10; // -1→0→1, +1→5
+      analystRating = Math.round((avgSentiment + 1) * 2.5 * 10) / 10;
       analystRating = Math.max(1, Math.min(5, analystRating));
     }
 
-    // Analyst data from OVERVIEW
     const ad: Record<string, unknown> = {};
     const targetPrice = pf("AnalystTargetPrice");
     if (targetPrice) {
@@ -169,7 +192,6 @@ serve(async (req) => {
     const strongSell = pf("AnalystRatingStrongSell") ?? 0;
     const totalAnalysts = strongBuy + buy + hold + sell + strongSell;
     if (totalAnalysts > 0) {
-      // Derive consensus
       const weighted = (strongBuy * 5 + buy * 4 + hold * 3 + sell * 2 + strongSell * 1) / totalAnalysts;
       let consensus = "Hold";
       if (weighted >= 4.3) consensus = "Strong Buy";
@@ -181,14 +203,16 @@ serve(async (req) => {
       ad.ratingsDistribution = { strongBuy, buy, hold, sell, strongSell, totalAnalysts };
     }
 
-    return j({
+    const result = {
       symbol: S, name, exchange, price, previousClose,
       change, changePercent, volume, avgVolume: volume,
       technical: { rsi, macd, macdSignal, sma50, sma200, ema20, bollingerUpper: bbUpper, bollingerLower: bbLower, atr },
       fundamental: { peRatio, forwardPE, earningsGrowth, debtToEquity, revenueGrowth, profitMargin, returnOnEquity, freeCashFlowYield: null },
       sentiment: { newsCount: feed.length, analystRating, insiderActivity: 0, headline: feed[0]?.title || `${name} at $${price.toFixed(2)}`, recentNews, grades: [] },
       analystData: Object.keys(ad).length ? ad : null,
-    });
+    };
+    cacheSet(cacheKey, result, 120); // 2-min cache
+    return j(result);
   } catch (e) {
     return j({ error: String(e) }, 500);
   }
