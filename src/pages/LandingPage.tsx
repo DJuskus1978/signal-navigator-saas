@@ -6,7 +6,9 @@ import heroBannerImg from "@/assets/hero-banner-new.jpg";
 import insideRadarStockDetailImg from "@/assets/inside-radar-stock-detail.jpeg";
 import insideRadarAnalystImg from "@/assets/inside-radar-analyst.jpeg";
 import insideRadarSignalImg from "@/assets/inside-radar-signal.jpeg";
-import newsSentimentImg from "@/assets/news-sentiment.jpeg";
+import newsDashboardImg from "@/assets/news-sentiment-dashboard.jpeg";
+import decisionGuidanceImg from "@/assets/decision-guidance.jpeg";
+import marketTrackerImg from "@/assets/market-tracker.jpeg";
 
 
 import avatarSarah from "@/assets/avatar-sarah.jpg";
@@ -37,6 +39,7 @@ export default function LandingPage() {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [insideIndex, setInsideIndex] = useState(0);
+  const [newsIndex, setNewsIndex] = useState(0);
   const { user } = useAuth();
   const navigate = useNavigate();
   const pricingRef = useRef<HTMLElement>(null);
@@ -341,18 +344,65 @@ export default function LandingPage() {
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
             AI-powered news analysis and market sentiment scoring to help you make informed stock trading decisions
           </p>
-          <div className="flex justify-center">
-            <div className="w-full max-w-xs mx-auto">
-              <IPhoneFrame>
-                <img
-                  src={newsSentimentImg}
-                  alt="StocksRadars real-time stock news sentiment analysis showing headline scoring, analyst ratings, and insider trading activity for S&P 500 stocks"
-                  className="w-full h-auto"
-                  loading="lazy"
-                />
-              </IPhoneFrame>
-            </div>
-          </div>
+          {(() => {
+            const newsSlides = [
+              { src: newsDashboardImg, alt: "StocksRadars dashboard showing market sentiment gauge, stock tabs for Nasdaq, Dow Jones, S&P 500 and Crypto" },
+              { src: decisionGuidanceImg, alt: "StocksRadars Decision Guidance showing fundamental strength, news sentiment, and technical momentum analysis" },
+              { src: marketTrackerImg, alt: "StocksRadars S&P 500 tracker with 125-day moving average chart and signal explanations" },
+            ];
+            return (
+              <>
+                <div className="flex justify-center">
+                  <div className="w-full max-w-xs mx-auto">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={newsIndex}
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -50 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <IPhoneFrame>
+                          <img
+                            src={newsSlides[newsIndex].src}
+                            alt={newsSlides[newsIndex].alt}
+                            className="w-full h-auto"
+                            loading="lazy"
+                          />
+                        </IPhoneFrame>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center gap-4 mt-6">
+                  <button
+                    onClick={() => setNewsIndex((prev) => (prev - 1 + newsSlides.length) % newsSlides.length)}
+                    className="p-2 rounded-full border border-border hover:bg-accent transition-colors"
+                    aria-label="Previous screenshot"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <div className="flex gap-2">
+                    {newsSlides.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setNewsIndex(i)}
+                        className={`w-2.5 h-2.5 rounded-full transition-colors ${i === newsIndex ? "bg-primary" : "bg-border"}`}
+                        aria-label={`Go to screenshot ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setNewsIndex((prev) => (prev + 1) % newsSlides.length)}
+                    className="p-2 rounded-full border border-border hover:bg-accent transition-colors"
+                    aria-label="Next screenshot"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </>
+            );
+          })()}
         </motion.div>
       </section>
 
