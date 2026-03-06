@@ -337,7 +337,7 @@ export default function LandingPage() {
           custom={0}
           variants={fadeUp}
         >
-          <h2 className="font-display text-3xl font-bold mb-4">Real-Time Stock News & Sentiment Analysis</h2>
+          <h2 className="font-display text-3xl font-bold mb-4">User Friendly Real-Time Stock News, Sentiment & Technical Radars</h2>
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
             AI-powered news analysis and market sentiment scoring to help you make informed stock trading decisions
           </p>
