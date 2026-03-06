@@ -202,13 +202,13 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Banner Image */}
-      <div className="w-full relative -mt-2 md:mt-0 px-4 md:px-8">
+      <div className="w-full relative -mt-2 md:mt-0">
         <img
           src={heroBannerImg}
           alt="StocksRadars hero banner showing financial charts, radar target, and market analysis illustrations"
-          className="w-full h-[50vh] sm:h-[45vh] md:h-auto object-cover object-center saturate-[1.35] contrast-[1.08] brightness-[1.03] rounded-lg"
+          className="w-full h-[50vh] sm:h-[45vh] md:h-auto object-cover object-center saturate-[1.35] contrast-[1.08] brightness-[1.03]"
         />
-        <div className="absolute inset-0 mx-4 md:mx-8 bg-gradient-to-b from-transparent via-transparent to-background md:hidden rounded-lg" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background md:hidden" />
       </div>
 
       {/* Hero Text */}
