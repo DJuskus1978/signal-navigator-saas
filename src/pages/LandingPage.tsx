@@ -206,7 +206,7 @@ export default function LandingPage() {
         <img
           src={heroBannerImg}
           alt="StocksRadars hero banner showing financial charts, radar target, and market analysis illustrations"
-          className="w-full h-[50vh] sm:h-[45vh] md:h-auto object-cover object-center"
+          className="w-full h-[50vh] sm:h-[45vh] md:h-auto object-cover object-center saturate-[1.35] contrast-[1.08] brightness-[1.03]"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background md:hidden" />
       </div>
