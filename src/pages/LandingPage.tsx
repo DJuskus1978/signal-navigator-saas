@@ -202,7 +202,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Banner Image */}
-      <div className="w-full relative">
+      <div className="w-full relative -mt-2 md:mt-0">
         <img
           src={heroBannerImg}
           alt="StocksRadars hero banner showing financial charts, radar target, and market analysis illustrations"
@@ -212,7 +212,7 @@ export default function LandingPage() {
       </div>
 
       {/* Hero Text */}
-      <section className="container mx-auto px-4 py-12 md:py-20" aria-label="Stock recommendations overview">
+      <section className="container mx-auto px-4 py-6 md:py-20" aria-label="Stock recommendations overview">
         <div className="max-w-3xl mx-auto text-center">
           <motion.h1
             className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
