@@ -24,6 +24,7 @@ import { ArrowRight, BarChart3, Shield, Zap, Menu, X, TrendingUp, Crown, Chevron
 
 import { RadarLogo } from "@/components/RadarLogo";
 import { IPhoneFrame } from "@/components/IPhoneFrame";
+import { useSwipe } from "@/hooks/use-swipe";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -85,6 +86,16 @@ export default function LandingPage() {
 
   const nextTestimonial = () => setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
   const prevTestimonial = () => setTestimonialIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+
+  const insideSwipe = useSwipe(
+    () => setInsideIndex((prev) => (prev + 1) % 3),
+    () => setInsideIndex((prev) => (prev - 1 + 3) % 3)
+  );
+  const newsSwipe = useSwipe(
+    () => setNewsIndex((prev) => (prev + 1) % 3),
+    () => setNewsIndex((prev) => (prev - 1 + 3) % 3)
+  );
+  const testimonialSwipe = useSwipe(nextTestimonial, prevTestimonial);
 
   // Track pricing section view on scroll
   useEffect(() => {
@@ -276,7 +287,7 @@ export default function LandingPage() {
             ];
             return (
               <>
-                <div className="flex justify-center">
+                <div className="flex justify-center" {...insideSwipe}>
                   <div className="w-full max-w-xs mx-auto">
                     <AnimatePresence mode="wait">
                       <motion.div
@@ -352,7 +363,7 @@ export default function LandingPage() {
             ];
             return (
               <>
-                <div className="flex justify-center">
+                <div className="flex justify-center" {...newsSwipe}>
                   <div className="w-full max-w-xs mx-auto">
                     <AnimatePresence mode="wait">
                       <motion.div
@@ -640,6 +651,7 @@ export default function LandingPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.3 }}
+              {...testimonialSwipe}
             >
               <Card className="h-full">
                 <CardContent className="p-8">
