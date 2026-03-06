@@ -82,7 +82,7 @@ export default function AboutPage() {
       {/* Footer */}
       <footer className="border-t border-border py-10 mt-auto" role="contentinfo">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground space-y-4">
-          <p className="font-medium text-foreground/80">
+          <p className="text-xs text-muted-foreground">
             This information is not a personal recommendation or investment advice. Conduct your own research and consider your financial situation before making any investment decisions.
           </p>
           <div className="flex items-center justify-center gap-4">
