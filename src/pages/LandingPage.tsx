@@ -87,6 +87,16 @@ export default function LandingPage() {
   const nextTestimonial = () => setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
   const prevTestimonial = () => setTestimonialIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
 
+  const insideSwipe = useSwipe(
+    () => setInsideIndex((prev) => (prev + 1) % 3),
+    () => setInsideIndex((prev) => (prev - 1 + 3) % 3)
+  );
+  const newsSwipe = useSwipe(
+    () => setNewsIndex((prev) => (prev + 1) % 3),
+    () => setNewsIndex((prev) => (prev - 1 + 3) % 3)
+  );
+  const testimonialSwipe = useSwipe(nextTestimonial, prevTestimonial);
+
   // Track pricing section view on scroll
   useEffect(() => {
     const el = pricingRef.current;
