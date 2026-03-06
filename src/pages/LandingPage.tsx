@@ -24,6 +24,7 @@ import { ArrowRight, BarChart3, Shield, Zap, Menu, X, TrendingUp, Crown, Chevron
 
 import { RadarLogo } from "@/components/RadarLogo";
 import { IPhoneFrame } from "@/components/IPhoneFrame";
+import { useSwipe } from "@/hooks/use-swipe";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
