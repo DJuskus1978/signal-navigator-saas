@@ -130,4 +130,5 @@ export interface Stock {
   hasDetailData?: boolean;
   radarScores?: Record<InvestorProfile, RadarScore>;
   analystData?: AnalystData;
+  technicalNulls?: string[]; // technical fields that had no data from API
 }

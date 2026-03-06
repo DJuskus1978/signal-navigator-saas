@@ -181,9 +181,14 @@ export function getTechnicalPhase(stock: Stock): PhaseData {
   const t = stock.technical;
   const score = stock.phaseScores.technical;
   const { label, level } = getPhaseStatus(score);
+  const nulls = new Set(stock.technicalNulls || []);
 
-  const trendShort: SignalLevel = t.ema20 > t.sma50 ? "bullish" : "bearish";
-  const trendMid: SignalLevel = t.sma50 > t.sma200 ? "bullish" : "bearish";
+  const isNull = (field: string) => nulls.has(field);
+  const na = (field: string, value: string) => isNull(field) ? "N/A" : value;
+  const naSignal = (field: string, signal: SignalLevel): SignalLevel => isNull(field) ? "neutral" : signal;
+
+  const trendShort: SignalLevel = naSignal("ema20", t.ema20 > t.sma50 ? "bullish" : "bearish");
+  const trendMid: SignalLevel = naSignal("sma50", t.sma50 > t.sma200 ? "bullish" : "bearish");
 
   return {
     statusLabel: label === "Strong" ? "Strengthening" : label === "Stable" ? "Neutral" : "Weakening",
@@ -197,35 +202,35 @@ export function getTechnicalPhase(stock: Stock): PhaseData {
       {
         icon: "trending-up", title: "Trend",
         items: [
-          { label: "Short-term (EMA 20)", value: trendShort === "bullish" ? "Upward" : "Downward", signal: trendShort },
-          { label: "Medium-term (SMA 50)", value: trendMid === "bullish" ? "Above 200-day" : "Below 200-day", signal: trendMid },
-          { label: "Long-term (SMA 200)", value: t.sma200 < t.sma50 ? "Golden Cross" : "Death Cross", signal: t.sma200 < t.sma50 ? "bullish" : "bearish" },
+          { label: "Short-term (EMA 20)", value: isNull("ema20") ? "N/A" : trendShort === "bullish" ? "Upward" : "Downward", signal: trendShort },
+          { label: "Medium-term (SMA 50)", value: isNull("sma50") ? "N/A" : trendMid === "bullish" ? "Above 200-day" : "Below 200-day", signal: trendMid },
+          { label: "Long-term (SMA 200)", value: isNull("sma200") ? "N/A" : t.sma200 < t.sma50 ? "Golden Cross" : "Death Cross", signal: naSignal("sma200", t.sma200 < t.sma50 ? "bullish" : "bearish") },
         ],
       },
       {
         icon: "gauge", title: "Momentum",
         items: [
-          { label: "RSI (14)", value: t.rsi < 30 ? "Oversold" : t.rsi > 70 ? "Overbought" : `${t.rsi.toFixed(0)} — Neutral`, signal: t.rsi < 30 ? "bullish" : t.rsi > 70 ? "bearish" : "neutral" },
-          { label: "MACD", value: t.macd > t.macdSignal ? "Bullish crossover" : "Bearish crossover", signal: t.macd > t.macdSignal ? "bullish" : "bearish" },
+          { label: "RSI (14)", value: isNull("rsi") ? "N/A" : t.rsi < 30 ? "Oversold" : t.rsi > 70 ? "Overbought" : `${t.rsi.toFixed(0)} — Neutral`, signal: naSignal("rsi", t.rsi < 30 ? "bullish" : t.rsi > 70 ? "bearish" : "neutral") },
+          { label: "MACD", value: isNull("macd") ? "N/A" : t.macd > t.macdSignal ? "Bullish crossover" : "Bearish crossover", signal: naSignal("macd", t.macd > t.macdSignal ? "bullish" : "bearish") },
         ],
       },
       {
         icon: "activity", title: "Activity",
         items: [
           { label: "Volume", value: t.volume > t.avgVolume ? "Above average" : "Below average", signal: t.volume > t.avgVolume ? "bullish" : "neutral" },
-          { label: "Volatility (ATR)", value: t.atr > stock.price * 0.04 ? "High" : "Normal", signal: t.atr > stock.price * 0.04 ? "bearish" : "neutral" },
+          { label: "Volatility (ATR)", value: isNull("atr") ? "N/A" : t.atr > stock.price * 0.04 ? "High" : "Normal", signal: naSignal("atr", t.atr > stock.price * 0.04 ? "bearish" : "neutral") },
         ],
       },
     ],
     detailRows: [
-      { label: "RSI (14)", value: t.rsi.toFixed(1), hint: t.rsi < 30 ? "Oversold" : t.rsi > 70 ? "Overbought" : "Neutral", signal: t.rsi < 30 ? "bullish" : t.rsi > 70 ? "bearish" : "neutral" },
-      { label: "MACD", value: t.macd.toFixed(2), hint: t.macd > t.macdSignal ? "Bullish crossover" : "Bearish crossover", signal: t.macd > t.macdSignal ? "bullish" : "bearish" },
-      { label: "MACD Signal", value: t.macdSignal.toFixed(2), hint: t.macdSignal > 0 ? "Bullish" : t.macdSignal < 0 ? "Bearish" : "Neutral", signal: t.macdSignal > 0 ? "bullish" : t.macdSignal < 0 ? "bearish" : "neutral" },
-      { label: "EMA 20", value: `$${t.ema20.toFixed(2)}`, hint: t.ema20 > t.sma50 ? "Short-term bullish" : "Short-term bearish", signal: t.ema20 > t.sma50 ? "bullish" : "bearish" },
-      { label: "SMA 50", value: `$${t.sma50.toFixed(2)}`, hint: t.sma50 > t.sma200 ? "Above 200-day" : "Below 200-day", signal: t.sma50 > t.sma200 ? "bullish" : "bearish" },
-      { label: "SMA 200", value: `$${t.sma200.toFixed(2)}`, hint: t.sma200 < t.sma50 ? "Below 50-day" : "Above 50-day", signal: t.sma200 < t.sma50 ? "bullish" : "bearish" },
-      { label: "Bollinger Bands", value: `$${t.bollingerLower.toFixed(0)} – $${t.bollingerUpper.toFixed(0)}`, hint: stock.price < t.bollingerLower ? "Near lower band" : stock.price > t.bollingerUpper ? "Near upper band" : "Within range", signal: stock.price < t.bollingerLower ? "bullish" : stock.price > t.bollingerUpper ? "bearish" : "neutral" },
-      { label: "ATR (Volatility)", value: `$${t.atr.toFixed(2)}`, hint: t.atr > stock.price * 0.04 ? "High volatility" : "Normal", signal: t.atr > stock.price * 0.04 ? "bearish" : "neutral" },
+      { label: "RSI (14)", value: na("rsi", t.rsi.toFixed(1)), hint: isNull("rsi") ? "Unavailable" : t.rsi < 30 ? "Oversold" : t.rsi > 70 ? "Overbought" : "Neutral", signal: naSignal("rsi", t.rsi < 30 ? "bullish" : t.rsi > 70 ? "bearish" : "neutral") },
+      { label: "MACD", value: na("macd", t.macd.toFixed(2)), hint: isNull("macd") ? "Unavailable" : t.macd > t.macdSignal ? "Bullish crossover" : "Bearish crossover", signal: naSignal("macd", t.macd > t.macdSignal ? "bullish" : "bearish") },
+      { label: "MACD Signal", value: na("macdSignal", t.macdSignal.toFixed(2)), hint: isNull("macdSignal") ? "Unavailable" : t.macdSignal > 0 ? "Bullish" : t.macdSignal < 0 ? "Bearish" : "Neutral", signal: naSignal("macdSignal", t.macdSignal > 0 ? "bullish" : t.macdSignal < 0 ? "bearish" : "neutral") },
+      { label: "EMA 20", value: na("ema20", `$${t.ema20.toFixed(2)}`), hint: isNull("ema20") ? "Unavailable" : t.ema20 > t.sma50 ? "Short-term bullish" : "Short-term bearish", signal: naSignal("ema20", t.ema20 > t.sma50 ? "bullish" : "bearish") },
+      { label: "SMA 50", value: na("sma50", `$${t.sma50.toFixed(2)}`), hint: isNull("sma50") ? "Unavailable" : t.sma50 > t.sma200 ? "Above 200-day" : "Below 200-day", signal: naSignal("sma50", t.sma50 > t.sma200 ? "bullish" : "bearish") },
+      { label: "SMA 200", value: na("sma200", `$${t.sma200.toFixed(2)}`), hint: isNull("sma200") ? "Unavailable" : t.sma200 < t.sma50 ? "Below 50-day" : "Above 50-day", signal: naSignal("sma200", t.sma200 < t.sma50 ? "bullish" : "bearish") },
+      { label: "Bollinger Bands", value: (isNull("bollingerUpper") || isNull("bollingerLower")) ? "N/A" : `$${t.bollingerLower.toFixed(0)} – $${t.bollingerUpper.toFixed(0)}`, hint: (isNull("bollingerUpper") || isNull("bollingerLower")) ? "Unavailable" : stock.price < t.bollingerLower ? "Near lower band" : stock.price > t.bollingerUpper ? "Near upper band" : "Within range", signal: (isNull("bollingerUpper") || isNull("bollingerLower")) ? "neutral" : stock.price < t.bollingerLower ? "bullish" : stock.price > t.bollingerUpper ? "bearish" : "neutral" },
+      { label: "ATR (Volatility)", value: na("atr", `$${t.atr.toFixed(2)}`), hint: isNull("atr") ? "Unavailable" : t.atr > stock.price * 0.04 ? "High volatility" : "Normal", signal: naSignal("atr", t.atr > stock.price * 0.04 ? "bearish" : "neutral") },
       { label: "Volume", value: `${(t.volume / 1_000_000).toFixed(1)}M`, hint: t.volume > t.avgVolume ? "Above average" : "Below average", signal: t.volume > t.avgVolume ? "bullish" : "neutral" },
     ],
   };

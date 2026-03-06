@@ -165,19 +165,34 @@ const DEFAULT_SENTIMENT: SentimentIndicators = {
   insiderActivity: 0, headline: "", sentimentRating: "neutral",
 };
 
-function buildTechnicals(price: number, volume: number, avgVolume: number, tech?: DetailResponse["technical"]): TechnicalIndicators {
+function buildTechnicals(price: number, volume: number, avgVolume: number, tech?: DetailResponse["technical"]): { indicators: TechnicalIndicators; nullFields: string[] } {
+  const nullFields: string[] = [];
+  if (tech) {
+    if (tech.rsi == null) nullFields.push("rsi");
+    if (tech.macd == null) nullFields.push("macd");
+    if (tech.macdSignal == null) nullFields.push("macdSignal");
+    if (tech.sma50 == null) nullFields.push("sma50");
+    if (tech.sma200 == null) nullFields.push("sma200");
+    if (tech.ema20 == null) nullFields.push("ema20");
+    if (tech.bollingerUpper == null) nullFields.push("bollingerUpper");
+    if (tech.bollingerLower == null) nullFields.push("bollingerLower");
+    if (tech.atr == null) nullFields.push("atr");
+  }
   return {
-    rsi: tech?.rsi ?? 50,
-    macd: tech?.macd ?? 0,
-    macdSignal: tech?.macdSignal ?? 0,
-    sma50: tech?.sma50 ?? price,
-    sma200: tech?.sma200 ?? price,
-    ema20: tech?.ema20 ?? price,
-    volume,
-    avgVolume,
-    bollingerUpper: tech?.bollingerUpper ?? price * 1.05,
-    bollingerLower: tech?.bollingerLower ?? price * 0.95,
-    atr: tech?.atr ?? price * 0.02,
+    indicators: {
+      rsi: tech?.rsi ?? 50,
+      macd: tech?.macd ?? 0,
+      macdSignal: tech?.macdSignal ?? 0,
+      sma50: tech?.sma50 ?? price,
+      sma200: tech?.sma200 ?? price,
+      ema20: tech?.ema20 ?? price,
+      volume,
+      avgVolume,
+      bollingerUpper: tech?.bollingerUpper ?? price * 1.05,
+      bollingerLower: tech?.bollingerLower ?? price * 0.95,
+      atr: tech?.atr ?? price * 0.02,
+    },
+    nullFields,
   };
 }
 
@@ -277,7 +292,7 @@ function buildCryptoMarket(quote: QuoteResponse): CryptoMarketIndicators {
 }
 
 function cryptoQuoteToStock(quote: QuoteResponse): Stock {
-  const technical = buildTechnicals(quote.price, quote.volume, quote.avgVolume);
+  const { indicators: technical, nullFields: technicalNulls } = buildTechnicals(quote.price, quote.volume, quote.avgVolume);
   const sentiment: SentimentIndicators = {
     ...DEFAULT_SENTIMENT,
     headline: `${CRYPTO_NAMES[quote.symbol] || quote.name} trades at $${quote.price.toFixed(2)}`,
@@ -304,11 +319,12 @@ function cryptoQuoteToStock(quote: QuoteResponse): Stock {
     cryptoMarket,
     hasDetailData: false,
     radarScores,
+    technicalNulls,
   };
 }
 
 function cryptoDetailToStock(detail: DetailResponse): Stock {
-  const technical = buildTechnicals(detail.price, detail.volume, detail.avgVolume, detail.technical);
+  const { indicators: technical, nullFields: technicalNulls } = buildTechnicals(detail.price, detail.volume, detail.avgVolume, detail.technical);
   const sentiment = buildSentiment(detail.sentiment);
   
   // Build crypto market indicators from detail data
@@ -316,12 +332,10 @@ function cryptoDetailToStock(detail: DetailResponse): Stock {
     ...DEFAULT_CRYPTO_MARKET,
     priceChange24h: detail.changePercent,
   };
-  // Use crypto fundamental data if available
   if (detail.fundamental) {
     const f = detail.fundamental;
-    // Map FMP crypto fields
-    cryptoMarket.priceChange7d = f.revenueGrowth ?? 0; // reused field from edge fn
-    cryptoMarket.priceChange30d = f.earningsGrowth ?? 0; // reused field from edge fn
+    cryptoMarket.priceChange7d = f.revenueGrowth ?? 0;
+    cryptoMarket.priceChange30d = f.earningsGrowth ?? 0;
   }
   
   const phaseScores = calculateCryptoPhaseScores(cryptoMarket, sentiment, technical);
@@ -344,6 +358,7 @@ function cryptoDetailToStock(detail: DetailResponse): Stock {
     cryptoMarket,
     hasDetailData: true,
     radarScores,
+    technicalNulls,
   };
 }
 
@@ -351,7 +366,7 @@ function cryptoDetailToStock(detail: DetailResponse): Stock {
 
 function quoteToStock(quote: QuoteResponse, exchange: Exchange): Stock {
   if (isCryptoSymbol(quote.symbol)) return cryptoQuoteToStock(quote);
-  const technical = buildTechnicals(quote.price, quote.volume, quote.avgVolume);
+  const { indicators: technical, nullFields: technicalNulls } = buildTechnicals(quote.price, quote.volume, quote.avgVolume);
   const fundamental = DEFAULT_FUNDAMENTAL;
   const sentiment: SentimentIndicators = {
     ...DEFAULT_SENTIMENT,
@@ -376,12 +391,13 @@ function quoteToStock(quote: QuoteResponse, exchange: Exchange): Stock {
     sentiment,
     hasDetailData: false,
     radarScores,
+    technicalNulls,
   };
 }
 
 function detailToStock(detail: DetailResponse, exchange: Exchange): Stock {
   if (isCryptoSymbol(detail.symbol)) return cryptoDetailToStock(detail);
-  const technical = buildTechnicals(detail.price, detail.volume, detail.avgVolume, detail.technical);
+  const { indicators: technical, nullFields: technicalNulls } = buildTechnicals(detail.price, detail.volume, detail.avgVolume, detail.technical);
   const fundamental = buildFundamentals(detail.fundamental);
   const sentiment = buildSentiment(detail.sentiment);
   const phaseScores = calculatePhaseScores(fundamental, sentiment, technical);
@@ -403,6 +419,7 @@ function detailToStock(detail: DetailResponse, exchange: Exchange): Stock {
     sentiment,
     hasDetailData: true,
     radarScores,
+    technicalNulls,
     analystData: buildAnalystData(detail.analystData),
   };
 }

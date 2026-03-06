@@ -51,7 +51,8 @@ function SubBlockSection({ block }: { block: SubBlock }) {
       </p>
       <div className="space-y-1">
         {block.items.map((item) => {
-          const color = item.signal === "bullish" ? "text-signal-buy" : item.signal === "bearish" ? "text-signal-sell" : "text-signal-hold";
+          const isNA = item.value === "N/A";
+          const color = isNA ? "text-muted-foreground/50 italic" : item.signal === "bullish" ? "text-signal-buy" : item.signal === "bearish" ? "text-signal-sell" : "text-signal-hold";
           return (
             <div key={item.label} className="flex justify-between items-center text-sm py-0.5">
               <span className="text-muted-foreground">{item.label}</span>
@@ -111,14 +112,16 @@ export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interp
 
             {expanded && (
               <div className="space-y-0 border-t border-border pt-2">
-                {detailRows.map((row) => (
+                {detailRows.map((row) => {
+                  const isNA = row.value === "N/A";
+                  return (
                   <div key={row.label} className="flex justify-between items-center py-2.5 border-b border-border last:border-0">
                     <span className="text-sm text-muted-foreground">{row.label}</span>
                     <div className="flex items-center gap-2">
                       {row.hint && row.signal && (
                         <span
-                          className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                          style={{
+                          className={cn("text-[11px] font-medium px-2 py-0.5 rounded-full", isNA && "opacity-50")}
+                          style={isNA ? { color: "hsl(var(--muted-foreground))", backgroundColor: "hsl(var(--muted) / 0.5)" } : {
                             color: row.signal === "bullish" ? "hsl(var(--signal-buy))" : row.signal === "bearish" ? "hsl(var(--signal-sell))" : "hsl(var(--signal-hold))",
                             backgroundColor: row.signal === "bullish" ? "hsl(var(--signal-buy-bg))" : row.signal === "bearish" ? "hsl(var(--signal-sell-bg))" : "hsl(var(--signal-hold-bg))",
                           }}
@@ -126,10 +129,11 @@ export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interp
                           {row.hint}
                         </span>
                       )}
-                      <span className="font-medium text-sm font-display">{row.value}</span>
+                      <span className={cn("font-medium text-sm font-display", isNA && "text-muted-foreground/50 italic")}>{row.value}</span>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
