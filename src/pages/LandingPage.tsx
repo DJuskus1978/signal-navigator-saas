@@ -710,13 +710,15 @@ export default function LandingPage() {
           <div className="flex items-center justify-center gap-4">
             <Link to="/about" className="hover:text-foreground underline underline-offset-4">About</Link>
             <span>·</span>
-            <Link to="/terms" className="hover:text-foreground underline underline-offset-4">Terms of Use</Link>
+            <Link to="/terms" className="hover:text-foreground underline underline-offset-4">Terms</Link>
             <span>·</span>
-            <Link to="/privacy" className="hover:text-foreground underline underline-offset-4">Privacy Policy</Link>
+            <Link to="/privacy" className="hover:text-foreground underline underline-offset-4">Privacy</Link>
             <span>·</span>
-            <Link to="/brand" className="hover:text-foreground underline underline-offset-4">Brand Assets</Link>
+            <Link to="/brand" className="hover:text-foreground underline underline-offset-4">Brand</Link>
           </div>
-          <p className="text-xs">© {new Date().getFullYear()} StocksRadars — AI Stock Recommendations. All rights reserved.</p>
+          <div className="pt-6 mt-4 border-t border-border">
+            <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} StocksRadars — AI Stock Recommendations. All rights reserved.</p>
+          </div>
         </div>
       </footer>
     </div>
