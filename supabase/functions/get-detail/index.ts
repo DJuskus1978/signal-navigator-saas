@@ -37,6 +37,30 @@ async function cacheSet(key: string, data: unknown, ttlSeconds: number) {
   } catch { /* silent */ }
 }
 
+// ─── Retry wrapper for AV calls ──────────────────────────────────────────────
+async function avWithRetry(params: string, apiKey: string, retries = 2): Promise<Record<string, unknown>> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(`${AV}?${params}&apikey=${apiKey}`);
+      const data = await res.json();
+      // Alpha Vantage returns a "Note" or "Information" key when rate-limited
+      if (data?.Note || data?.Information) {
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, 1500 * (attempt + 1))); // backoff: 1.5s, 3s
+          continue;
+        }
+      }
+      return data;
+    } catch {
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+        continue;
+      }
+    }
+  }
+  return {};
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: H });
   const j = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...H, 'Content-Type': 'application/json' } });
@@ -58,7 +82,7 @@ serve(async (req) => {
     if (cached) return j(cached);
 
     const ic = S.endsWith("USD") && S.length <= 10;
-    const av = (params: string) => fetch(`${AV}?${params}&apikey=${key}`).then(r => r.json()).catch(() => ({}));
+    const av = (params: string) => avWithRetry(params, key);
 
     if (ic) {
       const fromCurrency = S.replace("USD", "");
@@ -70,20 +94,20 @@ serve(async (req) => {
         av(`function=NEWS_SENTIMENT&tickers=CRYPTO:${fromCurrency}&limit=10`),
       ]);
 
-      const rate = exchangeRate?.["Realtime Currency Exchange Rate"];
+      const rate = exchangeRate?.["Realtime Currency Exchange Rate"] as Record<string, string> | undefined;
       const price = rate ? parseFloat(rate["5. Exchange Rate"] || "0") : 0;
       if (!price) return j({ error: 'No data for crypto symbol' }, 400);
       const name = rate?.["2. From_Currency Name"] || S;
 
-      const rsiSeries = rsiData?.["Technical Analysis: RSI"];
+      const rsiSeries = rsiData?.["Technical Analysis: RSI"] as Record<string, Record<string, string>> | undefined;
       const rsiVal = rsiSeries ? parseFloat(Object.values(rsiSeries)[0]?.["RSI"] || "50") : null;
-      const smaSeries = smaData50?.["Technical Analysis: SMA"];
+      const smaSeries = smaData50?.["Technical Analysis: SMA"] as Record<string, Record<string, string>> | undefined;
       const sma50Val = smaSeries ? parseFloat(Object.values(smaSeries)[0]?.["SMA"] || "0") : null;
-      const emaSeries = emaData20?.["Technical Analysis: EMA"];
+      const emaSeries = emaData20?.["Technical Analysis: EMA"] as Record<string, Record<string, string>> | undefined;
       const ema20Val = emaSeries ? parseFloat(Object.values(emaSeries)[0]?.["EMA"] || "0") : null;
 
-      const feed = Array.isArray(newsData?.feed) ? newsData.feed : [];
-      const recentNews = feed.slice(0, 5).map((n: Record<string, string>) => ({
+      const feed = Array.isArray((newsData as Record<string, unknown>)?.feed) ? (newsData as Record<string, unknown>).feed as Record<string, string>[] : [];
+      const recentNews = feed.slice(0, 5).map((n) => ({
         title: n.title || "", publisher: n.source || "", date: n.time_published || "",
       }));
 
@@ -95,26 +119,34 @@ serve(async (req) => {
         sentiment: { newsCount: feed.length, analystRating: 3, insiderActivity: 0, headline: feed[0]?.title || `${name} at $${price.toFixed(2)}`, recentNews, grades: [] },
         analystData: null,
       };
-      cacheSet(cacheKey, result, 120); // 2-min cache
+      cacheSet(cacheKey, result, 120);
       return j(result);
     }
 
-    // ─── Stock detail ────────────────────────────────────────────────
-    const [quoteData, overviewData, rsiData, sma50Data, sma200Data, ema20Data, macdData, bbandsData, atrData, newsData] = await Promise.all([
+    // ─── Stock detail — BATCHED to avoid rate limits ─────────────────
+    // Batch 1: Core data (quote, overview, news + 2 key technicals)
+    const [quoteData, overviewData, rsiData, sma50Data, newsData] = await Promise.all([
       av(`function=GLOBAL_QUOTE&symbol=${S}`),
       av(`function=OVERVIEW&symbol=${S}`),
       av(`function=RSI&symbol=${S}&interval=daily&time_period=14&series_type=close`),
       av(`function=SMA&symbol=${S}&interval=daily&time_period=50&series_type=close`),
+      av(`function=NEWS_SENTIMENT&tickers=${S}&limit=20`),
+    ]);
+
+    const gq = quoteData?.["Global Quote"] as Record<string, string> | undefined;
+    if (!gq || !gq["05. price"]) return j({ error: 'No data' }, 400);
+
+    // Small delay between batches to avoid rate limiting
+    await new Promise(r => setTimeout(r, 800));
+
+    // Batch 2: Remaining technicals
+    const [sma200Data, ema20Data, macdData, bbandsData, atrData] = await Promise.all([
       av(`function=SMA&symbol=${S}&interval=daily&time_period=200&series_type=close`),
       av(`function=EMA&symbol=${S}&interval=daily&time_period=20&series_type=close`),
       av(`function=MACD&symbol=${S}&interval=daily&series_type=close`),
       av(`function=BBANDS&symbol=${S}&interval=daily&time_period=20&series_type=close`),
       av(`function=ATR&symbol=${S}&interval=daily&time_period=14`),
-      av(`function=NEWS_SENTIMENT&tickers=${S}&limit=20`),
     ]);
-
-    const gq = quoteData?.["Global Quote"];
-    if (!gq || !gq["05. price"]) return j({ error: 'No data' }, 400);
 
     const price = parseFloat(gq["05. price"]);
     const previousClose = parseFloat(gq["08. previous close"] || "0");
@@ -122,7 +154,7 @@ serve(async (req) => {
     const changePercent = previousClose > 0 ? Math.round((change / previousClose) * 10000) / 100 : 0;
     const volume = parseInt(gq["06. volume"] || "0", 10);
 
-    const ov = overviewData || {};
+    const ov = (overviewData || {}) as Record<string, string>;
     const name = ov["Name"] || S;
     const exchange = ov["Exchange"] || "";
 
@@ -149,7 +181,7 @@ serve(async (req) => {
     const pf = (field: string): number | null => {
       const v = ov[field];
       if (v === undefined || v === null || v === "None" || v === "-") return null;
-      const n = parseFloat(v as string);
+      const n = parseFloat(v);
       return isNaN(n) ? null : n;
     };
 
@@ -161,21 +193,21 @@ serve(async (req) => {
     const revenueGrowth = pf("QuarterlyRevenueGrowthYOY") != null ? pf("QuarterlyRevenueGrowthYOY")! * 100 : null;
     const debtToEquity = pf("DebtToEquity") != null ? pf("DebtToEquity")! / 100 : null;
 
-    const feed = Array.isArray(newsData?.feed) ? newsData.feed : [];
-    const recentNews = feed.slice(0, 5).map((n: Record<string, string>) => ({
-      title: n.title || "", publisher: n.source || "", date: n.time_published || "",
+    const feed = Array.isArray((newsData as Record<string, unknown>)?.feed) ? (newsData as Record<string, unknown>).feed as Record<string, unknown>[] : [];
+    const recentNews = feed.slice(0, 5).map((n) => ({
+      title: (n.title as string) || "", publisher: (n.source as string) || "", date: (n.time_published as string) || "",
     }));
 
     let analystRating = 3;
     const tickerSentiments = feed
-      .map((n: Record<string, unknown>) => {
+      .map((n) => {
         const ts = Array.isArray(n.ticker_sentiment) ? n.ticker_sentiment : [];
-        const match = ts.find((t: Record<string, string>) => t.ticker === S);
-        return match ? parseFloat((match as Record<string, string>).ticker_sentiment_score || "0") : null;
+        const match = (ts as Record<string, string>[]).find((t) => t.ticker === S);
+        return match ? parseFloat(match.ticker_sentiment_score || "0") : null;
       })
-      .filter((v: number | null): v is number => v !== null);
+      .filter((v): v is number => v !== null);
     if (tickerSentiments.length > 0) {
-      const avgSentiment = tickerSentiments.reduce((a: number, b: number) => a + b, 0) / tickerSentiments.length;
+      const avgSentiment = tickerSentiments.reduce((a, b) => a + b, 0) / tickerSentiments.length;
       analystRating = Math.round((avgSentiment + 1) * 2.5 * 10) / 10;
       analystRating = Math.max(1, Math.min(5, analystRating));
     }
@@ -210,10 +242,10 @@ serve(async (req) => {
       change, changePercent, volume, avgVolume: volume,
       technical: { rsi, macd, macdSignal, sma50, sma200, ema20, bollingerUpper: bbUpper, bollingerLower: bbLower, atr },
       fundamental: { peRatio, forwardPE, earningsGrowth, debtToEquity, revenueGrowth, profitMargin, returnOnEquity, freeCashFlowYield: null },
-      sentiment: { newsCount: feed.length, analystRating, insiderActivity: 0, headline: feed[0]?.title || `${name} at $${price.toFixed(2)}`, recentNews, grades: [] },
+      sentiment: { newsCount: feed.length, analystRating, insiderActivity: 0, headline: (feed[0] as Record<string, string>)?.title || `${name} at $${price.toFixed(2)}`, recentNews, grades: [] },
       analystData: Object.keys(ad).length ? ad : null,
     };
-    cacheSet(cacheKey, result, 120); // 2-min cache
+    cacheSet(cacheKey, result, 120);
     return j(result);
   } catch (e) {
     return j({ error: String(e) }, 500);
