@@ -1,48 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://stocksradars.com/</loc>
+    <loc>https://www.stocksradars.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://stocksradars.com/auth</loc>
+    <loc>https://www.stocksradars.com/auth</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://stocksradars.com/about</loc>
+    <loc>https://www.stocksradars.com/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://stocksradars.com/terms</loc>
+    <loc>https://www.stocksradars.com/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://stocksradars.com/privacy</loc>
+    <loc>https://www.stocksradars.com/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
-  <!-- Geo-targeted market pages for SEO -->
   <url>
-    <loc>https://stocksradars.com/?market=asx</loc>
+    <loc>https://www.stocksradars.com/?market=nasdaq</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stocksradars.com/?market=tsx</loc>
+    <loc>https://www.stocksradars.com/?market=sp500</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stocksradars.com/?market=aex</loc>
+    <loc>https://www.stocksradars.com/?market=dowjones</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://stocksradars.com/?market=ftse</loc>
+    <loc>https://www.stocksradars.com/?market=crypto</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
