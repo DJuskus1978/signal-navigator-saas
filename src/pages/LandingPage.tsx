@@ -287,7 +287,7 @@ export default function LandingPage() {
             ];
             return (
               <>
-                <div className="flex justify-center">
+                <div className="flex justify-center" {...insideSwipe}>
                   <div className="w-full max-w-xs mx-auto">
                     <AnimatePresence mode="wait">
                       <motion.div
