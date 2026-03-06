@@ -202,7 +202,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Banner Image */}
-      <div className="w-full relative -mt-2 md:mt-0">
+      <div className="w-full relative">
         <img
           src={heroBannerImg}
           alt="StocksRadars hero banner showing financial charts, radar target, and market analysis illustrations"
