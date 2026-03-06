@@ -717,7 +717,8 @@ export default function LandingPage() {
             <Link to="/brand" className="hover:text-foreground underline underline-offset-4">Brand</Link>
           </div>
           <div className="pt-6 mt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} StocksRadars — AI Stock Recommendations. All rights reserved.</p>
+            <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} StocksRadars</p>
+            <p className="text-xs text-muted-foreground">AI Stock Recommendations. All rights reserved.</p>
           </div>
         </div>
       </footer>
