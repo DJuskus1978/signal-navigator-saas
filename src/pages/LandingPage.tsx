@@ -364,6 +364,10 @@ export default function LandingPage() {
             return (
               <>
                 <div className="flex justify-center" {...newsSwipe}>
+                  <div className="w-full max-w-xs mx-auto">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={newsIndex}
                         initial={{ opacity: 0, x: 50 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -50 }}
