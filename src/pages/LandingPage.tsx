@@ -202,12 +202,13 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Banner Image */}
-      <div className="w-full">
+      <div className="w-full relative">
         <img
           src={heroBannerImg}
           alt="StocksRadars hero banner showing financial charts, radar target, and market analysis illustrations"
-          className="w-full h-auto object-cover"
+          className="w-full h-[50vh] sm:h-[45vh] md:h-auto object-cover object-center"
         />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background md:hidden" />
       </div>
 
       {/* Hero Text */}
