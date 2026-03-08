@@ -17,6 +17,7 @@ import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import BrandAssetsPage from "./pages/BrandAssetsPage";
 import MarketingPlanPage from "./pages/MarketingPlanPage";
+import SocialPostsPage from "./pages/SocialPostsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/brand" element={<BrandAssetsPage />} />
             <Route path="/marketing-plan" element={<MarketingPlanPage />} />
+            <Route path="/social-posts" element={<SocialPostsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
