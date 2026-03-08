@@ -113,16 +113,33 @@ export default function MarketingPlanPage() {
             ]} />
           </Section>
 
-          {/* Ad Assets */}
-          <Section title="Ad Creative Assets">
-            <Table headers={["File", "Format", "Size", "Use Case"]} rows={[
-              ["ad-stop-guessing.jpg", "Horizontal", "1200×628", "FB feed, X feed"],
-              ["ad-one-glance.jpg", "Horizontal", "1200×628", "FB feed, X feed"],
-              ["ad-story-trade-smarter.jpg", "Vertical", "1080×1920", "FB/IG Stories"],
-              ["ad-pricing-value.jpg", "Horizontal", "1200×628", "FB feed, X feed"],
-              ["ad-square-traffic-light.jpg", "Square", "1080×1080", "X feed, IG feed"],
-              ["ad-free-trial.jpg", "Horizontal", "1200×628", "FB feed, X feed"],
-            ]} />
+          {/* Ad Assets Gallery */}
+          <Section title="Ad Creative Assets — Preview & Download">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { file: "ad-stop-guessing.jpg", label: "Stop Guessing", format: "1200×628", use: "FB & X feed" },
+                { file: "ad-one-glance.jpg", label: "One Glance", format: "1200×628", use: "FB & X feed" },
+                { file: "ad-story-trade-smarter.jpg", label: "Story — Trade Smarter", format: "1080×1920", use: "FB/IG Stories" },
+                { file: "ad-pricing-value.jpg", label: "Pricing Value", format: "1200×628", use: "FB & X feed" },
+                { file: "ad-square-traffic-light.jpg", label: "Traffic Light Square", format: "1080×1080", use: "X & IG feed" },
+                { file: "ad-free-trial.jpg", label: "Free Trial", format: "1200×628", use: "FB & X feed" },
+              ].map((ad) => (
+                <div key={ad.file} className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
+                  <div className="aspect-video rounded-lg bg-muted/50 flex items-center justify-center overflow-hidden">
+                    <img src={`/ads/${ad.file}`} alt={ad.label} className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">{ad.label}</p>
+                    <p className="text-xs text-muted-foreground">{ad.format} · {ad.use}</p>
+                  </div>
+                  <a href={`/ads/${ad.file}`} download className="mt-auto">
+                    <Button variant="outline" size="sm" className="w-full gap-2">
+                      <Download className="w-4 h-4" /> Download
+                    </Button>
+                  </a>
+                </div>
+              ))}
+            </div>
           </Section>
 
           {/* Budget */}
