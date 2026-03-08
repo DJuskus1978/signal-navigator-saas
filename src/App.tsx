@@ -17,6 +17,7 @@ import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import BrandAssetsPage from "./pages/BrandAssetsPage";
 import MarketingPlanPage from "./pages/MarketingPlanPage";
+import SocialPostsPage from "./pages/SocialPostsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
