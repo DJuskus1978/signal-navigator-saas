@@ -113,30 +113,49 @@ export default function MarketingPlanPage() {
             ]} />
           </Section>
 
-          {/* Ad Assets Gallery */}
-          <Section title="Ad Creative Assets — Preview & Download">
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Ad Assets Gallery — A/B Testing */}
+          <Section title="Ad Creative Assets — A/B Testing Variants">
+            <p className="text-sm text-muted-foreground mb-6">Each ad has two variants for A/B testing: <span className="font-semibold text-foreground">Dark (A)</span> and <span className="font-semibold text-foreground">White (B)</span>.</p>
+            <div className="space-y-8">
               {[
-                { file: "ad-stop-guessing.jpg", label: "Stop Guessing", format: "1200×628", use: "FB & X feed" },
-                { file: "ad-one-glance.jpg", label: "One Glance", format: "1200×628", use: "FB & X feed" },
-                { file: "ad-story-trade-smarter.jpg", label: "Story — Trade Smarter", format: "1080×1920", use: "FB/IG Stories" },
-                { file: "ad-pricing-value.jpg", label: "Pricing Value", format: "1200×628", use: "FB & X feed" },
-                { file: "ad-square-traffic-light.jpg", label: "Traffic Light Square", format: "1080×1080", use: "X & IG feed" },
-                { file: "ad-free-trial.jpg", label: "Free Trial", format: "1200×628", use: "FB & X feed" },
+                { label: "Stop Guessing", format: "1200×628", use: "FB & X feed", dark: "ad-stop-guessing.jpg", white: "ad-stop-guessing-white.jpg" },
+                { label: "One Glance", format: "1200×628", use: "FB & X feed", dark: "ad-one-glance.jpg", white: "ad-one-glance-white.jpg" },
+                { label: "Story — Trade Smarter", format: "1080×1920", use: "FB/IG Stories", dark: "ad-story-trade-smarter.jpg", white: "ad-story-trade-smarter-white.jpg" },
+                { label: "Pricing Value", format: "1200×628", use: "FB & X feed", dark: "ad-pricing-value.jpg", white: "ad-pricing-value-white.jpg" },
+                { label: "Traffic Light Square", format: "1080×1080", use: "X & IG feed", dark: "ad-square-traffic-light.jpg", white: "ad-square-traffic-light-white.jpg" },
+                { label: "Free Trial", format: "1200×628", use: "FB & X feed", dark: "ad-free-trial.jpg", white: "ad-free-trial-white.jpg" },
               ].map((ad) => (
-                <div key={ad.file} className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
-                  <div className="aspect-video rounded-lg bg-muted/50 flex items-center justify-center overflow-hidden">
-                    <img src={`/ads/${ad.file}`} alt={ad.label} className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground text-sm">{ad.label}</p>
+                <div key={ad.label} className="rounded-xl border border-border bg-card p-4 break-inside-avoid">
+                  <div className="mb-3">
+                    <p className="font-semibold text-foreground">{ad.label}</p>
                     <p className="text-xs text-muted-foreground">{ad.format} · {ad.use}</p>
                   </div>
-                  <a href={`/ads/${ad.file}`} download className="mt-auto">
-                    <Button variant="outline" size="sm" className="w-full gap-2">
-                      <Download className="w-4 h-4" /> Download
-                    </Button>
-                  </a>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Variant A — Dark */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded w-fit">A — Dark</span>
+                      <div className="aspect-video rounded-lg bg-muted/50 overflow-hidden">
+                        <img src={`/ads/${ad.dark}`} alt={`${ad.label} — Dark`} className="w-full h-full object-cover" />
+                      </div>
+                      <a href={`/ads/${ad.dark}`} download>
+                        <Button variant="outline" size="sm" className="w-full gap-2">
+                          <Download className="w-4 h-4" /> Download A
+                        </Button>
+                      </a>
+                    </div>
+                    {/* Variant B — White */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded w-fit">B — White</span>
+                      <div className="aspect-video rounded-lg bg-muted/50 overflow-hidden">
+                        <img src={`/ads/${ad.white}`} alt={`${ad.label} — White`} className="w-full h-full object-cover" />
+                      </div>
+                      <a href={`/ads/${ad.white}`} download>
+                        <Button variant="outline" size="sm" className="w-full gap-2">
+                          <Download className="w-4 h-4" /> Download B
+                        </Button>
+                      </a>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
