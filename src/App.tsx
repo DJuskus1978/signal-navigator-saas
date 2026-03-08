@@ -16,6 +16,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import BrandAssetsPage from "./pages/BrandAssetsPage";
+import MarketingPlanPage from "./pages/MarketingPlanPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
