@@ -42,6 +42,7 @@ const App = () => (
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/brand" element={<BrandAssetsPage />} />
             <Route path="/marketing-plan" element={<MarketingPlanPage />} />
+            <Route path="/social-posts" element={<SocialPostsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
