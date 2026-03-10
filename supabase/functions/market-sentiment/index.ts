@@ -50,48 +50,33 @@ serve(async (req) => {
     const cached = await cacheGet(cacheKey);
     if (cached) return j(cached);
 
-    const fmpKey = Deno.env.get('FMP_API_KEY')!;
-    
-    // Try ^GSPC first, fall back to SPY ETF if index not available on plan
-    let historical: any[] | null = null;
-    let usingSPY = false;
-    
-    // Attempt 1: actual S&P 500 index
-    try {
-      const r1 = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/%5EGSPC?apikey=${fmpKey}`);
-      const d1 = await r1.json();
-      if (Array.isArray(d1?.historical) && d1.historical.length > 0) {
-        historical = d1.historical;
-        console.log('[SENTIMENT] Using ^GSPC index data');
-      }
-    } catch (e) {
-      console.log('[SENTIMENT] ^GSPC fetch failed:', String(e));
+    const avKey = Deno.env.get('ALPHA_VANTAGE_API_KEY')!;
+
+    // Fetch SPY daily data from Alpha Vantage (full history for 125-day MA)
+    const r = await fetch(
+      `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=SPY&outputsize=full&apikey=${avKey}`
+    );
+    const d = await r.json();
+    const timeSeries = d?.["Time Series (Daily)"];
+
+    if (!timeSeries || Object.keys(timeSeries).length === 0) {
+      console.error('[SENTIMENT] Alpha Vantage returned no data:', JSON.stringify(d).slice(0, 300));
+      return j({ error: 'No data from provider' }, 502);
     }
-    
-    // Attempt 2: SPY ETF as proxy
-    if (!historical) {
-      const r2 = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/SPY?apikey=${fmpKey}`);
-      const d2 = await r2.json();
-      if (Array.isArray(d2?.historical) && d2.historical.length > 0) {
-        historical = d2.historical;
-        usingSPY = true;
-        console.log('[SENTIMENT] Falling back to SPY ETF proxy');
-      }
-    }
-    
-    if (!historical) return j({ error: 'No data from provider' }, 502);
 
-    // FMP returns newest first — sort oldest first
-    const entries = historical
-      .map((item: any) => ({ date: item.date, close: item.close }))
-      .sort((a: any, b: any) => a.date.localeCompare(b.date));
+    // Convert to sorted array (oldest first)
+    const entries = Object.entries(timeSeries)
+      .map(([date, vals]: [string, any]) => ({
+        date,
+        close: parseFloat(vals["4. close"]),
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
 
-    // SPY trades at ~1/10th of S&P 500 index value
-    const SPY_MULTIPLIER = usingSPY ? 10 : 1;
-
+    // SPY trades at ~1/10th of S&P 500 — multiply to approximate index value
+    const SPY_MULTIPLIER = 10;
     const MA_WINDOW = 125;
-    const closes = entries.map((e: any) => e.close);
-    
+    const closes = entries.map(e => e.close);
+
     // Show ~150 trading days (~7 months)
     const displayDays = 150;
     const startIdx = Math.max(0, entries.length - displayDays);
@@ -99,7 +84,7 @@ serve(async (req) => {
     for (let i = startIdx; i < entries.length; i++) {
       const start = Math.max(0, i - MA_WINDOW + 1);
       const slice = closes.slice(start, i + 1);
-      const ma = slice.reduce((a: number, b: number) => a + b, 0) / slice.length;
+      const ma = slice.reduce((a, b) => a + b, 0) / slice.length;
       chartData.push({
         date: entries[i].date,
         close: Math.round(entries[i].close * SPY_MULTIPLIER * 100) / 100,
@@ -110,7 +95,7 @@ serve(async (req) => {
     const latest = entries[entries.length - 1];
     const latestSP500 = latest.close * SPY_MULTIPLIER;
     const maValue = chartData[chartData.length - 1]?.ma ?? latestSP500;
-    
+
     // Sentiment logic
     const diff = (latestSP500 - maValue) / maValue;
     let sentiment: string;
@@ -130,7 +115,7 @@ serve(async (req) => {
     };
 
     cacheSet(cacheKey, result, 3600);
-    console.log('[SENTIMENT] Success:', { sentiment, price: result.currentPrice, ma: result.ma, usingSPY });
+    console.log('[SENTIMENT] Success (Alpha Vantage SPY):', { sentiment, price: result.currentPrice, ma: result.ma });
     return j(result);
   } catch (e) {
     console.error('[SENTIMENT] Error:', String(e));
