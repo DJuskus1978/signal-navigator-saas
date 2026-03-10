@@ -51,42 +51,70 @@ serve(async (req) => {
     if (cached) return j(cached);
 
     const fmpKey = Deno.env.get('FMP_API_KEY')!;
-    // Fetch actual S&P 500 index (^GSPC) historical data from FMP for accurate values
-    const r = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/%5EGSPC?apikey=${fmpKey}`);
-    const d = await r.json();
-    const historical = d?.historical;
-    if (!Array.isArray(historical) || historical.length === 0) return j({ error: 'No data from provider' }, 502);
+    
+    // Try ^GSPC first, fall back to SPY ETF if index not available on plan
+    let historical: any[] | null = null;
+    let usingSPY = false;
+    
+    // Attempt 1: actual S&P 500 index
+    try {
+      const r1 = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/%5EGSPC?apikey=${fmpKey}`);
+      const d1 = await r1.json();
+      if (Array.isArray(d1?.historical) && d1.historical.length > 0) {
+        historical = d1.historical;
+        console.log('[SENTIMENT] Using ^GSPC index data');
+      }
+    } catch (e) {
+      console.log('[SENTIMENT] ^GSPC fetch failed:', String(e));
+    }
+    
+    // Attempt 2: SPY ETF as proxy
+    if (!historical) {
+      const r2 = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/SPY?apikey=${fmpKey}`);
+      const d2 = await r2.json();
+      if (Array.isArray(d2?.historical) && d2.historical.length > 0) {
+        historical = d2.historical;
+        usingSPY = true;
+        console.log('[SENTIMENT] Falling back to SPY ETF proxy');
+      }
+    }
+    
+    if (!historical) return j({ error: 'No data from provider' }, 502);
 
     // FMP returns newest first — sort oldest first
     const entries = historical
       .map((item: any) => ({ date: item.date, close: item.close }))
       .sort((a: any, b: any) => a.date.localeCompare(b.date));
 
+    // SPY trades at ~1/10th of S&P 500 index value
+    const SPY_MULTIPLIER = usingSPY ? 10 : 1;
+
     const MA_WINDOW = 125;
     const closes = entries.map((e: any) => e.close);
     
     // Show ~150 trading days (~7 months)
     const displayDays = 150;
-    const chartData = entries.slice(-displayDays).map((entry: any) => {
-      const fullIdx = entries.indexOf(entry);
-      const start = Math.max(0, fullIdx - MA_WINDOW + 1);
-      const slice = closes.slice(start, fullIdx + 1);
+    const startIdx = Math.max(0, entries.length - displayDays);
+    const chartData = [];
+    for (let i = startIdx; i < entries.length; i++) {
+      const start = Math.max(0, i - MA_WINDOW + 1);
+      const slice = closes.slice(start, i + 1);
       const ma = slice.reduce((a: number, b: number) => a + b, 0) / slice.length;
-      return {
-        date: entry.date,
-        close: Math.round(entry.close * 100) / 100,
-        ma: Math.round(ma * 100) / 100,
-      };
-    });
+      chartData.push({
+        date: entries[i].date,
+        close: Math.round(entries[i].close * SPY_MULTIPLIER * 100) / 100,
+        ma: Math.round(ma * SPY_MULTIPLIER * 100) / 100,
+      });
+    }
 
     const latest = entries[entries.length - 1];
-    const latestSP500 = latest.close;
+    const latestSP500 = latest.close * SPY_MULTIPLIER;
     const maValue = chartData[chartData.length - 1]?.ma ?? latestSP500;
     
-    // Sentiment: matching Revolut-style logic with narrow Neutral zone (±0.5%)
+    // Sentiment logic
     const diff = (latestSP500 - maValue) / maValue;
     let sentiment: string;
-    let gaugeValue: number; // 0-100, 50 = neutral
+    let gaugeValue: number;
     if (diff > 0.03) { sentiment = "Bullish"; gaugeValue = 85; }
     else if (diff > 0.005) { sentiment = "Bullish"; gaugeValue = 65; }
     else if (diff > -0.005) { sentiment = "Neutral"; gaugeValue = 50; }
@@ -101,9 +129,11 @@ serve(async (req) => {
       chartData,
     };
 
-    cacheSet(cacheKey, result, 3600); // 1-hour cache
+    cacheSet(cacheKey, result, 3600);
+    console.log('[SENTIMENT] Success:', { sentiment, price: result.currentPrice, ma: result.ma, usingSPY });
     return j(result);
   } catch (e) {
+    console.error('[SENTIMENT] Error:', String(e));
     return j({ error: String(e) }, 500);
   }
 });

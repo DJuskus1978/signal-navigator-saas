@@ -1,0 +1,1 @@
+DELETE FROM stock_cache WHERE cache_key = 'market-sentiment:spy-daily';
