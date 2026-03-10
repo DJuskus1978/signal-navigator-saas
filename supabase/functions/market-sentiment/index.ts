@@ -50,38 +50,32 @@ serve(async (req) => {
     const cached = await cacheGet(cacheKey);
     if (cached) return j(cached);
 
-    const key = Deno.env.get('ALPHA_VANTAGE_API_KEY')!;
-    // Fetch daily time series for SPY (S&P 500 ETF), full output for 125-day MA
-    const r = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=SPY&outputsize=full&apikey=${key}`);
+    const fmpKey = Deno.env.get('FMP_API_KEY')!;
+    // Fetch actual S&P 500 index (^GSPC) historical data from FMP for accurate values
+    const r = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/%5EGSPC?apikey=${fmpKey}`);
     const d = await r.json();
-    const ts = d?.["Time Series (Daily)"];
-    if (!ts) return j({ error: 'No data from provider' }, 502);
+    const historical = d?.historical;
+    if (!Array.isArray(historical) || historical.length === 0) return j({ error: 'No data from provider' }, 502);
 
-    // Convert to sorted array (oldest first)
-    const entries = Object.entries(ts)
-      .map(([date, vals]: [string, any]) => ({
-        date,
-        close: parseFloat(vals["4. close"]),
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    // FMP returns newest first — sort oldest first
+    const entries = historical
+      .map((item: any) => ({ date: item.date, close: item.close }))
+      .sort((a: any, b: any) => a.date.localeCompare(b.date));
 
     const MA_WINDOW = 125;
-    const closes = entries.map(e => e.close);
+    const closes = entries.map((e: any) => e.close);
     
-    // SPY tracks S&P 500 at ~1/10th the value. Multiply by 10 to approximate S&P 500 index.
-    const SPY_TO_SP500 = 10;
-    
-    // Show ~150 trading days (~7 months from Sep)
+    // Show ~150 trading days (~7 months)
     const displayDays = 150;
-    const chartData = entries.slice(-displayDays).map((entry) => {
+    const chartData = entries.slice(-displayDays).map((entry: any) => {
       const fullIdx = entries.indexOf(entry);
       const start = Math.max(0, fullIdx - MA_WINDOW + 1);
       const slice = closes.slice(start, fullIdx + 1);
-      const ma = slice.reduce((a, b) => a + b, 0) / slice.length;
+      const ma = slice.reduce((a: number, b: number) => a + b, 0) / slice.length;
       return {
         date: entry.date,
-        close: Math.round(entry.close * SPY_TO_SP500 * 100) / 100,
-        ma: Math.round(ma * SPY_TO_SP500 * 100) / 100,
+        close: Math.round(entry.close * 100) / 100,
+        ma: Math.round(ma * 100) / 100,
       };
     });
 
