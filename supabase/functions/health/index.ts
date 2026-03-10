@@ -2,22 +2,17 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 serve(async (_req) => {
   try {
-    const key = Deno.env.get('FMP_API_KEY');
-    
-    // Try different timeframe values for technical indicators
+    const avKey = Deno.env.get('ALPHA_VANTAGE_API_KEY');
+
+    // Test Alpha Vantage connectivity
     const tests = {
-      rsi_1day: `https://financialmodelingprep.com/stable/technical-indicators/rsi?symbol=AAPL&periodLength=14&timeframe=1day&apikey=${key}`,
-      rsi_1D: `https://financialmodelingprep.com/stable/technical-indicators/rsi?symbol=AAPL&periodLength=14&timeframe=1D&apikey=${key}`,
-      rsi_d: `https://financialmodelingprep.com/stable/technical-indicators/rsi?symbol=AAPL&periodLength=14&timeframe=d&apikey=${key}`,
-      rsi_1hour: `https://financialmodelingprep.com/stable/technical-indicators/rsi?symbol=AAPL&periodLength=14&timeframe=1hour&apikey=${key}`,
-      rsi_4hour: `https://financialmodelingprep.com/stable/technical-indicators/rsi?symbol=AAPL&periodLength=14&timeframe=4hour&apikey=${key}`,
-      rsi_1min: `https://financialmodelingprep.com/stable/technical-indicators/rsi?symbol=AAPL&periodLength=14&timeframe=1min&apikey=${key}`,
-      rsi_5min: `https://financialmodelingprep.com/stable/technical-indicators/rsi?symbol=AAPL&periodLength=14&timeframe=5min&apikey=${key}`,
-      rsi_15min: `https://financialmodelingprep.com/stable/technical-indicators/rsi?symbol=AAPL&periodLength=14&timeframe=15min&apikey=${key}`,
+      global_quote: `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=AAPL&apikey=${avKey}`,
+      rsi: `https://www.alphavantage.co/query?function=RSI&symbol=AAPL&interval=daily&time_period=14&series_type=close&apikey=${avKey}`,
+      overview: `https://www.alphavantage.co/query?function=OVERVIEW&symbol=AAPL&apikey=${avKey}`,
     };
 
     const results: Record<string, unknown> = {};
-    
+
     await Promise.all(
       Object.entries(tests).map(async ([name, url]) => {
         try {
@@ -25,16 +20,11 @@ serve(async (_req) => {
           const text = await r.text();
           let parsed;
           try { parsed = JSON.parse(text); } catch { parsed = text.slice(0, 200); }
-          if (r.status === 200) {
-            const arr = Array.isArray(parsed) ? parsed : null;
-            results[name] = { 
-              status: "✅ OK", 
-              count: arr?.length,
-              sample: arr?.[0],
-            };
+          if (r.status === 200 && !parsed?.Note && !parsed?.Information) {
+            results[name] = { status: "✅ OK", sample: typeof parsed === 'object' ? Object.keys(parsed).slice(0, 3) : parsed };
           } else {
-            const msg = parsed?.["Error Message"] || parsed?.error || parsed;
-            results[name] = { status: `❌ ${r.status}`, reason: typeof msg === 'string' ? msg.slice(0, 80) : 'blocked' };
+            const msg = parsed?.Note || parsed?.Information || parsed?.["Error Message"] || 'unknown';
+            results[name] = { status: `⚠️ ${r.status}`, reason: typeof msg === 'string' ? msg.slice(0, 120) : 'blocked' };
           }
         } catch (e) {
           results[name] = { status: "💥 ERROR", error: String(e).slice(0, 100) };
@@ -42,7 +32,7 @@ serve(async (_req) => {
       })
     );
 
-    return new Response(JSON.stringify(results, null, 2), {
+    return new Response(JSON.stringify({ provider: "Alpha Vantage", ...results }, null, 2), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   } catch (e) {
