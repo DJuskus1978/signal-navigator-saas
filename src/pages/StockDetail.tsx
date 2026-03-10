@@ -13,6 +13,7 @@ import { AIRadarSignalCard } from "@/components/stock-detail/AIRadarSignalCard";
 import { PhaseCard } from "@/components/stock-detail/PhaseCard";
 import { AIDecisionGuidance } from "@/components/stock-detail/AIDecisionGuidance";
 import { AnalystRatingsSection } from "@/components/stock-detail/AnalystRatingsSection";
+import { AISignalsCard } from "@/components/AISignalsCard";
 import { getFundamentalPhase, getSentimentPhase, getTechnicalPhase } from "@/components/stock-detail/phase-data";
 
 function ViewModeToggle({ simple, onToggle, advancedLocked, onLockedClick }: { simple: boolean; onToggle: () => void; advancedLocked?: boolean; onLockedClick?: () => void }) {
@@ -158,8 +159,13 @@ export default function StockDetail() {
           onLockedProfileClick={goToPricing}
         />
 
+        {/* AI Signals — "Why StocksRadars likes this stock" */}
+        <div className="mt-8">
+          <AISignalsCard stock={stock} />
+        </div>
+
         {/* AI Decision Guidance */}
-        <div className="mt-8 mb-6">
+        <div className="mt-6 mb-6">
           <AIDecisionGuidance stock={stock} isCrypto={isCrypto} profile={profile} />
         </div>
 

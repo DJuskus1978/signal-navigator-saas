@@ -1,5 +1,6 @@
 import { Stock } from "@/lib/types";
 import { TrafficLight } from "./TrafficLight";
+import { AIScoreBadge } from "./AIScoreBadge";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -46,12 +47,15 @@ export function StockCard({ stock, blurred = false }: StockCardProps) {
           {hasRadar ? (
             <>
               <TrafficLight recommendation={stock.recommendation} size="sm" />
-              <p className="text-sm font-semibold text-muted-foreground tracking-wide">RadarScore™</p>
+              <AIScoreBadge score={stock.radarScores?.balanced?.radarScore ?? stock.score} />
             </>
           ) : (
-            <div className="flex items-center gap-1 text-primary text-sm font-medium">
-              <span>View Radar</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+            <div className="flex flex-col items-end gap-1">
+              <TrafficLight recommendation={stock.recommendation} size="sm" />
+              <div className="flex items-center gap-1 text-primary text-xs font-medium">
+                <span>Full Radar</span>
+                <ArrowRight className="w-3 h-3" />
+              </div>
             </div>
           )}
         </div>

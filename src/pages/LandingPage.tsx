@@ -25,6 +25,7 @@ import { ArrowRight, BarChart3, Shield, Zap, Menu, X, TrendingUp, Crown, Chevron
 import { RadarLogo } from "@/components/RadarLogo";
 import { IPhoneFrame } from "@/components/IPhoneFrame";
 import { useSwipe } from "@/hooks/use-swipe";
+import { AIPerformanceDashboard } from "@/components/AIPerformanceDashboard";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -430,6 +431,13 @@ export default function LandingPage() {
         >
           For the more advanced investor, dive deeper into detailed fundamental and technical radars — all the data you need to make informed decisions, in one place.
         </motion.p>
+      </section>
+
+      {/* Live AI Performance Dashboard */}
+      <section className="container mx-auto px-4 py-16" aria-label="AI performance tracker">
+        <div className="max-w-2xl mx-auto">
+          <AIPerformanceDashboard />
+        </div>
       </section>
 
       {/* How It Works */}
