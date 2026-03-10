@@ -433,6 +433,13 @@ export default function LandingPage() {
         </motion.p>
       </section>
 
+      {/* Live AI Performance Dashboard */}
+      <section className="container mx-auto px-4 py-16" aria-label="AI performance tracker">
+        <div className="max-w-2xl mx-auto">
+          <AIPerformanceDashboard />
+        </div>
+      </section>
+
       {/* How It Works */}
       <section className="bg-card border-y border-border py-20" aria-label="How StocksRadars work">
         <div className="container mx-auto px-4">

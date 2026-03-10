@@ -159,8 +159,13 @@ export default function StockDetail() {
           onLockedProfileClick={goToPricing}
         />
 
+        {/* AI Signals — "Why StocksRadars likes this stock" */}
+        <div className="mt-8">
+          <AISignalsCard stock={stock} />
+        </div>
+
         {/* AI Decision Guidance */}
-        <div className="mt-8 mb-6">
+        <div className="mt-6 mb-6">
           <AIDecisionGuidance stock={stock} isCrypto={isCrypto} profile={profile} />
         </div>
 
