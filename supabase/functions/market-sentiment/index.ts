@@ -86,31 +86,35 @@ serve(async (req) => {
       .map((item: any) => ({ date: item.date, close: item.close }))
       .sort((a: any, b: any) => a.date.localeCompare(b.date));
 
+    // SPY trades at ~1/10th of S&P 500 index value
+    const SPY_MULTIPLIER = usingSPY ? 10 : 1;
+
     const MA_WINDOW = 125;
     const closes = entries.map((e: any) => e.close);
     
     // Show ~150 trading days (~7 months)
     const displayDays = 150;
-    const chartData = entries.slice(-displayDays).map((entry: any) => {
-      const fullIdx = entries.indexOf(entry);
-      const start = Math.max(0, fullIdx - MA_WINDOW + 1);
-      const slice = closes.slice(start, fullIdx + 1);
+    const startIdx = Math.max(0, entries.length - displayDays);
+    const chartData = [];
+    for (let i = startIdx; i < entries.length; i++) {
+      const start = Math.max(0, i - MA_WINDOW + 1);
+      const slice = closes.slice(start, i + 1);
       const ma = slice.reduce((a: number, b: number) => a + b, 0) / slice.length;
-      return {
-        date: entry.date,
-        close: Math.round(entry.close * 100) / 100,
-        ma: Math.round(ma * 100) / 100,
-      };
-    });
+      chartData.push({
+        date: entries[i].date,
+        close: Math.round(entries[i].close * SPY_MULTIPLIER * 100) / 100,
+        ma: Math.round(ma * SPY_MULTIPLIER * 100) / 100,
+      });
+    }
 
     const latest = entries[entries.length - 1];
-    const latestSP500 = latest.close;
+    const latestSP500 = latest.close * SPY_MULTIPLIER;
     const maValue = chartData[chartData.length - 1]?.ma ?? latestSP500;
     
-    // Sentiment: matching Revolut-style logic with narrow Neutral zone (±0.5%)
+    // Sentiment logic
     const diff = (latestSP500 - maValue) / maValue;
     let sentiment: string;
-    let gaugeValue: number; // 0-100, 50 = neutral
+    let gaugeValue: number;
     if (diff > 0.03) { sentiment = "Bullish"; gaugeValue = 85; }
     else if (diff > 0.005) { sentiment = "Bullish"; gaugeValue = 65; }
     else if (diff > -0.005) { sentiment = "Neutral"; gaugeValue = 50; }
@@ -125,9 +129,11 @@ serve(async (req) => {
       chartData,
     };
 
-    cacheSet(cacheKey, result, 3600); // 1-hour cache
+    cacheSet(cacheKey, result, 3600);
+    console.log('[SENTIMENT] Success:', { sentiment, price: result.currentPrice, ma: result.ma, usingSPY });
     return j(result);
   } catch (e) {
+    console.error('[SENTIMENT] Error:', String(e));
     return j({ error: String(e) }, 500);
   }
 });
