@@ -51,11 +51,35 @@ serve(async (req) => {
     if (cached) return j(cached);
 
     const fmpKey = Deno.env.get('FMP_API_KEY')!;
-    // Fetch actual S&P 500 index (^GSPC) historical data from FMP for accurate values
-    const r = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/%5EGSPC?apikey=${fmpKey}`);
-    const d = await r.json();
-    const historical = d?.historical;
-    if (!Array.isArray(historical) || historical.length === 0) return j({ error: 'No data from provider' }, 502);
+    
+    // Try ^GSPC first, fall back to SPY ETF if index not available on plan
+    let historical: any[] | null = null;
+    let usingSPY = false;
+    
+    // Attempt 1: actual S&P 500 index
+    try {
+      const r1 = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/%5EGSPC?apikey=${fmpKey}`);
+      const d1 = await r1.json();
+      if (Array.isArray(d1?.historical) && d1.historical.length > 0) {
+        historical = d1.historical;
+        console.log('[SENTIMENT] Using ^GSPC index data');
+      }
+    } catch (e) {
+      console.log('[SENTIMENT] ^GSPC fetch failed:', String(e));
+    }
+    
+    // Attempt 2: SPY ETF as proxy
+    if (!historical) {
+      const r2 = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/SPY?apikey=${fmpKey}`);
+      const d2 = await r2.json();
+      if (Array.isArray(d2?.historical) && d2.historical.length > 0) {
+        historical = d2.historical;
+        usingSPY = true;
+        console.log('[SENTIMENT] Falling back to SPY ETF proxy');
+      }
+    }
+    
+    if (!historical) return j({ error: 'No data from provider' }, 502);
 
     // FMP returns newest first — sort oldest first
     const entries = historical
