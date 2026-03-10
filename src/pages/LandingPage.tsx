@@ -616,7 +616,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Algorithm Description & FMP Partner */}
+      {/* Algorithm Description */}
       <section className="container mx-auto px-4 py-16">
         <div className="max-w-3xl mx-auto text-center">
           <motion.p
