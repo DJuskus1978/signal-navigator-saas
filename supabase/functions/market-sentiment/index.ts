@@ -80,7 +80,7 @@ serve(async (req) => {
     });
 
     const latest = entries[entries.length - 1];
-    const latestSP500 = latest.close * SPY_TO_SP500;
+    const latestSP500 = latest.close;
     const maValue = chartData[chartData.length - 1]?.ma ?? latestSP500;
     
     // Sentiment: matching Revolut-style logic with narrow Neutral zone (±0.5%)
