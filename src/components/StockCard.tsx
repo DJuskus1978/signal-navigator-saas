@@ -1,5 +1,6 @@
 import { Stock } from "@/lib/types";
 import { TrafficLight } from "./TrafficLight";
+import { AIScoreBadge } from "./AIScoreBadge";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
