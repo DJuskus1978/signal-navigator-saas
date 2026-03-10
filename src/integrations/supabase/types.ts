@@ -68,6 +68,45 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio_snapshots: {
+        Row: {
+          benchmark_nasdaq: number | null
+          benchmark_nasdaq_initial: number | null
+          benchmark_sp500: number | null
+          benchmark_sp500_initial: number | null
+          created_at: string
+          holdings: Json
+          id: string
+          initial_value: number
+          portfolio_value: number
+          snapshot_date: string
+        }
+        Insert: {
+          benchmark_nasdaq?: number | null
+          benchmark_nasdaq_initial?: number | null
+          benchmark_sp500?: number | null
+          benchmark_sp500_initial?: number | null
+          created_at?: string
+          holdings?: Json
+          id?: string
+          initial_value?: number
+          portfolio_value: number
+          snapshot_date?: string
+        }
+        Update: {
+          benchmark_nasdaq?: number | null
+          benchmark_nasdaq_initial?: number | null
+          benchmark_sp500?: number | null
+          benchmark_sp500_initial?: number | null
+          created_at?: string
+          holdings?: Json
+          id?: string
+          initial_value?: number
+          portfolio_value?: number
+          snapshot_date?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
