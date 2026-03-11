@@ -236,7 +236,7 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-3">
                   {visibleStocks.map((stock) => (
-                    <StockCard key={stock.ticker} stock={stock} />
+                    <StockCard key={stock.ticker} stock={stock} defaultExpanded={true} />
                   ))}
                   {isLimited && (
                     <div className="text-center py-6 border border-dashed border-border rounded-xl">
