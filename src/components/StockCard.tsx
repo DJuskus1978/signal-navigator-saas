@@ -56,7 +56,7 @@ export function StockCard({ stock, blurred = false }: StockCardProps) {
           }}
           className="w-full px-4 py-2 border-t border-border flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:bg-accent/50 transition-colors"
         >
-          More Indicators
+          View Radars
           {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
       )}

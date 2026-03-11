@@ -9,7 +9,7 @@ import { AISignalsCard } from "./AISignalsCard";
 import { AIDecisionGuidance } from "./stock-detail/AIDecisionGuidance";
 import { PhaseCard } from "./stock-detail/PhaseCard";
 import { getFundamentalPhase, getSentimentPhase, getTechnicalPhase } from "./stock-detail/phase-data";
-import { BarChart3, Newspaper, TrendingUp, Loader2 } from "lucide-react";
+import { BarChart3, Newspaper, TrendingUp, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 
 interface Props {
   stock: Stock;
@@ -19,6 +19,7 @@ export function ExpandedStockIndicators({ stock }: Props) {
   const { data: detailStock, isLoading } = useLiveStockDetail(stock.ticker);
   const displayStock = detailStock || stock;
   const [profile, setProfile] = useState<InvestorProfile>("balanced");
+  const [showMore, setShowMore] = useState(false);
 
   const isCrypto = displayStock.assetType === "crypto";
   const fundamentalPhase = getFundamentalPhase(displayStock);
@@ -36,13 +37,6 @@ export function ExpandedStockIndicators({ stock }: Props) {
 
   return (
     <div className="px-4 pb-4 space-y-4">
-      {/* External Analyst Ratings */}
-      {!isCrypto && displayStock.analystData ? (
-        <AnalystRatingsSection analystData={displayStock.analystData} currentPrice={displayStock.price} />
-      ) : !isCrypto ? (
-        <p className="text-xs text-muted-foreground text-center py-2">No analyst data available for this ticker</p>
-      ) : null}
-
       {/* AI Radar Signal Card */}
       <AIRadarSignalCard
         stock={displayStock}
@@ -83,8 +77,28 @@ export function ExpandedStockIndicators({ stock }: Props) {
         {...technicalPhase}
       />
 
-      {/* General Market Sentiment */}
-      <MarketSentiment />
+      {/* More Indicators toggle */}
+      <button
+        onClick={() => setShowMore(!showMore)}
+        className="w-full py-2 flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:bg-accent/50 transition-colors rounded-lg border border-border"
+      >
+        More Indicators
+        {showMore ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+      </button>
+
+      {showMore && (
+        <div className="space-y-4">
+          {/* General Market Sentiment */}
+          <MarketSentiment />
+
+          {/* External Analyst Ratings */}
+          {!isCrypto && displayStock.analystData ? (
+            <AnalystRatingsSection analystData={displayStock.analystData} currentPrice={displayStock.price} />
+          ) : !isCrypto ? (
+            <p className="text-xs text-muted-foreground text-center py-2">No analyst data available for this ticker</p>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
