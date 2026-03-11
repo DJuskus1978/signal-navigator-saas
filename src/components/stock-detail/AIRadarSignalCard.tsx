@@ -60,7 +60,7 @@ function generateSummary(stock: Stock, isCrypto: boolean, signal: string, radarS
 }
 
 function ProfileToggle({ profile, onChange, lockedProfiles = [], onLockedClick }: { profile: InvestorProfile; onChange: (p: InvestorProfile) => void; lockedProfiles?: InvestorProfile[]; onLockedClick?: () => void }) {
-  const profiles: InvestorProfile[] = ["conservative", "balanced", "active"];
+  const profiles: InvestorProfile[] = ["short-term", "medium-term", "long-term"];
   return (
     <div className="space-y-2">
       <div className="inline-flex items-center gap-2">
