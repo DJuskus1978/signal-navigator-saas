@@ -28,9 +28,9 @@ function getStatusStyles(color: "constructive" | "neutral" | "cautious") {
 }
 
 const PROFILE_LABELS: Record<InvestorProfile, string> = {
-  "short-term": "Short-term",
-  "medium-term": "Medium-term",
-  "long-term": "Long-term",
+  "short-term": "Short",
+  "medium-term": "Medium",
+  "long-term": "Long",
 };
 
 const ALL_SIGNALS: Recommendation[] = ["strong-buy", "buy", "hold", "dont-buy", "sell"];
