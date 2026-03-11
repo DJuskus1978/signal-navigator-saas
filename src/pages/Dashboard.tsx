@@ -252,8 +252,6 @@ export default function Dashboard() {
           </Tabs>
         )}
 
-        {/* Market Sentiment */}
-        {!isSearchActive && <div className="mt-10"><MarketSentiment /></div>}
       </main>
     </div>
   );
