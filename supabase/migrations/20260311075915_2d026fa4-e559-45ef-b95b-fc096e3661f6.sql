@@ -1,0 +1,2 @@
+ALTER TABLE public.portfolio_snapshots ADD COLUMN IF NOT EXISTS cash_balance numeric DEFAULT 100000;
+ALTER TABLE public.portfolio_snapshots ADD COLUMN IF NOT EXISTS total_realized_pnl numeric DEFAULT 0;
