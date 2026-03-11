@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Stock } from "@/lib/types";
 import type { InvestorProfile } from "@/lib/types";
 import { useLiveStockDetail } from "@/hooks/use-live-stocks";
