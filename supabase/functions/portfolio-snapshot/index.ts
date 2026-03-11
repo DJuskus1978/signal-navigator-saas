@@ -263,7 +263,7 @@ serve(async (req) => {
     new Response(JSON.stringify(b), { status: s, headers: { ...H, "Content-Type": "application/json" } });
 
   try {
-    const fmpKey = Deno.env.get("FMP_API_KEY")!;
+    const avKey = Deno.env.get("ALPHA_VANTAGE_API_KEY")!;
     const today = new Date().toISOString().split("T")[0];
 
     /* 1. Load previous state */
