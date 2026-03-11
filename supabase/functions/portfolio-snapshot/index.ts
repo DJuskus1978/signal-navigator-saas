@@ -7,7 +7,7 @@ const H = {
 };
 const SB_URL = () => Deno.env.get("SUPABASE_URL")!;
 const SB_KEY = () => Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const FMP_BASE = "https://financialmodelingprep.com/api/v3";
+const AV_BASE = "https://www.alphavantage.co/query";
 
 /* ── Universe of tickers per index ── */
 const INDEX_UNIVERSE: Record<string, string[]> = {
