@@ -5,9 +5,9 @@ const H = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-const AV = "https://www.alphavantage.co/query";
 const SB_URL = () => Deno.env.get("SUPABASE_URL")!;
 const SB_KEY = () => Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const FMP_BASE = "https://financialmodelingprep.com/api/v3";
 
 /* ── Universe of tickers per index ── */
 const INDEX_UNIVERSE: Record<string, string[]> = {
@@ -30,16 +30,25 @@ const INDEX_UNIVERSE: Record<string, string[]> = {
 
 const POSITIONS_PER_INDEX = 10;
 const INITIAL_CAPITAL = 100_000;
-const SELL_THRESHOLD = 38;
-const BUY_THRESHOLD = 52;
 
-/* ── Types ── */
-interface Quote { symbol: string; price: number; change: number; changePercent: number; }
+/* ── FMP Quote type ── */
+interface FMPQuote {
+  symbol: string;
+  price: number;
+  change: number;
+  changesPercentage: number;
+  pe: number | null;
+  volume: number;
+  avgVolume: number;
+  marketCap: number;
+  previousClose: number;
+}
 
 interface OpenPosition {
   ticker: string; exchange: string; shares: number;
   entry_price: number; entry_date: string; current_price: number;
-  score: number; unrealized_pnl: number; unrealized_pnl_pct: number;
+  score: number; recommendation: string;
+  unrealized_pnl: number; unrealized_pnl_pct: number;
   action: "hold" | "buy";
 }
 
@@ -47,51 +56,176 @@ interface ClosedPosition {
   ticker: string; exchange: string; shares: number;
   entry_price: number; entry_date: string; exit_price: number;
   realized_pnl: number; realized_pnl_pct: number;
+  recommendation: string;
 }
 
-/* ── Helpers ── */
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/* ════════════════════════════════════════════════════════════════════════════
+   THREE-PHASE RadarScore™ — mirrors src/lib/recommendation-engine.ts
+   ════════════════════════════════════════════════════════════════════════════ */
 
-async function fetchQuote(symbol: string, apiKey: string): Promise<Quote | null> {
+/**
+ * Phase 1: Fundamentals — P/E is the primary metric available from batch quotes.
+ * We scale the P/E sub-score to approximate the full fundamental range.
+ */
+function calculateFundamentalScore(pe: number | null): number {
+  if (pe === null || pe <= 0) return 0; // no data → neutral
+
+  let score = 0;
+  // P/E ratio — matches recommendation-engine.ts thresholds exactly
+  if (pe < 12) score += 25;
+  else if (pe < 18) score += 15;
+  else if (pe < 25) score += 5;
+  else if (pe < 35) score -= 5;
+  else score -= 15;
+
+  // Scale up since we only have P/E (full engine has 8 sub-indicators)
+  // P/E is the highest-weight single indicator so we give it ~2x
+  return score * 2;
+}
+
+/**
+ * Phase 2: Sentiment — without live news/social feeds in the batch context,
+ * we use volume surge as a proxy for market attention/conviction.
+ * Volume spikes with positive price action ≈ bullish sentiment.
+ */
+function calculateSentimentScore(
+  changesPercentage: number,
+  volumeRatio: number
+): number {
+  let score = 0;
+
+  // Volume-price agreement as sentiment proxy
+  if (volumeRatio > 2 && changesPercentage > 0) score += 20;
+  else if (volumeRatio > 1.5 && changesPercentage > 0) score += 12;
+  else if (volumeRatio > 1.2) score += 5;
+  else if (volumeRatio > 0.8) score += 0;
+  else if (changesPercentage < -1) score -= 10;
+  else score -= 3;
+
+  // Momentum direction as "market mood"
+  if (changesPercentage > 3) score += 15;
+  else if (changesPercentage > 1) score += 8;
+  else if (changesPercentage > 0) score += 3;
+  else if (changesPercentage > -1) score -= 3;
+  else if (changesPercentage > -3) score -= 8;
+  else score -= 15;
+
+  return score;
+}
+
+/**
+ * Phase 3: Technicals — uses momentum, volume conviction, and position trend.
+ * Receives a fundamentalBias to align with the real engine's context-aware scoring.
+ */
+function calculateTechnicalScore(
+  changesPercentage: number,
+  volumeRatio: number,
+  fundamentalBias: number,
+  entryPrice?: number,
+  currentPrice?: number
+): number {
+  let score = 0;
+
+  // Momentum (proxy for RSI + MACD direction)
+  // Matches recommendation-engine.ts RSI/MACD threshold patterns
+  if (changesPercentage > 3) score += 22;
+  else if (changesPercentage > 1.5) score += 14;
+  else if (changesPercentage > 0.3) score += 5;
+  else if (changesPercentage > -0.3) score += 0;
+  else if (changesPercentage > -1.5) score -= 10;
+  else if (changesPercentage > -3) score -= 15;
+  else score -= 20;
+
+  // Volume conviction — matches recommendation-engine.ts exactly
+  if (volumeRatio > 2) score += 12;
+  else if (volumeRatio > 1.3) score += 7;
+  else if (volumeRatio > 0.8) score += 0;
+  else score -= 5;
+
+  // Position trend (proxy for SMA50/SMA200 golden/death cross)
+  if (entryPrice && currentPrice) {
+    const posRet = ((currentPrice - entryPrice) / entryPrice) * 100;
+    if (posRet > 10) score += 20;
+    else if (posRet > 5) score += 12;
+    else if (posRet > 1) score += 5;
+    else if (posRet > -1) score += 0;
+    else if (posRet > -5) score -= 10;
+    else score -= 18;
+  }
+
+  // High volatility + strong fundamentals = opportunity (matches engine)
+  if (Math.abs(changesPercentage) > 3 && fundamentalBias > 20) score += 8;
+  else if (Math.abs(changesPercentage) > 5) score -= 5;
+
+  return score;
+}
+
+/**
+ * Combined RadarScore™ — same weights as recommendation-engine.ts:
+ *   Fundamentals: 40%, Sentiment: 25%, Technicals: 35%
+ *
+ * Same recommendation thresholds:
+ *   >= 60 → strong-buy, >= 30 → buy, >= 5 → hold, >= -15 → dont-buy, else → sell
+ */
+function calculateRadarScore(
+  quote: FMPQuote,
+  entryPrice?: number
+): { score: number; recommendation: string; fundScore: number; sentScore: number; techScore: number } {
+  const volumeRatio = quote.avgVolume > 0 ? quote.volume / quote.avgVolume : 1;
+
+  const fundScore = calculateFundamentalScore(quote.pe);
+  const sentScore = calculateSentimentScore(quote.changesPercentage, volumeRatio);
+  const techScore = calculateTechnicalScore(
+    quote.changesPercentage, volumeRatio, fundScore,
+    entryPrice, quote.price
+  );
+
+  // Weighted combination — matches recommendation-engine.ts exactly
+  const combined = Math.round(fundScore * 0.40 + sentScore * 0.25 + techScore * 0.35);
+
+  let recommendation: string;
+  if (combined >= 60) recommendation = "strong-buy";
+  else if (combined >= 30) recommendation = "buy";
+  else if (combined >= 5) recommendation = "hold";
+  else if (combined >= -15) recommendation = "dont-buy";
+  else recommendation = "sell";
+
+  return { score: combined, recommendation, fundScore, sentScore, techScore };
+}
+
+/* ── Data fetching (FMP batch — 1 call for all tickers) ── */
+
+async function fetchFMPQuotes(tickers: string[], apiKey: string): Promise<Map<string, FMPQuote>> {
+  const results = new Map<string, FMPQuote>();
+  // FMP batch endpoint supports comma-separated tickers
+  const url = `${FMP_BASE}/quote/${tickers.join(",")}?apikey=${apiKey}`;
   try {
-    const r = await fetch(`${AV}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`);
-    const d = await r.json();
-    const gq = d?.["Global Quote"];
-    if (!gq || !gq["05. price"]) return null;
-    const price = parseFloat(gq["05. price"]);
-    const prevClose = parseFloat(gq["08. previous close"] || "0");
-    const change = Math.round((price - prevClose) * 100) / 100;
-    const changePercent = prevClose > 0 ? Math.round((change / prevClose) * 10000) / 100 : 0;
-    return { symbol, price, change, changePercent };
-  } catch { return null; }
-}
-
-async function fetchQuotesBatched(tickers: string[], apiKey: string): Promise<Map<string, Quote>> {
-  const results = new Map<string, Quote>();
-  for (let i = 0; i < tickers.length; i += 4) {
-    const batch = tickers.slice(i, i + 4);
-    const quotes = await Promise.all(batch.map((t) => fetchQuote(t, apiKey)));
-    for (const q of quotes) if (q) results.set(q.symbol, q);
-    if (i + 4 < tickers.length) await delay(1200);
+    const res = await fetch(url);
+    const data = await res.json();
+    if (Array.isArray(data)) {
+      for (const q of data) {
+        if (q.symbol && q.price) {
+          results.set(q.symbol, {
+            symbol: q.symbol,
+            price: q.price,
+            change: q.change ?? 0,
+            changesPercentage: q.changesPercentage ?? 0,
+            pe: q.pe ?? null,
+            volume: q.volume ?? 0,
+            avgVolume: q.avgVolume ?? 0,
+            marketCap: q.marketCap ?? 0,
+            previousClose: q.previousClose ?? q.price,
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.error("FMP batch quote error:", e);
   }
   return results;
 }
 
-/**
- * RadarScore™ – momentum + position-aware scoring
- *  - Base: 50
- *  - Daily momentum: changePercent * 5 (capped ±15)
- *  - Position P&L factor: positionReturn * 2 (capped ±10)
- */
-function radarScore(q: Quote, entryPrice?: number): number {
-  let score = 50;
-  score += Math.max(-15, Math.min(15, q.changePercent * 5));
-  if (entryPrice) {
-    const posRet = ((q.price - entryPrice) / entryPrice) * 100;
-    score += Math.max(-10, Math.min(10, posRet * 2));
-  }
-  return Math.max(0, Math.min(100, Math.round(score)));
-}
+/* ── Supabase helpers ── */
 
 async function getPreviousSnapshot() {
   const res = await fetch(
@@ -111,19 +245,6 @@ async function getFirstSnapshot() {
   return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
 }
 
-async function fetchBenchmarks(apiKey: string) {
-  const [spy, qqq, dia] = await Promise.all([
-    fetchQuote("SPY", apiKey),
-    fetchQuote("QQQ", apiKey),
-    fetchQuote("DIA", apiKey),
-  ]);
-  return {
-    sp500: spy ? spy.price * 10 : null,
-    nasdaq: qqq ? qqq.price * 40 : null,
-    dow: dia ? dia.price * 100 : null,
-  };
-}
-
 /* ── Main handler ── */
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: H });
@@ -131,7 +252,7 @@ serve(async (req) => {
     new Response(JSON.stringify(b), { status: s, headers: { ...H, "Content-Type": "application/json" } });
 
   try {
-    const apiKey = Deno.env.get("ALPHA_VANTAGE_API_KEY")!;
+    const fmpKey = Deno.env.get("FMP_API_KEY")!;
     const today = new Date().toISOString().split("T")[0];
 
     /* 1. Load previous state */
@@ -143,25 +264,35 @@ serve(async (req) => {
     let openPositions: OpenPosition[] = isFirstDay ? [] : (prev.holdings?.open_positions ?? []);
     const closedToday: ClosedPosition[] = [];
 
-    /* 2. Fetch current prices for all open positions */
-    const openTickers = openPositions.map((p) => p.ticker);
-    const openQuotes = openTickers.length > 0 ? await fetchQuotesBatched(openTickers, apiKey) : new Map<string, Quote>();
+    /* 2. Gather ALL tickers we need quotes for (open + full universe + benchmarks) */
+    const allUniverseTickers = new Set<string>();
+    for (const tickers of Object.values(INDEX_UNIVERSE)) {
+      for (const t of tickers) allUniverseTickers.add(t);
+    }
+    for (const p of openPositions) allUniverseTickers.add(p.ticker);
+    // Add benchmark ETFs
+    allUniverseTickers.add("SPY");
+    allUniverseTickers.add("QQQ");
+    allUniverseTickers.add("DIA");
 
-    /* 3. Score each open position → HOLD or SELL */
+    /* 3. Single batch FMP call for ALL tickers */
+    const allQuotes = await fetchFMPQuotes([...allUniverseTickers], fmpKey);
+
+    /* 4. Score each open position → HOLD or SELL */
     const keptPositions: OpenPosition[] = [];
     for (const pos of openPositions) {
-      const quote = openQuotes.get(pos.ticker);
+      const quote = allQuotes.get(pos.ticker);
       if (!quote) {
         // Can't get quote — hold with stale data
         keptPositions.push({ ...pos, action: "hold" });
         continue;
       }
-      const score = radarScore(quote, pos.entry_price);
+      const { score, recommendation } = calculateRadarScore(quote, pos.entry_price);
       const unrealized_pnl = Math.round((quote.price - pos.entry_price) * pos.shares * 100) / 100;
       const unrealized_pnl_pct = Math.round(((quote.price - pos.entry_price) / pos.entry_price) * 10000) / 100;
 
-      if (score < SELL_THRESHOLD) {
-        /* SELL */
+      // SELL when RadarScore says "sell" or "dont-buy" — consistent with recommendation engine
+      if (recommendation === "sell" || recommendation === "dont-buy") {
         const realized_pnl = Math.round((quote.price - pos.entry_price) * pos.shares * 100) / 100;
         const realized_pnl_pct = Math.round(((quote.price - pos.entry_price) / pos.entry_price) * 10000) / 100;
         cash += pos.shares * quote.price;
@@ -169,52 +300,57 @@ serve(async (req) => {
         closedToday.push({
           ticker: pos.ticker, exchange: pos.exchange, shares: pos.shares,
           entry_price: pos.entry_price, entry_date: pos.entry_date,
-          exit_price: quote.price, realized_pnl, realized_pnl_pct,
+          exit_price: quote.price, realized_pnl, realized_pnl_pct, recommendation,
         });
       } else {
         /* HOLD */
         keptPositions.push({
-          ...pos, current_price: quote.price, score,
+          ...pos, current_price: quote.price, score, recommendation,
           unrealized_pnl, unrealized_pnl_pct, action: "hold",
         });
       }
     }
 
-    /* 4. Count free slots per index */
+    /* 5. Count free slots per index */
     const slotsUsed: Record<string, number> = { nasdaq: 0, dow: 0, sp500: 0 };
     for (const p of keptPositions) slotsUsed[p.exchange] = (slotsUsed[p.exchange] || 0) + 1;
 
     const heldTickers = new Set(keptPositions.map((p) => p.ticker));
     const newPositions: OpenPosition[] = [];
 
-    /* 5. For each index with free slots, scan & buy best candidates */
+    /* 6. For each index with free slots, score candidates & buy best */
     for (const [exchange, universe] of Object.entries(INDEX_UNIVERSE)) {
       const freeSlots = POSITIONS_PER_INDEX - (slotsUsed[exchange] || 0);
       if (freeSlots <= 0) continue;
 
       const candidates = universe.filter((t) => !heldTickers.has(t));
-      const sampled = candidates.sort(() => Math.random() - 0.5).slice(0, Math.min(14, candidates.length));
 
-      await delay(1200);
-      const candidateQuotes = await fetchQuotesBatched(sampled, apiKey);
-
-      const scored = Array.from(candidateQuotes.values())
-        .map((q) => ({ quote: q, score: radarScore(q) }))
-        .filter((s) => s.score >= BUY_THRESHOLD)
+      // Score all candidates using the same RadarScore™
+      const scored = candidates
+        .map((ticker) => {
+          const quote = allQuotes.get(ticker);
+          if (!quote) return null;
+          const result = calculateRadarScore(quote);
+          return { ticker, quote, ...result };
+        })
+        .filter((s): s is NonNullable<typeof s> => s !== null)
+        // BUY only when RadarScore says "buy" or "strong-buy"
+        .filter((s) => s.recommendation === "buy" || s.recommendation === "strong-buy")
         .sort((a, b) => b.score - a.score)
         .slice(0, freeSlots);
 
       for (const s of scored) {
         newPositions.push({
-          ticker: s.quote.symbol, exchange, shares: 0,
+          ticker: s.ticker, exchange, shares: 0,
           entry_price: s.quote.price, entry_date: today,
           current_price: s.quote.price, score: s.score,
+          recommendation: s.recommendation,
           unrealized_pnl: 0, unrealized_pnl_pct: 0, action: "buy",
         });
       }
     }
 
-    /* 6. Allocate cash equally to new positions */
+    /* 7. Allocate cash equally to new positions */
     if (newPositions.length > 0 && cash > 0) {
       const perPos = cash / newPositions.length;
       let totalSpent = 0;
@@ -226,22 +362,29 @@ serve(async (req) => {
     }
     const validNew = newPositions.filter((p) => p.shares > 0);
 
-    /* 7. Combine all open positions */
+    /* 8. Combine all open positions */
     const allOpen = [...keptPositions, ...validNew];
 
-    /* 8. Portfolio value = cash + market value of all positions */
+    /* 9. Portfolio value */
     const posValue = allOpen.reduce((s, p) => s + p.shares * p.current_price, 0);
     const portfolioValue = Math.round((cash + posValue) * 100) / 100;
 
-    /* 9. Benchmarks */
-    await delay(1200);
-    const bench = await fetchBenchmarks(apiKey);
+    /* 10. Benchmarks from the same batch call */
+    const spyQ = allQuotes.get("SPY");
+    const qqqQ = allQuotes.get("QQQ");
+    const diaQ = allQuotes.get("DIA");
+    const bench = {
+      sp500: spyQ ? spyQ.price * 10 : null,
+      nasdaq: qqqQ ? qqqQ.price * 40 : null,
+      dow: diaQ ? diaQ.price * 100 : null,
+    };
+
     const first = isFirstDay ? null : await getFirstSnapshot();
     const sp500Init = isFirstDay ? bench.sp500 : (first?.benchmark_sp500_initial ?? bench.sp500);
     const nasdaqInit = isFirstDay ? bench.nasdaq : (first?.benchmark_nasdaq_initial ?? bench.nasdaq);
     const dowInit = isFirstDay ? bench.dow : (first?.benchmark_dow_initial ?? bench.dow);
 
-    /* 10. Upsert today's snapshot */
+    /* 11. Upsert today's snapshot */
     const snapshot = {
       snapshot_date: today,
       portfolio_value: portfolioValue,
@@ -287,6 +430,7 @@ serve(async (req) => {
       benchmark_sp500: bench.sp500,
       benchmark_nasdaq: bench.nasdaq,
       benchmark_dow: bench.dow,
+      scoring_engine: "RadarScore™ three-phase (fundamental 40%, sentiment 25%, technical 35%)",
     });
   } catch (e) {
     return j({ error: String(e) }, 500);
