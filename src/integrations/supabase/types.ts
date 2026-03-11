@@ -70,6 +70,8 @@ export type Database = {
       }
       portfolio_snapshots: {
         Row: {
+          benchmark_dow: number | null
+          benchmark_dow_initial: number | null
           benchmark_nasdaq: number | null
           benchmark_nasdaq_initial: number | null
           benchmark_sp500: number | null
@@ -82,6 +84,8 @@ export type Database = {
           snapshot_date: string
         }
         Insert: {
+          benchmark_dow?: number | null
+          benchmark_dow_initial?: number | null
           benchmark_nasdaq?: number | null
           benchmark_nasdaq_initial?: number | null
           benchmark_sp500?: number | null
@@ -94,6 +98,8 @@ export type Database = {
           snapshot_date?: string
         }
         Update: {
+          benchmark_dow?: number | null
+          benchmark_dow_initial?: number | null
           benchmark_nasdaq?: number | null
           benchmark_nasdaq_initial?: number | null
           benchmark_sp500?: number | null

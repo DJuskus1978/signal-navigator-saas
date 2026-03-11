@@ -9,7 +9,7 @@ const AV = "https://www.alphavantage.co/query";
 const SB_URL = () => Deno.env.get("SUPABASE_URL")!;
 const SB_KEY = () => Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// Top tickers per index (superset — we'll score and pick top 10)
+// Top tickers per index — we sample and score to pick the best 10
 const INDEX_TICKERS: Record<string, string[]> = {
   nasdaq: [
     "AAPL","MSFT","GOOGL","AMZN","NVDA","META","TSLA","NFLX",
@@ -28,7 +28,14 @@ const INDEX_TICKERS: Record<string, string[]> = {
   ],
 };
 
-async function fetchQuote(symbol: string, apiKey: string): Promise<{ symbol: string; price: number; change: number; changePercent: number } | null> {
+interface Quote {
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+}
+
+async function fetchQuote(symbol: string, apiKey: string): Promise<Quote | null> {
   try {
     const r = await fetch(`${AV}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`);
     const d = await r.json();
@@ -44,10 +51,92 @@ async function fetchQuote(symbol: string, apiKey: string): Promise<{ symbol: str
   }
 }
 
-// Simple scoring for portfolio selection (positive change% + momentum)
-function quickScore(q: { price: number; change: number; changePercent: number }): number {
-  // Simple momentum score: positive change = higher score
+// Score: momentum-based — positive daily change = higher score
+function quickScore(q: Quote): number {
   return 50 + q.changePercent * 5;
+}
+
+interface Holding {
+  ticker: string;
+  exchange: string;
+  score: number;
+  price: number;
+  changePercent: number;
+  action: "buy" | "hold" | "sell";
+}
+
+async function selectTopHoldings(apiKey: string): Promise<Holding[]> {
+  const allHoldings: Holding[] = [];
+
+  for (const [exchange, tickers] of Object.entries(INDEX_TICKERS)) {
+    // Sample 12 random tickers to stay within rate limits
+    const sampled = tickers.sort(() => Math.random() - 0.5).slice(0, 12);
+    const quotes: Quote[] = [];
+
+    for (let i = 0; i < sampled.length; i += 4) {
+      const batch = sampled.slice(i, i + 4);
+      const results = await Promise.all(batch.map((s) => fetchQuote(s, apiKey)));
+      quotes.push(...(results.filter(Boolean) as Quote[]));
+      if (i + 4 < sampled.length) await delay(1200);
+    }
+
+    // Score and pick top 10 per index
+    const scored = quotes
+      .map((q) => ({ ...q, score: quickScore(q) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+
+    for (const s of scored) {
+      allHoldings.push({
+        ticker: s.symbol,
+        exchange,
+        score: Math.round(s.score),
+        price: s.price,
+        changePercent: s.changePercent,
+        action: s.changePercent >= 0 ? "buy" : "sell",
+      });
+    }
+  }
+  return allHoldings;
+}
+
+async function fetchBenchmarks(apiKey: string) {
+  // SPY ≈ S&P 500 / 10, QQQ ≈ Nasdaq / 40, DIA ≈ Dow / 100
+  const [spy, qqq, dia] = await Promise.all([
+    fetchQuote("SPY", apiKey),
+    fetchQuote("QQQ", apiKey),
+    fetchQuote("DIA", apiKey),
+  ]);
+  return {
+    sp500: spy ? spy.price * 10 : null,
+    nasdaq: qqq ? qqq.price * 40 : null,
+    dow: dia ? dia.price * 100 : null,
+    sp500Change: spy?.changePercent ?? null,
+    nasdaqChange: qqq?.changePercent ?? null,
+    dowChange: dia?.changePercent ?? null,
+  };
+}
+
+async function getPreviousSnapshot() {
+  const res = await fetch(
+    `${SB_URL()}/rest/v1/portfolio_snapshots?select=portfolio_value,snapshot_date&order=snapshot_date.desc&limit=1`,
+    { headers: { apikey: SB_KEY(), Authorization: `Bearer ${SB_KEY()}` } }
+  );
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length > 0 ? parseFloat(rows[0].portfolio_value) : null;
+}
+
+async function getFirstSnapshot() {
+  const res = await fetch(
+    `${SB_URL()}/rest/v1/portfolio_snapshots?select=benchmark_sp500_initial,benchmark_nasdaq_initial,benchmark_dow_initial&order=snapshot_date.asc&limit=1`,
+    { headers: { apikey: SB_KEY(), Authorization: `Bearer ${SB_KEY()}` } }
+  );
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+}
+
+function delay(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 serve(async (req) => {
@@ -57,130 +146,46 @@ serve(async (req) => {
 
   try {
     const apiKey = Deno.env.get("ALPHA_VANTAGE_API_KEY")!;
-    const allHoldings: { ticker: string; exchange: string; score: number; price: number; weight: number }[] = [];
+    const INITIAL_VALUE = 100000;
 
-    // Process each index — pick a sample of 5 tickers to stay within rate limits
-    for (const [exchange, tickers] of Object.entries(INDEX_TICKERS)) {
-      // Sample 12 random tickers to score (API rate limit friendly)
-      const sampled = tickers.sort(() => Math.random() - 0.5).slice(0, 12);
-      
-      // Fetch in batches of 4 with delays
-      const quotes: { symbol: string; price: number; change: number; changePercent: number }[] = [];
-      for (let i = 0; i < sampled.length; i += 4) {
-        const batch = sampled.slice(i, i + 4);
-        const results = await Promise.all(batch.map((s) => fetchQuote(s, apiKey)));
-        quotes.push(...results.filter(Boolean) as typeof quotes);
-        if (i + 4 < sampled.length) {
-          await new Promise((r) => setTimeout(r, 1200)); // rate limit delay
-        }
-      }
+    // 1. Select top holdings
+    const holdings = await selectTopHoldings(apiKey);
+    if (holdings.length === 0) return j({ error: "No quotes available" }, 500);
 
-      // Score and pick top 10
-      const scored = quotes
-        .map((q) => ({ ...q, score: quickScore(q) }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 10);
+    // 2. Fetch benchmarks
+    await delay(1200);
+    const bench = await fetchBenchmarks(apiKey);
 
-      const weight = 1 / 30; // equal weight across 30 stocks
-      for (const s of scored) {
-        allHoldings.push({
-          ticker: s.symbol,
-          exchange,
-          score: Math.round(s.score),
-          price: s.price,
-          weight,
-        });
-      }
+    // 3. Calculate portfolio value
+    const prevValue = await getPreviousSnapshot();
+    const isFirstDay = prevValue === null;
+
+    let portfolioValue = INITIAL_VALUE;
+    if (!isFirstDay) {
+      // Portfolio return = weighted avg of daily change% across all holdings
+      const avgDailyReturn = holdings.reduce((sum, h) => sum + h.changePercent, 0) / holdings.length;
+      portfolioValue = prevValue * (1 + avgDailyReturn / 100);
     }
 
-    if (allHoldings.length === 0) {
-      return j({ error: "No quotes available" }, 500);
-    }
+    // 4. Resolve initial benchmark values
+    const firstSnap = await getFirstSnapshot();
+    const sp500Initial = isFirstDay ? bench.sp500 : (firstSnap?.benchmark_sp500_initial ?? bench.sp500);
+    const nasdaqInitial = isFirstDay ? bench.nasdaq : (firstSnap?.benchmark_nasdaq_initial ?? bench.nasdaq);
+    const dowInitial = isFirstDay ? bench.dow : (firstSnap?.benchmark_dow_initial ?? bench.dow);
 
-    // Calculate portfolio value (equal-weight $100k)
-    const initialValue = 100000;
-    const perStock = initialValue / allHoldings.length;
-    
-    // For the first snapshot, portfolio value = initial value
-    // For subsequent snapshots, we'd track shares bought at initial prices
-    // For now, portfolio tracks daily performance attribution
-    const portfolioValue = allHoldings.reduce((sum, h) => {
-      // Each stock contributes its daily change% to the portfolio
-      return sum;
-    }, 0);
-
-    // Simple approach: portfolio value = initial * (1 + avg daily return of holdings)
-    // We need the previous snapshot to calculate properly
-    const prevSnapshotRes = await fetch(
-      `${SB_URL()}/rest/v1/portfolio_snapshots?select=portfolio_value,snapshot_date&order=snapshot_date.desc&limit=1`,
-      { headers: { apikey: SB_KEY(), Authorization: `Bearer ${SB_KEY()}` } }
-    );
-    const prevRows = await prevSnapshotRes.json();
-    const prevValue = Array.isArray(prevRows) && prevRows.length > 0 
-      ? parseFloat(prevRows[0].portfolio_value) 
-      : initialValue;
-
-    // Calculate avg daily change across holdings
-    const avgChange = allHoldings.reduce((sum, h) => {
-      const holdingQuote = allHoldings.find((q) => q.ticker === h.ticker);
-      // Use the changePercent from the quote data
-      return sum;
-    }, 0);
-
-    // Fetch benchmark prices (SPY for S&P 500, QQQ for Nasdaq)
-    await new Promise((r) => setTimeout(r, 1200));
-    const [spyQuote, qqqQuote] = await Promise.all([
-      fetchQuote("SPY", apiKey),
-      fetchQuote("QQQ", apiKey),
-    ]);
-
-    // Get initial benchmark values from first snapshot
-    const firstSnapshotRes = await fetch(
-      `${SB_URL()}/rest/v1/portfolio_snapshots?select=benchmark_sp500_initial,benchmark_nasdaq_initial&order=snapshot_date.asc&limit=1`,
-      { headers: { apikey: SB_KEY(), Authorization: `Bearer ${SB_KEY()}` } }
-    );
-    const firstRows = await firstSnapshotRes.json();
-    const isFirstSnapshot = !Array.isArray(firstRows) || firstRows.length === 0;
-
-    const sp500Price = spyQuote ? spyQuote.price * 10 : null; // SPY ~= S&P 500 / 10
-    const nasdaqPrice = qqqQuote ? qqqQuote.price * 40 : null; // QQQ ~= Nasdaq / 40
-
-    // For first snapshot, set initial benchmarks
-    const sp500Initial = isFirstSnapshot ? sp500Price : (firstRows[0]?.benchmark_sp500_initial ?? sp500Price);
-    const nasdaqInitial = isFirstSnapshot ? nasdaqPrice : (firstRows[0]?.benchmark_nasdaq_initial ?? nasdaqPrice);
-
-    // Portfolio value: first day = initial, subsequent = previous * (1 + weighted avg daily return)
-    let newPortfolioValue = initialValue;
-    if (!isFirstSnapshot) {
-      // Calculate weighted return from today's holdings
-      // Use each holding's daily changePercent
-      const fetchedQuotes = allHoldings.map((h) => h);
-      // We need the actual changePercent — let's re-fetch or use stored data
-      // For simplicity, use the average changePercent from all holdings
-      // The holdings already have price but not changePercent directly
-      // Let's recalculate from the original quote data
-      
-      // Since we already have the scores which incorporate changePercent,
-      // let's approximate: score = 50 + changePercent * 5, so changePercent = (score - 50) / 5
-      const avgDailyReturn = allHoldings.reduce((sum, h) => {
-        const estimatedChangePct = (h.score - 50) / 5;
-        return sum + estimatedChangePct / allHoldings.length;
-      }, 0);
-      
-      newPortfolioValue = prevValue * (1 + avgDailyReturn / 100);
-    }
-
-    // Upsert today's snapshot
+    // 5. Upsert today's snapshot
     const today = new Date().toISOString().split("T")[0];
     const snapshot = {
       snapshot_date: today,
-      portfolio_value: Math.round(newPortfolioValue * 100) / 100,
-      initial_value: initialValue,
-      holdings: allHoldings,
-      benchmark_sp500: sp500Price,
-      benchmark_nasdaq: nasdaqPrice,
+      portfolio_value: Math.round(portfolioValue * 100) / 100,
+      initial_value: INITIAL_VALUE,
+      holdings,
+      benchmark_sp500: bench.sp500,
+      benchmark_nasdaq: bench.nasdaq,
+      benchmark_dow: bench.dow,
       benchmark_sp500_initial: sp500Initial,
       benchmark_nasdaq_initial: nasdaqInitial,
+      benchmark_dow_initial: dowInitial,
     };
 
     await fetch(`${SB_URL()}/rest/v1/portfolio_snapshots`, {
@@ -198,9 +203,12 @@ serve(async (req) => {
       success: true,
       date: today,
       portfolio_value: snapshot.portfolio_value,
-      holdings_count: allHoldings.length,
-      benchmark_sp500: sp500Price,
-      benchmark_nasdaq: nasdaqPrice,
+      holdings_count: holdings.length,
+      benchmark_sp500: bench.sp500,
+      benchmark_nasdaq: bench.nasdaq,
+      benchmark_dow: bench.dow,
+      buy_signals: holdings.filter((h) => h.action === "buy").length,
+      sell_signals: holdings.filter((h) => h.action === "sell").length,
     });
   } catch (e) {
     return j({ error: String(e) }, 500);
