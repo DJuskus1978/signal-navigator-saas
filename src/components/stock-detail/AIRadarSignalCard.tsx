@@ -102,7 +102,7 @@ function ProfileToggle({ profile, onChange, lockedProfiles = [], onLockedClick }
 
 function SignalToggle({ activeSignal }: { activeSignal: Recommendation }) {
   return (
-    <div className="inline-flex items-center rounded-full border-2 border-border bg-card p-1">
+    <div className="inline-flex items-center rounded-full border border-border bg-card p-0.5">
       {ALL_SIGNALS.map((sig) => {
         const isActive = sig === activeSignal;
         const style = SIGNAL_STYLES[sig];
@@ -111,15 +111,15 @@ function SignalToggle({ activeSignal }: { activeSignal: Recommendation }) {
           <div
             key={sig}
             className={cn(
-              "rounded-full px-4 py-2.5 text-sm font-bold transition-all flex items-center gap-2",
+              "rounded-full px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5",
               isActive
-                ? cn(style.activeBg, style.activeText, "shadow-md scale-105")
-                : "text-muted-foreground/30"
+                ? cn(style.activeBg, style.activeText, "shadow-md ring-2 ring-offset-1 ring-offset-card", sig === "sell" || sig === "dont-buy" ? "ring-signal-sell/40" : sig === "hold" ? "ring-signal-hold/40" : "ring-signal-buy/40")
+                : "text-muted-foreground/40"
             )}
           >
             {isActive && (
               <span
-                className="w-3 h-3 rounded-full animate-pulse-glow shrink-0 bg-white"
+                className="w-2.5 h-2.5 rounded-full animate-pulse-glow shrink-0 bg-white"
               />
             )}
             <span>
