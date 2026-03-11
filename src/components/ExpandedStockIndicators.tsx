@@ -92,7 +92,7 @@ export function ExpandedStockIndicators({ stock }: Props) {
         <div className="space-y-4">
           {/* External Analyst Ratings */}
           {!isCrypto && displayStock.analystData ? (
-            <AnalystRatingsSection analystData={displayStock.analystData} currentPrice={displayStock.price} />
+            <AnalystRatingsSection analystData={displayStock.analystData} currentPrice={displayStock.price} ticker={displayStock.ticker} />
           ) : !isCrypto ? (
             <p className="text-xs text-muted-foreground text-center py-2">No analyst data available for this ticker</p>
           ) : null}

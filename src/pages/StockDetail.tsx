@@ -144,7 +144,7 @@ export default function StockDetail() {
         {/* External Analyst Ratings — first block */}
         {!isCrypto && stock.analystData && (
           <div className="mb-8">
-            <AnalystRatingsSection analystData={stock.analystData} currentPrice={stock.price} />
+            <AnalystRatingsSection analystData={stock.analystData} currentPrice={stock.price} ticker={displayTicker} />
           </div>
         )}
 
