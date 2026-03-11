@@ -55,6 +55,7 @@ export function ExpandedStockIndicators({ stock }: Props) {
       <AIDecisionGuidance stock={displayStock} isCrypto={isCrypto} profile={profile} />
 
       {/* 3-Phase Breakdown */}
+      <div ref={breakdownRef} />
       <PhaseCard
         icon={<BarChart3 className="w-5 h-5" />}
         title={isCrypto ? "Market Structure" : "Fundamental Strength"}
