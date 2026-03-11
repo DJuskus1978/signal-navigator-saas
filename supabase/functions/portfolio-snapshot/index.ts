@@ -193,34 +193,45 @@ function calculateRadarScore(
   return { score: combined, recommendation, fundScore, sentScore, techScore };
 }
 
-/* ── Data fetching (FMP batch — 1 call for all tickers) ── */
+/* ── Data fetching (Alpha Vantage — batched with rate-limit delays) ── */
 
-async function fetchFMPQuotes(tickers: string[], apiKey: string): Promise<Map<string, FMPQuote>> {
-  const results = new Map<string, FMPQuote>();
-  // FMP batch endpoint supports comma-separated tickers
-  const url = `${FMP_BASE}/quote/${tickers.join(",")}?apikey=${apiKey}`;
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function fetchAVQuote(symbol: string, apiKey: string): Promise<StockQuote | null> {
   try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (Array.isArray(data)) {
-      for (const q of data) {
-        if (q.symbol && q.price) {
-          results.set(q.symbol, {
-            symbol: q.symbol,
-            price: q.price,
-            change: q.change ?? 0,
-            changesPercentage: q.changesPercentage ?? 0,
-            pe: q.pe ?? null,
-            volume: q.volume ?? 0,
-            avgVolume: q.avgVolume ?? 0,
-            marketCap: q.marketCap ?? 0,
-            previousClose: q.previousClose ?? q.price,
-          });
-        }
-      }
-    }
+    const r = await fetch(`${AV_BASE}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`);
+    const d = await r.json();
+    const gq = d?.["Global Quote"];
+    if (!gq || !gq["05. price"]) return null;
+    const price = parseFloat(gq["05. price"]);
+    const previousClose = parseFloat(gq["08. previous close"] || "0");
+    const volume = parseInt(gq["06. volume"] || "0", 10);
+    const change = Math.round((price - previousClose) * 100) / 100;
+    const changesPct = previousClose > 0 ? Math.round((change / previousClose) * 10000) / 100 : 0;
+    return {
+      symbol, price, change, changesPercentage: changesPct,
+      pe: null, volume, avgVolume: volume,
+      marketCap: 0, previousClose,
+    };
   } catch (e) {
-    console.error("FMP batch quote error:", e);
+    console.error(`AV quote error for ${symbol}:`, e);
+    return null;
+  }
+}
+
+async function fetchAllQuotes(tickers: string[], apiKey: string): Promise<Map<string, StockQuote>> {
+  const results = new Map<string, StockQuote>();
+  const BATCH_SIZE = 5;
+  const BATCH_DELAY = 1200; // ~5 calls per 1.2s keeps within 75/min
+
+  for (let i = 0; i < tickers.length; i += BATCH_SIZE) {
+    const batch = tickers.slice(i, i + BATCH_SIZE);
+    const promises = batch.map((t) => fetchAVQuote(t, apiKey));
+    const quotes = await Promise.all(promises);
+    for (const q of quotes) {
+      if (q) results.set(q.symbol, q);
+    }
+    if (i + BATCH_SIZE < tickers.length) await delay(BATCH_DELAY);
   }
   return results;
 }
