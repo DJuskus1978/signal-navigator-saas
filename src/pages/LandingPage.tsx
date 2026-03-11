@@ -6,9 +6,9 @@ import heroBannerImg from "@/assets/hero-banner-new.jpg";
 import insideDashboardNewImg from "@/assets/inside-radar-dashboard-new.jpeg";
 import insideSignalScoreImg from "@/assets/inside-radar-signal-score.jpeg";
 import insideAnalystRatingsImg from "@/assets/inside-radar-analyst-ratings.jpeg";
-import newsDashboardImg from "@/assets/news-sentiment-dashboard.jpeg";
 import decisionGuidanceImg from "@/assets/decision-guidance.jpeg";
 import marketTrackerImg from "@/assets/market-tracker.jpeg";
+import marketSentimentImg from "@/assets/market-sentiment-dashboard.jpeg";
 
 
 import avatarSarah from "@/assets/avatar-sarah.jpg";
@@ -366,9 +366,9 @@ export default function LandingPage() {
           </p>
           {(() => {
             const newsSlides = [
-              { src: newsDashboardImg, alt: "StocksRadars dashboard showing market sentiment gauge, stock tabs for Nasdaq, Dow Jones, S&P 500 and Crypto" },
               { src: decisionGuidanceImg, alt: "StocksRadars Decision Guidance showing fundamental strength, news sentiment, and technical momentum analysis" },
               { src: marketTrackerImg, alt: "StocksRadars S&P 500 tracker with 125-day moving average chart and signal explanations" },
+              { src: marketSentimentImg, alt: "StocksRadars General Market Sentiment gauge with bullish, neutral, bearish signals and S&P 500 tracker chart" },
             ];
             return (
               <>
