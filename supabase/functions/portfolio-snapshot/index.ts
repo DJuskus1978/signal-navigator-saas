@@ -168,7 +168,7 @@ function calculateTechnicalScore(
  *   >= 60 → strong-buy, >= 30 → buy, >= 5 → hold, >= -15 → dont-buy, else → sell
  */
 function calculateRadarScore(
-  quote: FMPQuote,
+  quote: StockQuote,
   entryPrice?: number
 ): { score: number; recommendation: string; fundScore: number; sentScore: number; techScore: number } {
   const volumeRatio = quote.avgVolume > 0 ? quote.volume / quote.avgVolume : 1;
