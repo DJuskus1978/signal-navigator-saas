@@ -31,8 +31,8 @@ const INDEX_UNIVERSE: Record<string, string[]> = {
 const POSITIONS_PER_INDEX = 10;
 const INITIAL_CAPITAL = 100_000;
 
-/* ── FMP Quote type ── */
-interface FMPQuote {
+/* ── Quote type ── */
+interface StockQuote {
   symbol: string;
   price: number;
   change: number;
