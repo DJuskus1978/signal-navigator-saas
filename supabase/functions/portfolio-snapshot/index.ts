@@ -373,13 +373,16 @@ serve(async (req) => {
     const heldTickers = new Set(keptPositions.map((p) => p.ticker));
     const newPositions: OpenPosition[] = [];
 
-    /* 6. Score candidates & buy best (using adaptive params) */
+    /* 6. Score candidates & buy best (using adaptive params)
+       Track globally bought tickers to avoid duplicates across indexes */
+    const globalBoughtTickers = new Set(heldTickers);
+
     for (const [exchange, universe] of Object.entries(INDEX_UNIVERSE)) {
       const freeSlots = POSITIONS_PER_INDEX - (slotsUsed[exchange] || 0);
       if (freeSlots <= 0) continue;
 
       const scored = universe
-        .filter((t) => !heldTickers.has(t))
+        .filter((t) => !globalBoughtTickers.has(t))
         .map((ticker) => {
           const quote = allQuotes.get(ticker);
           if (!quote) return null;
@@ -391,6 +394,7 @@ serve(async (req) => {
         .slice(0, freeSlots);
 
       for (const s of scored) {
+        globalBoughtTickers.add(s.ticker);
         newPositions.push({
           ticker: s.ticker, exchange, shares: 0,
           entry_price: s.quote.price, entry_date: today,
