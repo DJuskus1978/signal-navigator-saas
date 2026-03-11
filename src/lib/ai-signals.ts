@@ -120,7 +120,7 @@ export function generateAISignals(stock: Stock): AISignal[] {
 export function getAIVerdict(stock: Stock): { liked: boolean; title: string } {
   const score = stock.radarScores?.balanced?.radarScore ?? stock.score;
   if (score >= 60) {
-    return { liked: true, title: `Why StocksRadars likes ${stock.name}` };
+    return { liked: true, title: `Why StocksRadars favors ${stock.name}` };
   } else if (score >= 45) {
     return { liked: true, title: `StocksRadars is neutral on ${stock.name}` };
   } else {
