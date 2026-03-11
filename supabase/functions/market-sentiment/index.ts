@@ -96,14 +96,17 @@ serve(async (req) => {
     const latestSP500 = latest.close * SPY_MULTIPLIER;
     const maValue = chartData[chartData.length - 1]?.ma ?? latestSP500;
 
-    // Sentiment logic
+    // Sentiment logic — aligned with industry convention:
+    // Price near or above MA = bullish (the trend is intact)
+    // Only clearly below MA = bearish
     const diff = (latestSP500 - maValue) / maValue;
     let sentiment: string;
     let gaugeValue: number;
-    if (diff > 0.03) { sentiment = "Bullish"; gaugeValue = 85; }
-    else if (diff > 0.005) { sentiment = "Bullish"; gaugeValue = 65; }
-    else if (diff > -0.005) { sentiment = "Neutral"; gaugeValue = 50; }
-    else if (diff > -0.03) { sentiment = "Bearish"; gaugeValue = 35; }
+    if (diff > 0.03) { sentiment = "Bullish"; gaugeValue = 90; }
+    else if (diff > 0.01) { sentiment = "Bullish"; gaugeValue = 75; }
+    else if (diff > -0.01) { sentiment = "Bullish"; gaugeValue = 60; }
+    else if (diff > -0.03) { sentiment = "Neutral"; gaugeValue = 45; }
+    else if (diff > -0.06) { sentiment = "Bearish"; gaugeValue = 30; }
     else { sentiment = "Bearish"; gaugeValue = 15; }
 
     const result = {
