@@ -14,6 +14,7 @@ import { PhaseCard } from "@/components/stock-detail/PhaseCard";
 import { AIDecisionGuidance } from "@/components/stock-detail/AIDecisionGuidance";
 import { AnalystRatingsSection } from "@/components/stock-detail/AnalystRatingsSection";
 import { AISignalsCard } from "@/components/AISignalsCard";
+import { MarketSentiment } from "@/components/MarketSentiment";
 import { getFundamentalPhase, getSentimentPhase, getTechnicalPhase } from "@/components/stock-detail/phase-data";
 
 function ViewModeToggle({ simple, onToggle, advancedLocked, onLockedClick }: { simple: boolean; onToggle: () => void; advancedLocked?: boolean; onLockedClick?: () => void }) {
