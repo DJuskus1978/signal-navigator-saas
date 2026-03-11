@@ -386,7 +386,18 @@ export function AIPerformanceDashboard() {
                                 <span className="text-[10px] text-muted-foreground ml-1 uppercase">{h.exchange}</span>
                               </td>
                               <td className="px-3 py-2.5 text-right font-medium tabular-nums text-foreground">
-                                {Math.round(h.score)}
+                                <span className="text-xs">{Math.round(h.score)}</span>
+                                {h.recommendation && (
+                                  <span className={cn(
+                                    "ml-1 text-[9px] font-bold uppercase",
+                                    h.recommendation === "strong-buy" ? "text-signal-strong-buy" :
+                                    h.recommendation === "buy" ? "text-signal-buy" :
+                                    h.recommendation === "hold" ? "text-signal-hold" :
+                                    "text-signal-sell"
+                                  )}>
+                                    {h.recommendation === "strong-buy" ? "S.Buy" : h.recommendation}
+                                  </span>
+                                )}
                               </td>
                               <td className={cn(
                                 "px-3 py-2.5 text-right font-bold tabular-nums text-xs",
