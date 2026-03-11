@@ -485,7 +485,7 @@ export function useSearchStocks(query: string, assetType: "stock" | "crypto" = "
           : Promise.resolve([] as QuoteResponse[]),
       ]);
 
-      // Merge: local name-matched results first, then API results, dedup
+      // Merge: dedup, then sort exact ticker matches to the top
       const seen = new Set<string>();
       const merged: QuoteResponse[] = [];
       for (const q of [...localQuotes, ...apiQuotes]) {
@@ -494,6 +494,16 @@ export function useSearchStocks(query: string, assetType: "stock" | "crypto" = "
           merged.push(q);
         }
       }
+      const upperQ = query.toUpperCase();
+      merged.sort((a, b) => {
+        const aExact = a.symbol.toUpperCase() === upperQ ? 0 : 1;
+        const bExact = b.symbol.toUpperCase() === upperQ ? 0 : 1;
+        if (aExact !== bExact) return aExact - bExact;
+        // Then prioritize ticker starts-with
+        const aStarts = a.symbol.toUpperCase().startsWith(upperQ) ? 0 : 1;
+        const bStarts = b.symbol.toUpperCase().startsWith(upperQ) ? 0 : 1;
+        return aStarts - bStarts;
+      });
 
       return merged.map((q) => {
         if (assetType === "crypto") return cryptoQuoteToStock(q);
