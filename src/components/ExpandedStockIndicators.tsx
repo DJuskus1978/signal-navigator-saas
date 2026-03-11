@@ -20,6 +20,7 @@ export function ExpandedStockIndicators({ stock }: Props) {
   const displayStock = detailStock || stock;
   const [profile, setProfile] = useState<InvestorProfile>("balanced");
   const [showMore, setShowMore] = useState(false);
+  const breakdownRef = useRef<HTMLDivElement>(null);
 
   const isCrypto = displayStock.assetType === "crypto";
   const fundamentalPhase = getFundamentalPhase(displayStock);
