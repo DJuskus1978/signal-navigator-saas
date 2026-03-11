@@ -73,9 +73,10 @@ function ProfileToggle({ profile, onChange, lockedProfiles = [], onLockedClick }
               <button
                 key={p}
                 onClick={onLockedClick}
-                className="rounded-full px-3 py-1 text-xs font-semibold text-muted-foreground opacity-50 flex items-center gap-1"
+                className="rounded-full px-3 py-1 text-xs font-semibold text-muted-foreground opacity-50 flex flex-col items-center gap-0"
               >
-                <Lock className="w-3 h-3" /> {PROFILE_LABELS[p]}
+                <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> {PROFILE_LABELS[p].label}</span>
+                <span className="text-[8px] font-normal leading-tight">{PROFILE_LABELS[p].period}</span>
               </button>
             );
           }
@@ -84,13 +85,14 @@ function ProfileToggle({ profile, onChange, lockedProfiles = [], onLockedClick }
               key={p}
               onClick={() => onChange(p)}
               className={cn(
-                "rounded-full px-3 py-1 text-xs font-semibold transition-all",
+                "rounded-full px-3 py-1 text-xs font-semibold transition-all flex flex-col items-center gap-0",
                 profile === p
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {PROFILE_LABELS[p]}
+              <span>{PROFILE_LABELS[p].label}</span>
+              <span className={cn("text-[8px] font-normal leading-tight", profile === p ? "text-primary-foreground/70" : "text-muted-foreground/60")}>{PROFILE_LABELS[p].period}</span>
             </button>
           );
         })}
