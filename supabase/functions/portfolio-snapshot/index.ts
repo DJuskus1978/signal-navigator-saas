@@ -63,7 +63,13 @@ async function sbFetch(path: string, opts: RequestInit = {}) {
       ...(opts.headers as Record<string, string> ?? {}),
     },
   });
-  return res.json();
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(`Supabase REST error (${res.status}): ${JSON.stringify(data)}`);
+  }
+
+  return data;
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
