@@ -290,8 +290,9 @@ export default function LandingPage() {
           </p>
           {(() => {
             const insideSlides = [
-              { src: insideRadarSignalImg, alt: "StocksRadars signal card showing AAPL stock with Buy recommendation, Balanced profile selected, and Fundamentals/News/Technical weight bars" },
-              { src: insideRadarAnalystImg, alt: "StocksRadars external analyst ratings with gauge, price target, and ratings distribution breakdown" },
+              { src: insideDashboardNewImg, alt: "StocksRadars dashboard showing ADBE stock with Buy recommendation, AI score 66, and expanded RadarScore with investor profile selector" },
+              { src: insideSignalScoreImg, alt: "StocksRadars signal card with Hold recommendation, Fundamentals/News/Technical weight bars, and AI confidence signals" },
+              { src: insideAnalystRatingsImg, alt: "StocksRadars external analyst ratings with gauge, 12-month price target, and ratings distribution for MRK" },
             ];
             return (
               <>
