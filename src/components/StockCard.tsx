@@ -50,12 +50,9 @@ export function StockCard({ stock, blurred = false }: StockCardProps) {
               <AIScoreBadge score={stock.radarScores?.balanced?.radarScore ?? stock.score} />
             </>
           ) : (
-            <div className="flex flex-col items-end gap-1">
-              <TrafficLight recommendation={stock.recommendation} size="sm" />
-              <div className="flex items-center gap-1 text-primary text-xs font-medium">
-                <span>Full Radar</span>
-                <ArrowRight className="w-3 h-3" />
-              </div>
+            <div className="flex items-center gap-1 text-primary text-xs font-medium">
+              <span>View Radar</span>
+              <ArrowRight className="w-3 h-3" />
             </div>
           )}
         </div>
