@@ -6,9 +6,9 @@ import heroBannerImg from "@/assets/hero-banner-new.jpg";
 import insideDashboardNewImg from "@/assets/inside-radar-dashboard-new.jpeg";
 import insideSignalScoreImg from "@/assets/inside-radar-signal-score.jpeg";
 import insideAnalystRatingsImg from "@/assets/inside-radar-analyst-ratings.jpeg";
-import newsDashboardImg from "@/assets/news-sentiment-dashboard.jpeg";
 import decisionGuidanceImg from "@/assets/decision-guidance.jpeg";
 import marketTrackerImg from "@/assets/market-tracker.jpeg";
+import marketSentimentImg from "@/assets/market-sentiment-dashboard.jpeg";
 
 
 import avatarSarah from "@/assets/avatar-sarah.jpg";
