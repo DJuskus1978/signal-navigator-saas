@@ -124,9 +124,9 @@ export function AIPerformanceDashboard() {
 
     const strategies = [
       { name: "StocksRadars AI", returnPct: portfolioReturn, highlight: true },
-      ...(sp500Return !== null ? [{ name: "S&P 500", returnPct: sp500Return, highlight: false }] : []),
-      ...(nasdaqReturn !== null ? [{ name: "NASDAQ", returnPct: nasdaqReturn, highlight: false }] : []),
-      ...(dowReturn !== null ? [{ name: "Dow Jones", returnPct: dowReturn, highlight: false }] : []),
+      { name: "S&P 500", returnPct: sp500Return ?? 0, highlight: false },
+      { name: "NASDAQ", returnPct: nasdaqReturn ?? 0, highlight: false },
+      { name: "Dow Jones", returnPct: dowReturn ?? 0, highlight: false },
     ];
 
     return { latest, periodStart, strategies, daysTracking: snapshots.length, hasData };
