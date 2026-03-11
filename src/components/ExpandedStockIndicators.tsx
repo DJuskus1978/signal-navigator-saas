@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Stock } from "@/lib/types";
 import type { InvestorProfile } from "@/lib/types";
 import { useLiveStockDetail } from "@/hooks/use-live-stocks";
@@ -20,6 +20,7 @@ export function ExpandedStockIndicators({ stock }: Props) {
   const displayStock = detailStock || stock;
   const [profile, setProfile] = useState<InvestorProfile>("balanced");
   const [showMore, setShowMore] = useState(false);
+  const breakdownRef = useRef<HTMLDivElement>(null);
 
   const isCrypto = displayStock.assetType === "crypto";
   const fundamentalPhase = getFundamentalPhase(displayStock);
@@ -41,7 +42,7 @@ export function ExpandedStockIndicators({ stock }: Props) {
       <AIRadarSignalCard
         stock={displayStock}
         isCrypto={isCrypto}
-        onViewBreakdown={() => {}}
+        onViewBreakdown={() => breakdownRef.current?.scrollIntoView({ behavior: "smooth" })}
         profile={profile}
         onProfileChange={setProfile}
         lockedProfiles={[]}
@@ -54,6 +55,7 @@ export function ExpandedStockIndicators({ stock }: Props) {
       <AIDecisionGuidance stock={displayStock} isCrypto={isCrypto} profile={profile} />
 
       {/* 3-Phase Breakdown */}
+      <div ref={breakdownRef} />
       <PhaseCard
         icon={<BarChart3 className="w-5 h-5" />}
         title={isCrypto ? "Market Structure" : "Fundamental Strength"}
