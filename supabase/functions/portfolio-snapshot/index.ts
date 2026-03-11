@@ -286,8 +286,8 @@ serve(async (req) => {
     allUniverseTickers.add("QQQ");
     allUniverseTickers.add("DIA");
 
-    /* 3. Single batch FMP call for ALL tickers */
-    const allQuotes = await fetchFMPQuotes([...allUniverseTickers], fmpKey);
+    /* 3. Fetch all quotes via Alpha Vantage (batched with rate-limit delays) */
+    const allQuotes = await fetchAllQuotes([...allUniverseTickers], avKey);
 
     /* 4. Score each open position → HOLD or SELL */
     const keptPositions: OpenPosition[] = [];
