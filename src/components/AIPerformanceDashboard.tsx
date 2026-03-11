@@ -81,9 +81,17 @@ function getSnapshotForDate(snapshots: PortfolioSnapshot[], targetDate: string):
   return best;
 }
 
+interface HoldingItem {
+  ticker: string;
+  score: number;
+  price: number;
+  changePercent: number;
+}
+
 export function AIPerformanceDashboard() {
   const { data: snapshots = [], isLoading } = usePortfolioSnapshots();
   const [period, setPeriod] = useState<Period>("1d");
+  const [showHoldings, setShowHoldings] = useState(false);
 
   const { latest, periodStart, strategies, daysTracking, hasData } = useMemo(() => {
     const latest = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
