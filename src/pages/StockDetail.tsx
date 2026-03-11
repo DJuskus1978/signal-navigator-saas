@@ -5,7 +5,7 @@ import { useLiveStockDetail } from "@/hooks/use-live-stocks";
 import { useSubscription } from "@/hooks/use-subscription";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BarChart3, Newspaper, TrendingUp, Loader2, Lock } from "lucide-react";
+import { ArrowLeft, BarChart3, Newspaper, TrendingUp, Loader2, Lock, ChevronDown, ChevronUp } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ import { PhaseCard } from "@/components/stock-detail/PhaseCard";
 import { AIDecisionGuidance } from "@/components/stock-detail/AIDecisionGuidance";
 import { AnalystRatingsSection } from "@/components/stock-detail/AnalystRatingsSection";
 import { AISignalsCard } from "@/components/AISignalsCard";
+import { MarketSentiment } from "@/components/MarketSentiment";
 import { getFundamentalPhase, getSentimentPhase, getTechnicalPhase } from "@/components/stock-detail/phase-data";
 
 function ViewModeToggle({ simple, onToggle, advancedLocked, onLockedClick }: { simple: boolean; onToggle: () => void; advancedLocked?: boolean; onLockedClick?: () => void }) {
@@ -62,6 +63,7 @@ export default function StockDetail() {
   const breakdownRef = useRef<HTMLDivElement>(null);
   const [simpleMode, setSimpleMode] = useState(true);
   const [profile, setProfile] = useState<InvestorProfile>("balanced");
+  const [showMore, setShowMore] = useState(false);
 
   // Advanced mode requires pro_day_trader or bull_trader
   const hasAdvancedAccess = subscription?.tier === "pro_day_trader" || subscription?.tier === "bull_trader";
@@ -141,13 +143,6 @@ export default function StockDetail() {
           </div>
         </div>
 
-        {/* External Analyst Ratings — first block */}
-        {!isCrypto && stock.analystData && (
-          <div className="mb-8">
-            <AnalystRatingsSection analystData={stock.analystData} currentPrice={stock.price} ticker={displayTicker} />
-          </div>
-        )}
-
         {/* 1️⃣ AI Radar Signal Card */}
         <AIRadarSignalCard
           stock={stock}
@@ -159,7 +154,7 @@ export default function StockDetail() {
           onLockedProfileClick={goToPricing}
         />
 
-        {/* AI Signals — "Why StocksRadars likes this stock" */}
+        {/* AI Signals */}
         <div className="mt-8">
           <AISignalsCard stock={stock} />
         </div>
@@ -170,7 +165,7 @@ export default function StockDetail() {
         </div>
 
         {/* 3-Phase Breakdown */}
-        <div ref={breakdownRef} className="space-y-6 mb-8">
+        <div ref={breakdownRef} className="space-y-6 mb-6">
           <PhaseCard
             icon={<BarChart3 className="w-5 h-5" />}
             title={isCrypto ? "Market Structure" : "Fundamental Strength"}
@@ -194,6 +189,26 @@ export default function StockDetail() {
             {...technicalPhase}
           />
         </div>
+
+        {/* More Indicators toggle */}
+        <button
+          onClick={() => setShowMore(!showMore)}
+          className="w-full py-2 flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:bg-accent/50 transition-colors rounded-lg border border-border mb-6"
+        >
+          More Indicators
+          {showMore ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
+
+        {showMore && (
+          <div className="space-y-6 mb-8">
+            {!isCrypto && stock.analystData ? (
+              <AnalystRatingsSection analystData={stock.analystData} currentPrice={stock.price} ticker={displayTicker} />
+            ) : !isCrypto ? (
+              <p className="text-xs text-muted-foreground text-center py-2">No analyst data available for this ticker</p>
+            ) : null}
+            <MarketSentiment />
+          </div>
+        )}
       </main>
     </div>
   );
