@@ -90,15 +90,15 @@ export function ExpandedStockIndicators({ stock }: Props) {
 
       {showMore && (
         <div className="space-y-4">
-          {/* General Market Sentiment */}
-          <MarketSentiment />
-
           {/* External Analyst Ratings */}
           {!isCrypto && displayStock.analystData ? (
             <AnalystRatingsSection analystData={displayStock.analystData} currentPrice={displayStock.price} />
           ) : !isCrypto ? (
             <p className="text-xs text-muted-foreground text-center py-2">No analyst data available for this ticker</p>
           ) : null}
+
+          {/* General Market Sentiment */}
+          <MarketSentiment />
         </div>
       )}
     </div>
