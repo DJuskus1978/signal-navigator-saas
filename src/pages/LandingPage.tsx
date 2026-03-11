@@ -448,7 +448,7 @@ export default function LandingPage() {
           </p>
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
-              { icon: Zap, title: "Sign Up Free", desc: "Create your free stock analysis account in seconds with Google or email." },
+              { icon: Zap, title: "Sign Up 7 days Free Trial", desc: "Create your free stock analysis account in seconds with Apple, Google or email." },
               { icon: Shield, title: "Choose Your Plan", desc: "Unlock unlimited stock recommendations and full market coverage for just $9/month." },
               { icon: BarChart3, title: "Get StocksRadars", desc: "See clear Buy, Hold, or Sell recommendations for every Nasdaq, Dow Jones, S&P 500 stock & crypto." },
             ].map((step, i) => (
