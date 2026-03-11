@@ -367,7 +367,6 @@ export default function LandingPage() {
           {(() => {
             const newsSlides = [
               { src: decisionGuidanceImg, alt: "StocksRadars Decision Guidance showing fundamental strength, news sentiment, and technical momentum analysis" },
-              { src: marketTrackerImg, alt: "StocksRadars S&P 500 tracker with 125-day moving average chart and signal explanations" },
               { src: marketSentimentImg, alt: "StocksRadars General Market Sentiment gauge with bullish, neutral, bearish signals and S&P 500 tracker chart" },
             ];
             return (
