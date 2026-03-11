@@ -14,6 +14,7 @@ interface OpenPosition {
   entry_date: string;
   current_price: number;
   score: number;
+  recommendation?: string;
   unrealized_pnl: number;
   unrealized_pnl_pct: number;
   action: "hold" | "buy";
