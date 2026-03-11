@@ -286,7 +286,7 @@ export default function LandingPage() {
         >
           <h2 className="font-display text-3xl font-bold mb-4">Inside the StocksRadars</h2>
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
-            Choose your investor profile: <em>Conservative</em>, <em>Balanced</em>, or <em>Active</em> — and get personalized stocks radars.
+            Select your investment horizon — <em>Short</em>, <em>Medium</em>, or <em>Long term</em> — and get personalized AI-powered Stock Radars instantly.
           </p>
           {(() => {
             const insideSlides = [
