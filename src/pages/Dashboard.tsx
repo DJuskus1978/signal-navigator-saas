@@ -189,7 +189,7 @@ export default function Dashboard() {
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
                 {searchResults.map((stock) => (
-                  <StockCard key={stock.ticker} stock={stock} />
+                  <StockCard key={stock.ticker} stock={stock} defaultExpanded={true} />
                 ))}
               </div>
             )}
