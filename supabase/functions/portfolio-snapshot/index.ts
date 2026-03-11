@@ -63,7 +63,13 @@ async function sbFetch(path: string, opts: RequestInit = {}) {
       ...(opts.headers as Record<string, string> ?? {}),
     },
   });
-  return res.json();
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(`Supabase REST error (${res.status}): ${JSON.stringify(data)}`);
+  }
+
+  return data;
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -483,9 +489,9 @@ serve(async (req) => {
       benchmark_dow_initial: dowInit,
     };
 
-    await sbFetch("portfolio_snapshots", {
+    await sbFetch("portfolio_snapshots?on_conflict=snapshot_date", {
       method: "POST",
-      headers: { Prefer: "resolution=merge-duplicates" },
+      headers: { Prefer: "resolution=merge-duplicates,return=representation" },
       body: JSON.stringify(snapshot),
     });
 
