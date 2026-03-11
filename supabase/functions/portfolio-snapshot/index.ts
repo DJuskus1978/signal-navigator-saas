@@ -7,7 +7,7 @@ const H = {
 };
 const SB_URL = () => Deno.env.get("SUPABASE_URL")!;
 const SB_KEY = () => Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const FMP_BASE = "https://financialmodelingprep.com/api/v3";
+const AV_BASE = "https://www.alphavantage.co/query";
 
 /* ── Universe of tickers per index ── */
 const INDEX_UNIVERSE: Record<string, string[]> = {
@@ -31,8 +31,8 @@ const INDEX_UNIVERSE: Record<string, string[]> = {
 const POSITIONS_PER_INDEX = 10;
 const INITIAL_CAPITAL = 100_000;
 
-/* ── FMP Quote type ── */
-interface FMPQuote {
+/* ── Quote type ── */
+interface StockQuote {
   symbol: string;
   price: number;
   change: number;
@@ -168,7 +168,7 @@ function calculateTechnicalScore(
  *   >= 60 → strong-buy, >= 30 → buy, >= 5 → hold, >= -15 → dont-buy, else → sell
  */
 function calculateRadarScore(
-  quote: FMPQuote,
+  quote: StockQuote,
   entryPrice?: number
 ): { score: number; recommendation: string; fundScore: number; sentScore: number; techScore: number } {
   const volumeRatio = quote.avgVolume > 0 ? quote.volume / quote.avgVolume : 1;
@@ -193,34 +193,45 @@ function calculateRadarScore(
   return { score: combined, recommendation, fundScore, sentScore, techScore };
 }
 
-/* ── Data fetching (FMP batch — 1 call for all tickers) ── */
+/* ── Data fetching (Alpha Vantage — batched with rate-limit delays) ── */
 
-async function fetchFMPQuotes(tickers: string[], apiKey: string): Promise<Map<string, FMPQuote>> {
-  const results = new Map<string, FMPQuote>();
-  // FMP batch endpoint supports comma-separated tickers
-  const url = `${FMP_BASE}/quote/${tickers.join(",")}?apikey=${apiKey}`;
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function fetchAVQuote(symbol: string, apiKey: string): Promise<StockQuote | null> {
   try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (Array.isArray(data)) {
-      for (const q of data) {
-        if (q.symbol && q.price) {
-          results.set(q.symbol, {
-            symbol: q.symbol,
-            price: q.price,
-            change: q.change ?? 0,
-            changesPercentage: q.changesPercentage ?? 0,
-            pe: q.pe ?? null,
-            volume: q.volume ?? 0,
-            avgVolume: q.avgVolume ?? 0,
-            marketCap: q.marketCap ?? 0,
-            previousClose: q.previousClose ?? q.price,
-          });
-        }
-      }
-    }
+    const r = await fetch(`${AV_BASE}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`);
+    const d = await r.json();
+    const gq = d?.["Global Quote"];
+    if (!gq || !gq["05. price"]) return null;
+    const price = parseFloat(gq["05. price"]);
+    const previousClose = parseFloat(gq["08. previous close"] || "0");
+    const volume = parseInt(gq["06. volume"] || "0", 10);
+    const change = Math.round((price - previousClose) * 100) / 100;
+    const changesPct = previousClose > 0 ? Math.round((change / previousClose) * 10000) / 100 : 0;
+    return {
+      symbol, price, change, changesPercentage: changesPct,
+      pe: null, volume, avgVolume: volume,
+      marketCap: 0, previousClose,
+    };
   } catch (e) {
-    console.error("FMP batch quote error:", e);
+    console.error(`AV quote error for ${symbol}:`, e);
+    return null;
+  }
+}
+
+async function fetchAllQuotes(tickers: string[], apiKey: string): Promise<Map<string, StockQuote>> {
+  const results = new Map<string, StockQuote>();
+  const BATCH_SIZE = 5;
+  const BATCH_DELAY = 1200; // ~5 calls per 1.2s keeps within 75/min
+
+  for (let i = 0; i < tickers.length; i += BATCH_SIZE) {
+    const batch = tickers.slice(i, i + BATCH_SIZE);
+    const promises = batch.map((t) => fetchAVQuote(t, apiKey));
+    const quotes = await Promise.all(promises);
+    for (const q of quotes) {
+      if (q) results.set(q.symbol, q);
+    }
+    if (i + BATCH_SIZE < tickers.length) await delay(BATCH_DELAY);
   }
   return results;
 }
@@ -252,7 +263,7 @@ serve(async (req) => {
     new Response(JSON.stringify(b), { status: s, headers: { ...H, "Content-Type": "application/json" } });
 
   try {
-    const fmpKey = Deno.env.get("FMP_API_KEY")!;
+    const avKey = Deno.env.get("ALPHA_VANTAGE_API_KEY")!;
     const today = new Date().toISOString().split("T")[0];
 
     /* 1. Load previous state */
@@ -275,8 +286,8 @@ serve(async (req) => {
     allUniverseTickers.add("QQQ");
     allUniverseTickers.add("DIA");
 
-    /* 3. Single batch FMP call for ALL tickers */
-    const allQuotes = await fetchFMPQuotes([...allUniverseTickers], fmpKey);
+    /* 3. Fetch all quotes via Alpha Vantage (batched with rate-limit delays) */
+    const allQuotes = await fetchAllQuotes([...allUniverseTickers], avKey);
 
     /* 4. Score each open position → HOLD or SELL */
     const keptPositions: OpenPosition[] = [];
