@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, BarChart3, Target } from "lucide-react";
+import { TrendingUp, TrendingDown, BarChart3, Target, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -81,9 +81,17 @@ function getSnapshotForDate(snapshots: PortfolioSnapshot[], targetDate: string):
   return best;
 }
 
+interface HoldingItem {
+  ticker: string;
+  score: number;
+  price: number;
+  changePercent: number;
+}
+
 export function AIPerformanceDashboard() {
   const { data: snapshots = [], isLoading } = usePortfolioSnapshots();
   const [period, setPeriod] = useState<Period>("1d");
+  const [showHoldings, setShowHoldings] = useState(false);
 
   const { latest, periodStart, strategies, daysTracking, hasData } = useMemo(() => {
     const latest = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
@@ -261,6 +269,56 @@ export function AIPerformanceDashboard() {
                   </table>
                 </div>
               )}
+
+              {/* Top 5 Holdings expandable */}
+              {(() => {
+                const holdings = Array.isArray(latest!.holdings) ? (latest!.holdings as unknown as HoldingItem[]) : [];
+                const top5 = [...holdings].sort((a, b) => b.score - a.score).slice(0, 5);
+                if (top5.length === 0) return null;
+                return (
+                  <div className="mt-4">
+                    <button
+                      onClick={() => setShowHoldings(!showHoldings)}
+                      className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:bg-accent/50 transition-colors rounded-lg border border-border py-2"
+                    >
+                      Top 5 AI Picks
+                      <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", showHoldings && "rotate-180")} />
+                    </button>
+                    {showHoldings && (
+                      <div className="mt-3 rounded-xl border border-border overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="bg-muted/50">
+                              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Ticker</th>
+                              <th className="text-right px-4 py-2 font-medium text-muted-foreground">Score</th>
+                              <th className="text-right px-4 py-2 font-medium text-muted-foreground">Change</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {top5.map((h, i) => (
+                              <tr key={h.ticker} className="border-t border-border">
+                                <td className="px-4 py-2.5 font-semibold text-foreground">
+                                  <span className="text-muted-foreground mr-1.5">{i + 1}.</span>
+                                  {h.ticker}
+                                </td>
+                                <td className="px-4 py-2.5 text-right font-medium tabular-nums text-foreground">
+                                  {Math.round(h.score)}
+                                </td>
+                                <td className={cn(
+                                  "px-4 py-2.5 text-right font-bold tabular-nums",
+                                  h.changePercent >= 0 ? "text-signal-buy" : "text-signal-sell"
+                                )}>
+                                  {h.changePercent >= 0 ? "+" : ""}{h.changePercent.toFixed(1)}%
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <p className="text-[11px] text-muted-foreground text-center mt-4 italic">
                 AI dynamically selects &amp; rebalances top 10 stocks from Nasdaq, S&amp;P 500 &amp; Dow Jones daily based on RadarScore™
