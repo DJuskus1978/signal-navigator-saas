@@ -76,12 +76,14 @@ export type Database = {
           benchmark_nasdaq_initial: number | null
           benchmark_sp500: number | null
           benchmark_sp500_initial: number | null
+          cash_balance: number | null
           created_at: string
           holdings: Json
           id: string
           initial_value: number
           portfolio_value: number
           snapshot_date: string
+          total_realized_pnl: number | null
         }
         Insert: {
           benchmark_dow?: number | null
@@ -90,12 +92,14 @@ export type Database = {
           benchmark_nasdaq_initial?: number | null
           benchmark_sp500?: number | null
           benchmark_sp500_initial?: number | null
+          cash_balance?: number | null
           created_at?: string
           holdings?: Json
           id?: string
           initial_value?: number
           portfolio_value: number
           snapshot_date?: string
+          total_realized_pnl?: number | null
         }
         Update: {
           benchmark_dow?: number | null
@@ -104,12 +108,14 @@ export type Database = {
           benchmark_nasdaq_initial?: number | null
           benchmark_sp500?: number | null
           benchmark_sp500_initial?: number | null
+          cash_balance?: number | null
           created_at?: string
           holdings?: Json
           id?: string
           initial_value?: number
           portfolio_value?: number
           snapshot_date?: string
+          total_realized_pnl?: number | null
         }
         Relationships: []
       }
