@@ -118,7 +118,7 @@ export function generateAISignals(stock: Stock): AISignal[] {
  * Generate the "Why StocksRadars likes/doesn't like" summary
  */
 export function getAIVerdict(stock: Stock): { liked: boolean; title: string } {
-  const score = stock.radarScores?.balanced?.radarScore ?? stock.score;
+  const score = stock.radarScores?.["medium-term"]?.radarScore ?? stock.score;
   if (score >= 60) {
     return { liked: true, title: `Why StocksRadars favors ${stock.name}` };
   } else if (score >= 45) {

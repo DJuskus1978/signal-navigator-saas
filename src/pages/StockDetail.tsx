@@ -150,7 +150,7 @@ export default function StockDetail() {
           onViewBreakdown={handleViewBreakdown}
           profile={profile}
           onProfileChange={setProfile}
-          lockedProfiles={hasAdvancedAccess ? [] : (["conservative", "active"] as InvestorProfile[])}
+          lockedProfiles={hasAdvancedAccess ? [] : (["short-term", "long-term"] as InvestorProfile[])}
           onLockedProfileClick={goToPricing}
         />
 
