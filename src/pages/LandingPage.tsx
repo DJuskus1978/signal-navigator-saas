@@ -290,9 +290,8 @@ export default function LandingPage() {
           </p>
           {(() => {
             const insideSlides = [
-              { src: insideRadarStockDetailImg, alt: "StocksRadars stock detail view showing TSLA price, analyst gauge, and price target bar" },
-              { src: insideRadarAnalystImg, alt: "StocksRadars external analyst ratings with gauge, price target, and ratings distribution breakdown" },
               { src: insideRadarSignalImg, alt: "StocksRadars signal card showing AAPL stock with Buy recommendation, Balanced profile selected, and Fundamentals/News/Technical weight bars" },
+              { src: insideRadarAnalystImg, alt: "StocksRadars external analyst ratings with gauge, price target, and ratings distribution breakdown" },
             ];
             return (
               <>
