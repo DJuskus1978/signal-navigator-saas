@@ -42,7 +42,7 @@ export function ExpandedStockIndicators({ stock }: Props) {
       <AIRadarSignalCard
         stock={displayStock}
         isCrypto={isCrypto}
-        onViewBreakdown={() => {}}
+        onViewBreakdown={() => breakdownRef.current?.scrollIntoView({ behavior: "smooth" })}
         profile={profile}
         onProfileChange={setProfile}
         lockedProfiles={[]}
