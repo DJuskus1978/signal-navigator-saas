@@ -362,7 +362,7 @@ export default function LandingPage() {
         >
           <h2 className="font-display text-3xl font-bold mb-4">User Friendly Real-Time Stock News, Fundamentals & Technical Radars</h2>
           <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
-            AI-powered news analysis and market sentiment scoring to help you make informed stock trading decisions
+            “Our AI RadarScore™ scans thousands of news sources and market signals to deliver clear stock insights you can act on instantly.”
           </p>
           {(() => {
             const newsSlides = [

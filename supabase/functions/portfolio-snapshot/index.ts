@@ -489,9 +489,9 @@ serve(async (req) => {
       benchmark_dow_initial: dowInit,
     };
 
-    await sbFetch("portfolio_snapshots", {
+    await sbFetch("portfolio_snapshots?on_conflict=snapshot_date", {
       method: "POST",
-      headers: { Prefer: "resolution=merge-duplicates" },
+      headers: { Prefer: "resolution=merge-duplicates,return=representation" },
       body: JSON.stringify(snapshot),
     });
 
