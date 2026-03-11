@@ -5,7 +5,7 @@ import { useLiveStockDetail } from "@/hooks/use-live-stocks";
 import { useSubscription } from "@/hooks/use-subscription";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BarChart3, Newspaper, TrendingUp, Loader2, Lock } from "lucide-react";
+import { ArrowLeft, BarChart3, Newspaper, TrendingUp, Loader2, Lock, ChevronDown, ChevronUp } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
 import { cn } from "@/lib/utils";
 
