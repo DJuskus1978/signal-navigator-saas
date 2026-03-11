@@ -28,9 +28,9 @@ function getStatusStyles(color: "constructive" | "neutral" | "cautious") {
 }
 
 const PROFILE_LABELS: Record<InvestorProfile, string> = {
-  conservative: "Conservative",
-  balanced: "Balanced",
-  active: "Active",
+  "short-term": "Short-term",
+  "medium-term": "Medium-term",
+  "long-term": "Long-term",
 };
 
 const ALL_SIGNALS: Recommendation[] = ["strong-buy", "buy", "hold", "dont-buy", "sell"];
@@ -60,11 +60,11 @@ function generateSummary(stock: Stock, isCrypto: boolean, signal: string, radarS
 }
 
 function ProfileToggle({ profile, onChange, lockedProfiles = [], onLockedClick }: { profile: InvestorProfile; onChange: (p: InvestorProfile) => void; lockedProfiles?: InvestorProfile[]; onLockedClick?: () => void }) {
-  const profiles: InvestorProfile[] = ["conservative", "balanced", "active"];
+  const profiles: InvestorProfile[] = ["short-term", "medium-term", "long-term"];
   return (
     <div className="space-y-2">
       <div className="inline-flex items-center gap-2">
-        <span className="text-[10px] font-medium text-muted-foreground/50">Investor:</span>
+        <span className="text-[10px] font-medium text-muted-foreground/50">Horizon:</span>
         <div className="inline-flex items-center rounded-full border border-border bg-card p-0.5">
         {profiles.map((p) => {
           const isLocked = lockedProfiles.includes(p);

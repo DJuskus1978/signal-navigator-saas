@@ -62,7 +62,7 @@ export default function StockDetail() {
   const navigate = useNavigate();
   const breakdownRef = useRef<HTMLDivElement>(null);
   const [simpleMode, setSimpleMode] = useState(true);
-  const [profile, setProfile] = useState<InvestorProfile>("balanced");
+  const [profile, setProfile] = useState<InvestorProfile>("medium-term");
   const [showMore, setShowMore] = useState(false);
 
   // Advanced mode requires pro_day_trader or bull_trader
@@ -150,7 +150,7 @@ export default function StockDetail() {
           onViewBreakdown={handleViewBreakdown}
           profile={profile}
           onProfileChange={setProfile}
-          lockedProfiles={hasAdvancedAccess ? [] : (["conservative", "active"] as InvestorProfile[])}
+          lockedProfiles={hasAdvancedAccess ? [] : (["short-term", "long-term"] as InvestorProfile[])}
           onLockedProfileClick={goToPricing}
         />
 

@@ -10,7 +10,7 @@ interface AISignalsCardProps {
 export function AISignalsCard({ stock }: AISignalsCardProps) {
   const signals = generateAISignals(stock);
   const verdict = getAIVerdict(stock);
-  const score = stock.radarScores?.balanced?.radarScore ?? stock.score;
+  const score = stock.radarScores?.["medium-term"]?.radarScore ?? stock.score;
 
   if (signals.length === 0) return null;
 

@@ -108,7 +108,7 @@ export function calculateAllRadarScores(
   phaseScores: PhaseScores
 ): Record<InvestorProfile, RadarScore> {
   const normalized = normalizePhaseScores(phaseScores);
-  const profiles: InvestorProfile[] = ["conservative", "balanced", "active"];
+  const profiles: InvestorProfile[] = ["short-term", "medium-term", "long-term"];
 
   const result = {} as Record<InvestorProfile, RadarScore>;
   for (const profile of profiles) {

@@ -3,7 +3,7 @@ export type Confidence = "Strong" | "Moderate" | "Weak";
 export type Exchange = "nasdaq" | "dow" | "sp500" | "crypto";
 export type SentimentRating = "very-positive" | "positive" | "neutral" | "negative" | "very-negative";
 export type AssetType = "stock" | "crypto";
-export type InvestorProfile = "conservative" | "balanced" | "active";
+export type InvestorProfile = "short-term" | "medium-term" | "long-term";
 
 export interface ProfileWeights {
   fundamental: number;
@@ -12,9 +12,9 @@ export interface ProfileWeights {
 }
 
 export const PROFILE_WEIGHTS: Record<InvestorProfile, ProfileWeights> = {
-  conservative: { fundamental: 0.50, technical: 0.30, sentiment: 0.20 },
-  balanced:     { fundamental: 0.40, technical: 0.40, sentiment: 0.20 },
-  active:       { fundamental: 0.25, technical: 0.55, sentiment: 0.20 },
+  "short-term":  { fundamental: 0.25, technical: 0.55, sentiment: 0.20 },
+  "medium-term": { fundamental: 0.35, technical: 0.40, sentiment: 0.25 },
+  "long-term":   { fundamental: 0.50, technical: 0.25, sentiment: 0.25 },
 };
 
 export interface TechnicalIndicators {
