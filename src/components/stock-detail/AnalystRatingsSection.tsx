@@ -226,7 +226,7 @@ function RatingsDistribution({ distribution }: {
 
 // ─── Main Section ────────────────────────────────────────────────────────────
 
-export function AnalystRatingsSection({ analystData, currentPrice }: Props) {
+export function AnalystRatingsSection({ analystData, currentPrice, ticker }: Props) {
   const hasAnyData = analystData.consensus || analystData.priceTarget || analystData.ratingsDistribution;
   if (!hasAnyData) return null;
 
@@ -234,7 +234,9 @@ export function AnalystRatingsSection({ analystData, currentPrice }: Props) {
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Users className="w-5 h-5 text-primary" />
-        <h2 className="font-display text-lg font-bold">External Analyst Ratings</h2>
+        <h2 className="font-display text-lg font-bold">
+          External Analyst Ratings{ticker && <span className="text-primary ml-1">· {ticker}</span>}
+        </h2>
       </div>
 
       {analystData.consensus && (
