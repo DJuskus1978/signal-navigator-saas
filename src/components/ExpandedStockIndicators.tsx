@@ -18,7 +18,7 @@ interface Props {
 export function ExpandedStockIndicators({ stock }: Props) {
   const { data: detailStock, isLoading } = useLiveStockDetail(stock.ticker);
   const displayStock = detailStock || stock;
-  const [profile, setProfile] = useState<InvestorProfile>("balanced");
+  const [profile, setProfile] = useState<InvestorProfile>("medium-term");
   const [showMore, setShowMore] = useState(false);
   const breakdownRef = useRef<HTMLDivElement>(null);
 

@@ -46,8 +46,8 @@ export function StockCard({ stock, blurred = false }: StockCardProps) {
           </div>
 
           <div className={cn("flex flex-col items-end gap-1", blurred && "blur-sm")}>
-            <TrafficLight recommendation={displayStock.radarScores?.balanced?.signal ?? displayStock.recommendation} size="sm" />
-            <AIScoreBadge score={displayStock.radarScores?.balanced?.radarScore ?? displayStock.score} />
+            <TrafficLight recommendation={displayStock.radarScores?.["medium-term"]?.signal ?? displayStock.recommendation} size="sm" />
+            <AIScoreBadge score={displayStock.radarScores?.["medium-term"]?.radarScore ?? displayStock.score} />
           </div>
         </div>
       </div>

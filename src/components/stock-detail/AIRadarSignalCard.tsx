@@ -64,7 +64,7 @@ function ProfileToggle({ profile, onChange, lockedProfiles = [], onLockedClick }
   return (
     <div className="space-y-2">
       <div className="inline-flex items-center gap-2">
-        <span className="text-[10px] font-medium text-muted-foreground/50">Investor:</span>
+        <span className="text-[10px] font-medium text-muted-foreground/50">Horizon:</span>
         <div className="inline-flex items-center rounded-full border border-border bg-card p-0.5">
         {profiles.map((p) => {
           const isLocked = lockedProfiles.includes(p);
