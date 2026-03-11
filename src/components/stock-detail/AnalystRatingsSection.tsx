@@ -6,6 +6,7 @@ import { Users } from "lucide-react";
 interface Props {
   analystData: AnalystData;
   currentPrice: number;
+  ticker?: string;
 }
 
 // ─── Consensus Gauge ─────────────────────────────────────────────────────────
