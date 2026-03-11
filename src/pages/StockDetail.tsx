@@ -62,7 +62,7 @@ export default function StockDetail() {
   const navigate = useNavigate();
   const breakdownRef = useRef<HTMLDivElement>(null);
   const [simpleMode, setSimpleMode] = useState(true);
-  const [profile, setProfile] = useState<InvestorProfile>("balanced");
+  const [profile, setProfile] = useState<InvestorProfile>("medium-term");
   const [showMore, setShowMore] = useState(false);
 
   // Advanced mode requires pro_day_trader or bull_trader
