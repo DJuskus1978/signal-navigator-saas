@@ -366,9 +366,9 @@ export default function LandingPage() {
           </p>
           {(() => {
             const newsSlides = [
-              { src: newsDashboardImg, alt: "StocksRadars dashboard showing market sentiment gauge, stock tabs for Nasdaq, Dow Jones, S&P 500 and Crypto" },
               { src: decisionGuidanceImg, alt: "StocksRadars Decision Guidance showing fundamental strength, news sentiment, and technical momentum analysis" },
               { src: marketTrackerImg, alt: "StocksRadars S&P 500 tracker with 125-day moving average chart and signal explanations" },
+              { src: marketSentimentImg, alt: "StocksRadars General Market Sentiment gauge with bullish, neutral, bearish signals and S&P 500 tracker chart" },
             ];
             return (
               <>
