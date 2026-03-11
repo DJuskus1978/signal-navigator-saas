@@ -63,6 +63,7 @@ export default function StockDetail() {
   const breakdownRef = useRef<HTMLDivElement>(null);
   const [simpleMode, setSimpleMode] = useState(true);
   const [profile, setProfile] = useState<InvestorProfile>("balanced");
+  const [showMore, setShowMore] = useState(false);
 
   // Advanced mode requires pro_day_trader or bull_trader
   const hasAdvancedAccess = subscription?.tier === "pro_day_trader" || subscription?.tier === "bull_trader";
