@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { startCheckout } from "@/lib/stripe-helpers";
 import heroBannerImg from "@/assets/hero-banner-new.jpg";
 import insideDashboardNewImg from "@/assets/inside-radar-dashboard-new.jpeg";
-import insideSignalScoreImg from "@/assets/inside-radar-signal-score.jpeg";
+import insideSignalScoreImg from "@/assets/inside-radar-signal-score-new.jpeg";
 import insideAnalystRatingsImg from "@/assets/inside-radar-analyst-ratings.jpeg";
 import decisionGuidanceImg from "@/assets/decision-guidance.jpeg";
 import marketTrackerImg from "@/assets/market-tracker.jpeg";
