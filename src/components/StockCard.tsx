@@ -12,11 +12,12 @@ import { useLiveStockDetail } from "@/hooks/use-live-stocks";
 interface StockCardProps {
   stock: Stock;
   blurred?: boolean;
+  defaultExpanded?: boolean;
 }
 
-export function StockCard({ stock, blurred = false }: StockCardProps) {
+export function StockCard({ stock, blurred = false, defaultExpanded = false }: StockCardProps) {
   const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const { data: detailStock } = useLiveStockDetail(stock.ticker);
   
   // Use detail data when available so header signal matches the expanded RadarScore
