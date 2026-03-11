@@ -68,6 +68,45 @@ export type Database = {
         }
         Relationships: []
       }
+      optimization_log: {
+        Row: {
+          avg_loser_pct: number | null
+          avg_return_pct: number | null
+          avg_winner_pct: number | null
+          created_at: string
+          id: string
+          notes: string | null
+          parameter_changes: Json
+          round_number: number
+          trades_analyzed: number
+          win_rate: number | null
+        }
+        Insert: {
+          avg_loser_pct?: number | null
+          avg_return_pct?: number | null
+          avg_winner_pct?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          parameter_changes?: Json
+          round_number: number
+          trades_analyzed: number
+          win_rate?: number | null
+        }
+        Update: {
+          avg_loser_pct?: number | null
+          avg_return_pct?: number | null
+          avg_winner_pct?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          parameter_changes?: Json
+          round_number?: number
+          trades_analyzed?: number
+          win_rate?: number | null
+        }
+        Relationships: []
+      }
       portfolio_snapshots: {
         Row: {
           benchmark_dow: number | null
@@ -164,6 +203,33 @@ export type Database = {
         }
         Relationships: []
       }
+      scoring_parameters: {
+        Row: {
+          description: string | null
+          id: string
+          optimization_round: number
+          param_key: string
+          param_value: number
+          updated_at: string
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          optimization_round?: number
+          param_key: string
+          param_value: number
+          updated_at?: string
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          optimization_round?: number
+          param_key?: string
+          param_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stock_cache: {
         Row: {
           cache_key: string
@@ -182,6 +248,69 @@ export type Database = {
           data?: Json
           expires_at?: string
           fetched_at?: string
+        }
+        Relationships: []
+      }
+      trade_history: {
+        Row: {
+          created_at: string
+          entry_date: string
+          entry_price: number
+          entry_recommendation: string
+          entry_score: number
+          exchange: string
+          exit_date: string | null
+          exit_price: number | null
+          exit_recommendation: string | null
+          exit_score: number | null
+          holding_days: number | null
+          id: string
+          is_open: boolean
+          params_version: number
+          realized_pnl: number | null
+          realized_pnl_pct: number | null
+          shares: number
+          ticker: string
+        }
+        Insert: {
+          created_at?: string
+          entry_date: string
+          entry_price: number
+          entry_recommendation: string
+          entry_score: number
+          exchange: string
+          exit_date?: string | null
+          exit_price?: number | null
+          exit_recommendation?: string | null
+          exit_score?: number | null
+          holding_days?: number | null
+          id?: string
+          is_open?: boolean
+          params_version?: number
+          realized_pnl?: number | null
+          realized_pnl_pct?: number | null
+          shares: number
+          ticker: string
+        }
+        Update: {
+          created_at?: string
+          entry_date?: string
+          entry_price?: number
+          entry_recommendation?: string
+          entry_score?: number
+          exchange?: string
+          exit_date?: string | null
+          exit_price?: number | null
+          exit_recommendation?: string | null
+          exit_score?: number | null
+          holding_days?: number | null
+          id?: string
+          is_open?: boolean
+          params_version?: number
+          realized_pnl?: number | null
+          realized_pnl_pct?: number | null
+          shares?: number
+          ticker?: string
         }
         Relationships: []
       }
