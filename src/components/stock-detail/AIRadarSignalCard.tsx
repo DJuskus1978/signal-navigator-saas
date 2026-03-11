@@ -28,9 +28,9 @@ function getStatusStyles(color: "constructive" | "neutral" | "cautious") {
 }
 
 const PROFILE_LABELS: Record<InvestorProfile, string> = {
-  conservative: "Conservative",
-  balanced: "Balanced",
-  active: "Active",
+  "short-term": "Short-term",
+  "medium-term": "Medium-term",
+  "long-term": "Long-term",
 };
 
 const ALL_SIGNALS: Recommendation[] = ["strong-buy", "buy", "hold", "dont-buy", "sell"];
