@@ -267,6 +267,13 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Live AI Performance Dashboard */}
+      <section className="container mx-auto px-4 py-16" aria-label="AI performance tracker">
+        <div className="max-w-2xl mx-auto">
+          <AIPerformanceDashboard />
+        </div>
+      </section>
+
       {/* Inside Radar */}
       <section className="container mx-auto px-4 py-16 md:py-20" aria-label="Inside StocksRadars">
         <motion.div
@@ -431,13 +438,6 @@ export default function LandingPage() {
         >
           For the more advanced investor, dive deeper into detailed fundamental and technical radars — all the data you need to make informed decisions, in one place.
         </motion.p>
-      </section>
-
-      {/* Live AI Performance Dashboard */}
-      <section className="container mx-auto px-4 py-16" aria-label="AI performance tracker">
-        <div className="max-w-2xl mx-auto">
-          <AIPerformanceDashboard />
-        </div>
       </section>
 
       {/* How It Works */}
