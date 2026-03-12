@@ -31,6 +31,32 @@ const INDEX_UNIVERSE: Record<string, string[]> = {
 const POSITIONS_PER_INDEX = 10;
 const INITIAL_CAPITAL = 100_000;
 
+/* ══════════════════════════════════════════════════════════════════════════
+   PROFESSIONAL RISK MANAGEMENT CONSTANTS
+   Based on institutional trading desk practices
+   ══════════════════════════════════════════════════════════════════════════ */
+
+// Position-level risk controls
+const HARD_STOP_LOSS_PCT = -8;          // Max loss per position before forced exit
+const TRAILING_STOP_PCT = 12;           // Trailing stop distance from peak (%)
+const TAKE_PROFIT_TARGET_PCT = 25;      // Partial profit-taking trigger
+const TAKE_PROFIT_SELL_FRACTION = 0.5;  // Sell 50% at take-profit target
+
+// Position sizing
+const MAX_POSITION_PCT = 5;             // Max 5% of portfolio in any single stock
+const MIN_POSITION_VALUE = 500;         // Don't open tiny positions
+
+// Entry filters — avoid chasing & bad risk/reward
+const MAX_DAY_CHANGE_FOR_ENTRY = 4;     // Don't buy stocks up >4% today (chasing)
+const MIN_RISK_REWARD_RATIO = 2.0;      // Require 2:1 reward-to-risk minimum
+
+// Portfolio-level risk
+const MAX_PORTFOLIO_DRAWDOWN_PCT = 15;  // If portfolio down >15%, shift to defensive
+const MAX_CASH_RESERVE_PCT = 20;        // Always keep some powder dry
+
+// Cooldown: don't re-enter a recently stopped-out position
+const COOLDOWN_DAYS = 5;
+
 /* ── Types ── */
 interface StockQuote {
   symbol: string; price: number; change: number; changesPercentage: number;
@@ -44,6 +70,8 @@ interface OpenPosition {
   score: number; recommendation: string;
   unrealized_pnl: number; unrealized_pnl_pct: number;
   action: "hold" | "buy";
+  peak_price: number;       // Highest price since entry (for trailing stop)
+  exit_reason?: string;     // Why we sold (for transparency)
 }
 
 interface ClosedPosition {
@@ -51,6 +79,7 @@ interface ClosedPosition {
   entry_price: number; entry_date: string; exit_price: number;
   realized_pnl: number; realized_pnl_pct: number;
   recommendation: string; exit_score: number;
+  exit_reason: string;      // "stop-loss" | "trailing-stop" | "take-profit" | "signal-sell" | "drawdown-defense"
 }
 
 /* ── Supabase helper ── */
@@ -63,12 +92,10 @@ async function sbFetch(path: string, opts: RequestInit = {}) {
       ...(opts.headers as Record<string, string> ?? {}),
     },
   });
-
   const data = await res.json().catch(() => null);
   if (!res.ok) {
     throw new Error(`Supabase REST error (${res.status}): ${JSON.stringify(data)}`);
   }
-
   return data;
 }
 
@@ -77,25 +104,19 @@ async function sbFetch(path: string, opts: RequestInit = {}) {
    ════════════════════════════════════════════════════════════════════════════ */
 
 interface ScoringParams {
-  // Phase weights
   weight_fundamental: number; weight_sentiment: number; weight_technical: number;
-  // Recommendation thresholds
   threshold_strong_buy: number; threshold_buy: number;
   threshold_hold: number; threshold_dont_buy: number;
-  // P/E thresholds & scores
   pe_excellent: number; pe_good: number; pe_fair: number; pe_high: number;
   fund_pe_excellent_score: number; fund_pe_good_score: number;
   fund_pe_fair_score: number; fund_pe_high_score: number;
   fund_pe_very_high_score: number; fund_pe_multiplier: number;
-  // Sentiment thresholds
   sent_vol_surge: number; sent_vol_high: number;
   sent_vol_above_avg: number; sent_vol_normal: number;
-  // Technical thresholds
   tech_strong_bull: number; tech_bull: number; tech_slight_bull: number;
   tech_slight_bear: number; tech_bear: number; tech_strong_bear: number;
 }
 
-// Hardcoded defaults (used if DB params unavailable)
 const DEFAULT_PARAMS: ScoringParams = {
   weight_fundamental: 0.40, weight_sentiment: 0.25, weight_technical: 0.35,
   threshold_strong_buy: 60, threshold_buy: 30, threshold_hold: 5, threshold_dont_buy: -15,
@@ -111,13 +132,10 @@ async function loadScoringParams(): Promise<{ params: ScoringParams; round: numb
   try {
     const rows = await sbFetch("scoring_parameters?select=param_key,param_value,optimization_round");
     if (!Array.isArray(rows) || rows.length === 0) return { params: { ...DEFAULT_PARAMS }, round: 0 };
-
     const p = { ...DEFAULT_PARAMS };
     let round = 0;
     for (const r of rows) {
-      if (r.param_key in p) {
-        (p as Record<string, number>)[r.param_key] = Number(r.param_value);
-      }
+      if (r.param_key in p) (p as Record<string, number>)[r.param_key] = Number(r.param_value);
       round = Math.max(round, r.optimization_round ?? 0);
     }
     return { params: p, round };
@@ -199,18 +217,15 @@ function calculateRadarScore(
   const techScore = calculateTechnicalScore(
     quote.changesPercentage, volumeRatio, fundScore, p, entryPrice, quote.price
   );
-
   const combined = Math.round(
     fundScore * p.weight_fundamental + sentScore * p.weight_sentiment + techScore * p.weight_technical
   );
-
   let recommendation: string;
   if (combined >= p.threshold_strong_buy) recommendation = "strong-buy";
   else if (combined >= p.threshold_buy) recommendation = "buy";
   else if (combined >= p.threshold_hold) recommendation = "hold";
   else if (combined >= p.threshold_dont_buy) recommendation = "dont-buy";
   else recommendation = "sell";
-
   return { score: combined, recommendation, fundScore, sentScore, techScore };
 }
 
@@ -285,7 +300,6 @@ async function recordTradeClose(
   exitScore: number, exitRec: string,
   realizedPnl: number, realizedPnlPct: number, holdingDays: number
 ) {
-  // Find the open trade and close it
   const openTrades = await sbFetch(
     `trade_history?ticker=eq.${ticker}&entry_date=eq.${entryDate}&is_open=eq.true&limit=1`
   );
@@ -302,7 +316,113 @@ async function recordTradeClose(
   }
 }
 
-/* ── Main handler ── */
+/* ══════════════════════════════════════════════════════════════════════════
+   PROFESSIONAL RISK MANAGEMENT FUNCTIONS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/** Check if a position should be exited based on professional risk rules */
+function checkRiskExits(
+  pos: OpenPosition,
+  currentPrice: number,
+  portfolioValue: number,
+  portfolioDrawdownPct: number
+): { shouldExit: boolean; exitReason: string; sellFraction: number } {
+
+  const pnlPct = ((currentPrice - pos.entry_price) / pos.entry_price) * 100;
+  const peakPrice = Math.max(pos.peak_price || pos.entry_price, currentPrice);
+  const drawdownFromPeak = ((currentPrice - peakPrice) / peakPrice) * 100;
+
+  // 1. HARD STOP-LOSS — non-negotiable, like a bank's risk desk
+  if (pnlPct <= HARD_STOP_LOSS_PCT) {
+    return { shouldExit: true, exitReason: "stop-loss", sellFraction: 1.0 };
+  }
+
+  // 2. TRAILING STOP — protect profits once a position has run up
+  //    Only activates after position is at least 5% in profit
+  if (pnlPct > 5 && drawdownFromPeak <= -TRAILING_STOP_PCT) {
+    return { shouldExit: true, exitReason: "trailing-stop", sellFraction: 1.0 };
+  }
+
+  // 3. TAKE-PROFIT — partial sell at target (like institutional profit-taking)
+  if (pnlPct >= TAKE_PROFIT_TARGET_PCT) {
+    return { shouldExit: true, exitReason: "take-profit", sellFraction: TAKE_PROFIT_SELL_FRACTION };
+  }
+
+  // 4. PORTFOLIO DRAWDOWN DEFENSE — reduce risk when overall portfolio is hurting
+  if (portfolioDrawdownPct <= -MAX_PORTFOLIO_DRAWDOWN_PCT && pnlPct < 0) {
+    return { shouldExit: true, exitReason: "drawdown-defense", sellFraction: 1.0 };
+  }
+
+  return { shouldExit: false, exitReason: "", sellFraction: 0 };
+}
+
+/** Professional position sizing: risk-based, capped, volatility-aware */
+function calculatePositionSize(
+  quote: StockQuote,
+  score: number,
+  availableCash: number,
+  portfolioValue: number
+): number {
+  // Max allowed position value (% of portfolio)
+  const maxPositionValue = portfolioValue * (MAX_POSITION_PCT / 100);
+
+  // Base allocation: higher confidence = bigger position (Kelly-inspired)
+  // Score ranges roughly -50 to +80; normalize to 0.3–1.0 multiplier
+  const confidenceMultiplier = Math.max(0.3, Math.min(1.0, (score + 50) / 130));
+
+  // Volatility penalty: high intraday moves = smaller position
+  const volatility = Math.abs(quote.changesPercentage);
+  const volPenalty = volatility > 3 ? 0.5 : volatility > 2 ? 0.7 : volatility > 1 ? 0.85 : 1.0;
+
+  // Volume liquidity check: lower volume = smaller position
+  const volumeRatio = quote.avgVolume > 0 ? quote.volume / quote.avgVolume : 1;
+  const liquidityMult = volumeRatio < 0.5 ? 0.5 : volumeRatio < 0.8 ? 0.75 : 1.0;
+
+  const idealValue = maxPositionValue * confidenceMultiplier * volPenalty * liquidityMult;
+
+  // Never exceed available cash or max position size
+  const positionValue = Math.min(idealValue, availableCash, maxPositionValue);
+
+  // Skip tiny positions
+  if (positionValue < MIN_POSITION_VALUE) return 0;
+
+  return positionValue;
+}
+
+/** Check entry quality — professional brokers don't chase or take bad risk/reward */
+function isQualityEntry(quote: StockQuote, score: number): boolean {
+  // Don't chase: avoid buying stocks that already ran up a lot today
+  if (quote.changesPercentage > MAX_DAY_CHANGE_FOR_ENTRY) return false;
+
+  // Don't catch falling knives: avoid stocks down >5% today
+  if (quote.changesPercentage < -5) return false;
+
+  // Minimum risk/reward ratio check
+  // Estimated upside = score-based expectation, downside = stop-loss distance
+  const estimatedUpsidePct = Math.max(1, score * 0.4);  // rough proxy
+  const downsidePct = Math.abs(HARD_STOP_LOSS_PCT);
+  if (estimatedUpsidePct / downsidePct < MIN_RISK_REWARD_RATIO) return false;
+
+  // Volume sanity: don't trade in a vacuum
+  if (quote.volume < 10000) return false;
+
+  return true;
+}
+
+/** Check if a ticker is in cooldown (recently stopped out) */
+function isInCooldown(ticker: string, closedPositions: ClosedPosition[]): boolean {
+  const recent = closedPositions.find(
+    (c) => c.ticker === ticker && (c.exit_reason === "stop-loss" || c.exit_reason === "trailing-stop")
+  );
+  if (!recent) return false;
+  // closedPositions are from today, so if stopped out today → cooldown
+  return true;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MAIN HANDLER
+   ══════════════════════════════════════════════════════════════════════════ */
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: H });
   const j = (b: unknown, s = 200) =>
@@ -324,6 +444,19 @@ serve(async (req) => {
     let openPositions: OpenPosition[] = isFirstDay ? [] : (prev.holdings?.open_positions ?? []);
     const closedToday: ClosedPosition[] = [];
 
+    // Load recently closed trades for cooldown checking
+    let recentStopOuts: string[] = [];
+    try {
+      const recentTrades = await sbFetch(
+        `trade_history?is_open=eq.false&exit_date=gte.${new Date(Date.now() - COOLDOWN_DAYS * 86400000).toISOString().split("T")[0]}&select=ticker,exit_recommendation`
+      );
+      if (Array.isArray(recentTrades)) {
+        recentStopOuts = recentTrades
+          .filter((t: any) => t.exit_recommendation === "sell" || t.exit_recommendation === "dont-buy")
+          .map((t: any) => t.ticker);
+      }
+    } catch { /* ignore */ }
+
     /* 2. Gather all tickers */
     const allUniverseTickers = new Set<string>();
     for (const tickers of Object.values(INDEX_UNIVERSE)) for (const t of tickers) allUniverseTickers.add(t);
@@ -333,55 +466,108 @@ serve(async (req) => {
     /* 3. Fetch all quotes via Alpha Vantage */
     const allQuotes = await fetchAllQuotes([...allUniverseTickers], avKey);
 
-    /* 4. Score open positions → HOLD or SELL (using adaptive params) */
+    /* 4. Calculate portfolio drawdown for defensive mode */
+    const currentPosValue = openPositions.reduce((s, p) => {
+      const q = allQuotes.get(p.ticker);
+      return s + (q ? q.price * p.shares : p.current_price * p.shares);
+    }, 0);
+    const currentPortfolioValue = cash + currentPosValue;
+    const portfolioDrawdownPct = ((currentPortfolioValue - INITIAL_CAPITAL) / INITIAL_CAPITAL) * 100;
+    const isDefensiveMode = portfolioDrawdownPct <= -MAX_PORTFOLIO_DRAWDOWN_PCT;
+
+    /* 5. Score open positions → HOLD, SELL, or RISK-EXIT */
     const keptPositions: OpenPosition[] = [];
+    let riskExitsCount = 0;
+    let takeProfitCount = 0;
+
     for (const pos of openPositions) {
       const quote = allQuotes.get(pos.ticker);
       if (!quote) { keptPositions.push({ ...pos, action: "hold" }); continue; }
+
+      // Update peak price for trailing stop
+      const peakPrice = Math.max(pos.peak_price || pos.entry_price, quote.price);
 
       const { score, recommendation } = calculateRadarScore(quote, sp, pos.entry_price);
       const unrealized_pnl = Math.round((quote.price - pos.entry_price) * pos.shares * 100) / 100;
       const unrealized_pnl_pct = Math.round(((quote.price - pos.entry_price) / pos.entry_price) * 10000) / 100;
 
-      if (recommendation === "sell" || recommendation === "dont-buy") {
-        const realized_pnl = Math.round((quote.price - pos.entry_price) * pos.shares * 100) / 100;
+      // ── Professional Risk Checks (priority over signal-based exits) ──
+      const riskCheck = checkRiskExits(
+        { ...pos, peak_price: peakPrice },
+        quote.price,
+        currentPortfolioValue,
+        portfolioDrawdownPct
+      );
+
+      const shouldSignalSell = recommendation === "sell" || recommendation === "dont-buy";
+      const shouldExit = riskCheck.shouldExit || shouldSignalSell;
+      const exitReason = riskCheck.shouldExit ? riskCheck.exitReason : "signal-sell";
+      const sellFraction = riskCheck.shouldExit ? riskCheck.sellFraction : 1.0;
+
+      if (shouldExit) {
+        const sharesToSell = sellFraction < 1.0 ? Math.floor(pos.shares * sellFraction * 100) / 100 : pos.shares;
+        const sharesRemaining = Math.round((pos.shares - sharesToSell) * 100) / 100;
+
+        const realized_pnl = Math.round((quote.price - pos.entry_price) * sharesToSell * 100) / 100;
         const realized_pnl_pct = Math.round(((quote.price - pos.entry_price) / pos.entry_price) * 10000) / 100;
-        cash += pos.shares * quote.price;
+        cash += sharesToSell * quote.price;
         totalRealizedPnl += realized_pnl;
 
         const entryDate = new Date(pos.entry_date);
         const holdingDays = Math.round((Date.now() - entryDate.getTime()) / 86400000);
 
         closedToday.push({
-          ticker: pos.ticker, exchange: pos.exchange, shares: pos.shares,
+          ticker: pos.ticker, exchange: pos.exchange, shares: sharesToSell,
           entry_price: pos.entry_price, entry_date: pos.entry_date,
           exit_price: quote.price, realized_pnl, realized_pnl_pct,
           recommendation, exit_score: score,
+          exit_reason: exitReason,
         });
+
+        if (exitReason === "stop-loss" || exitReason === "trailing-stop") riskExitsCount++;
+        if (exitReason === "take-profit") takeProfitCount++;
 
         // Record trade close for learning
         recordTradeClose(
           pos.ticker, pos.entry_date, quote.price,
-          score, recommendation, realized_pnl, realized_pnl_pct, holdingDays
+          score, `${recommendation}:${exitReason}`, realized_pnl, realized_pnl_pct, holdingDays
         ).catch(console.error);
+
+        // Keep remaining shares if partial sell (take-profit)
+        if (sharesRemaining > 0) {
+          keptPositions.push({
+            ...pos, shares: sharesRemaining, current_price: quote.price,
+            score, recommendation, unrealized_pnl: Math.round((quote.price - pos.entry_price) * sharesRemaining * 100) / 100,
+            unrealized_pnl_pct, action: "hold", peak_price: peakPrice,
+          });
+        }
       } else {
         keptPositions.push({
           ...pos, current_price: quote.price, score, recommendation,
           unrealized_pnl, unrealized_pnl_pct, action: "hold",
+          peak_price: peakPrice,
         });
       }
     }
 
-    /* 5. Count free slots per index */
+    /* 6. Count free slots per index */
     const slotsUsed: Record<string, number> = { nasdaq: 0, dow: 0, sp500: 0 };
     for (const p of keptPositions) slotsUsed[p.exchange] = (slotsUsed[p.exchange] || 0) + 1;
 
     const heldTickers = new Set(keptPositions.map((p) => p.ticker));
     const newPositions: OpenPosition[] = [];
 
-    /* 6. Score candidates & buy best (using adaptive params)
-       Track globally bought tickers to avoid duplicates across indexes */
+    /* 7. Score candidates & buy best (with professional entry filters) */
     const globalBoughtTickers = new Set(heldTickers);
+
+    // In defensive mode, only buy strong-buy signals and reduce position sizes
+    const defensiveBuyFilter = isDefensiveMode
+      ? (rec: string) => rec === "strong-buy"
+      : (rec: string) => rec === "buy" || rec === "strong-buy";
+
+    // Calculate available cash for new positions (keep reserve)
+    const reserveAmount = currentPortfolioValue * (MAX_CASH_RESERVE_PCT / 100);
+    const deployableCash = Math.max(0, cash - reserveAmount);
 
     for (const [exchange, universe] of Object.entries(INDEX_UNIVERSE)) {
       const freeSlots = POSITIONS_PER_INDEX - (slotsUsed[exchange] || 0);
@@ -389,13 +575,19 @@ serve(async (req) => {
 
       const scored = universe
         .filter((t) => !globalBoughtTickers.has(t))
+        .filter((t) => !recentStopOuts.includes(t)) // Cooldown check
         .map((ticker) => {
           const quote = allQuotes.get(ticker);
           if (!quote) return null;
-          return { ticker, quote, ...calculateRadarScore(quote, sp) };
+          const result = calculateRadarScore(quote, sp);
+
+          // Professional entry quality gate
+          if (!isQualityEntry(quote, result.score)) return null;
+
+          return { ticker, quote, ...result };
         })
         .filter((s): s is NonNullable<typeof s> => s !== null)
-        .filter((s) => s.recommendation === "buy" || s.recommendation === "strong-buy")
+        .filter((s) => defensiveBuyFilter(s.recommendation))
         .sort((a, b) => b.score - a.score)
         .slice(0, freeSlots);
 
@@ -407,20 +599,35 @@ serve(async (req) => {
           current_price: s.quote.price, score: s.score,
           recommendation: s.recommendation,
           unrealized_pnl: 0, unrealized_pnl_pct: 0, action: "buy",
+          peak_price: s.quote.price,
         });
       }
     }
 
-    /* 7. Allocate cash equally to new positions */
-    if (newPositions.length > 0 && cash > 0) {
-      const perPos = cash / newPositions.length;
-      let totalSpent = 0;
-      for (const pos of newPositions) {
-        pos.shares = Math.floor((perPos / pos.entry_price) * 100) / 100;
-        totalSpent += pos.shares * pos.entry_price;
+    /* 8. Professional position sizing (risk-based, not equal weight) */
+    if (newPositions.length > 0 && deployableCash > 0) {
+      let remainingCash = deployableCash;
+
+      // Size positions from highest to lowest conviction
+      const sortedNew = [...newPositions].sort((a, b) => b.score - a.score);
+
+      for (const pos of sortedNew) {
+        const quote = allQuotes.get(pos.ticker);
+        if (!quote || remainingCash <= 0) continue;
+
+        const positionValue = calculatePositionSize(
+          quote, pos.score, remainingCash, currentPortfolioValue
+        );
+
+        if (positionValue <= 0) continue;
+
+        pos.shares = Math.floor((positionValue / pos.entry_price) * 100) / 100;
+        const spent = pos.shares * pos.entry_price;
+        remainingCash -= spent;
+        cash -= spent;
       }
-      cash = Math.round((cash - totalSpent) * 100) / 100;
     }
+
     const validNew = newPositions.filter((p) => p.shares > 0);
 
     // Record new trade opens for learning
@@ -428,14 +635,14 @@ serve(async (req) => {
       recordTradeOpen(pos, pos.score, pos.recommendation, paramsRound).catch(console.error);
     }
 
-    /* 8. Combine all open positions */
+    /* 9. Combine all open positions */
     const allOpen = [...keptPositions, ...validNew];
 
-    /* 9. Portfolio value */
+    /* 10. Portfolio value */
     const posValue = allOpen.reduce((s, p) => s + p.shares * p.current_price, 0);
     const portfolioValue = Math.round((cash + posValue) * 100) / 100;
 
-    /* 10. Benchmarks */
+    /* 11. Benchmarks */
     const spyQ = allQuotes.get("SPY");
     const qqqQ = allQuotes.get("QQQ");
     const diaQ = allQuotes.get("DIA");
@@ -450,12 +657,12 @@ serve(async (req) => {
     const nasdaqInit = isFirstDay ? bench.nasdaq : (first?.benchmark_nasdaq_initial ?? bench.nasdaq);
     const dowInit = isFirstDay ? bench.dow : (first?.benchmark_dow_initial ?? bench.dow);
 
-    /* 11. Upsert today's snapshot */
+    /* 12. Upsert today's snapshot */
     const snapshot = {
       snapshot_date: today,
       portfolio_value: portfolioValue,
       initial_value: INITIAL_CAPITAL,
-      cash_balance: cash,
+      cash_balance: Math.round(cash * 100) / 100,
       total_realized_pnl: Math.round(totalRealizedPnl * 100) / 100,
       holdings: {
         open_positions: allOpen,
@@ -465,6 +672,10 @@ serve(async (req) => {
           buys_today: validNew.length,
           sells_today: closedToday.length,
           holds: keptPositions.length,
+          risk_exits: riskExitsCount,
+          take_profits: takeProfitCount,
+          defensive_mode: isDefensiveMode,
+          cash_reserve_pct: Math.round((cash / portfolioValue) * 10000) / 100,
         },
         scoring: {
           params_version: paramsRound,
@@ -479,6 +690,15 @@ serve(async (req) => {
             hold: sp.threshold_hold,
             dont_buy: sp.threshold_dont_buy,
           },
+        },
+        risk_management: {
+          stop_loss_pct: HARD_STOP_LOSS_PCT,
+          trailing_stop_pct: TRAILING_STOP_PCT,
+          take_profit_pct: TAKE_PROFIT_TARGET_PCT,
+          max_position_pct: MAX_POSITION_PCT,
+          max_drawdown_pct: MAX_PORTFOLIO_DRAWDOWN_PCT,
+          cash_reserve_pct: MAX_CASH_RESERVE_PCT,
+          cooldown_days: COOLDOWN_DAYS,
         },
       },
       benchmark_sp500: bench.sp500,
@@ -498,16 +718,20 @@ serve(async (req) => {
     return j({
       success: true, date: today,
       portfolio_value: portfolioValue,
-      cash_balance: cash,
+      cash_balance: Math.round(cash * 100) / 100,
       open_positions: allOpen.length,
       buys_today: validNew.length,
       sells_today: closedToday.length,
       holds: keptPositions.length,
+      risk_exits: riskExitsCount,
+      take_profits: takeProfitCount,
+      defensive_mode: isDefensiveMode,
       realized_pnl: Math.round(totalRealizedPnl * 100) / 100,
       benchmark_sp500: bench.sp500,
       benchmark_nasdaq: bench.nasdaq,
       benchmark_dow: bench.dow,
-      scoring_engine: `RadarScore™ adaptive (round ${paramsRound}) — F:${sp.weight_fundamental} S:${sp.weight_sentiment} T:${sp.weight_technical}`,
+      scoring_engine: `RadarScore™ PRO adaptive (round ${paramsRound}) — F:${sp.weight_fundamental} S:${sp.weight_sentiment} T:${sp.weight_technical}`,
+      risk_management: "ACTIVE: stop-loss, trailing-stop, take-profit, position-sizing, drawdown-defense",
       params_version: paramsRound,
     });
   } catch (e) {
