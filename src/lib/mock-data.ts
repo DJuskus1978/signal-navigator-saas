@@ -109,7 +109,6 @@ function createStock(ticker: string, name: string, exchange: Exchange, priceBase
   const fundamental = generateFundamental();
   const sentiment = generateSentiment(name);
   const phaseScores = calculatePhaseScores(fundamental, sentiment, technical);
-  const { combined } = phaseScores;
   const radarScores = calculateAllRadarScores(phaseScores);
   const change = rand(-priceBase * 0.05, priceBase * 0.05);
 

@@ -39,8 +39,9 @@ import { PROFILE_WEIGHTS, CRYPTO_PROFILE_WEIGHTS, SIGNAL_META, getProfileWeights
 
 /** Clamp fundamental raw score to –2 … +2 conceptual range */
 function clampFundamental(raw: number): number {
-  // Empirical engine range: –60 to +130 → divide by 35 to land in –2…+2
-  return Math.max(-2, Math.min(2, raw / 35));
+  // Empirical engine range: –60 to +130 → divide by 65 to land in –2…+2
+  // (previously 35, which saturated at raw > +70 and wasted the upper half of the range)
+  return Math.max(-2, Math.min(2, raw / 65));
 }
 
 /** Clamp technical raw score to –2 … +2 conceptual range */
@@ -118,8 +119,11 @@ export function radarScoreToConfidence(
   const vals = [normalized.fundamental, normalized.sentiment, normalized.technical];
   const avg  = vals.reduce((a, b) => a + b, 0) / vals.length;
   const variance = vals.reduce((s, v) => s + (v - avg) ** 2, 0) / vals.length;
-  // alignment: 1 = fully aligned, 0 = total disagreement (variance = 800 = max)
-  const alignment = Math.max(0, 1 - variance / 800);
+  // alignment: 1 = fully aligned, 0 = total disagreement
+  // Max variance for three 0–100 values ≈ 2222 (e.g. [0, 0, 100] → var = 2222)
+  // (previously 800, which under-calibrated alignment and collapsed most real
+  //  cross-phase disagreements to 0 well before the true theoretical minimum)
+  const alignment = Math.max(0, 1 - variance / 2222);
 
   if (distanceFromNeutral >= 20 && alignment >= 0.45) return "Strong";
   if (distanceFromNeutral >= 10 && alignment >= 0.25) return "Moderate";

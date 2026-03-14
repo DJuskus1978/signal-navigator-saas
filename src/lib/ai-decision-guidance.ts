@@ -63,14 +63,59 @@ const DIMENSION_DRIVER: Record<DominantDimension, Record<"bullish" | "bearish" |
   },
 };
 
+/**
+ * Describe a normalised 0–100 dimension score as one of 5 tiers.
+ * Thresholds are calibrated to the 0–100 scale produced by normalizePhaseScores().
+ * (Previously getDimensionPolarity used 60/40 raw thresholds — corrected in v2.1.)
+ */
+function describePhase(
+  score: number
+): "strong" | "positive" | "neutral" | "weak" | "negative" {
+  if (score >= 70) return "strong";
+  if (score >= 55) return "positive";
+  if (score >= 45) return "neutral";
+  if (score >= 35) return "weak";
+  return "negative";
+}
+
+/** Map 5-tier describePhase output to the 3-tier polarity used by DIMENSION_DRIVER */
 function getDimensionPolarity(
   normalized: NormalizedScores,
   dominant: DominantDimension
 ): "bullish" | "bearish" | "neutral" {
-  const score = normalized[dominant];
-  if (score >= 60) return "bullish";
-  if (score <= 40) return "bearish";
+  const tier = describePhase(normalized[dominant]);
+  if (tier === "strong" || tier === "positive") return "bullish";
+  if (tier === "weak"   || tier === "negative") return "bearish";
   return "neutral";
+}
+
+/**
+ * Resolve which dimension to emphasise in guidance copy based on investor profile.
+ * Short-term traders should hear about technicals/sentiment; long-term investors
+ * should hear about fundamentals — regardless of which dimension happened to produce
+ * the highest weighted contribution for the score.
+ *
+ * Falls back to the score-derived dominant dimension when the profile-preferred
+ * dimension is at neutral (35–55) and the dominant dimension has a stronger signal.
+ */
+function getProfileDimension(
+  normalized: NormalizedScores,
+  dominant: DominantDimension,
+  profile: InvestorProfile
+): DominantDimension {
+  if (profile === "short-term") {
+    // Prefer technical; fall back to sentiment; use dominant only if both are neutral
+    if (describePhase(normalized.technical) !== "neutral") return "technical";
+    if (describePhase(normalized.sentiment) !== "neutral") return "sentiment";
+    return dominant;
+  }
+  if (profile === "long-term") {
+    // Prefer fundamental; use dominant only if fundamental is neutral
+    if (describePhase(normalized.fundamental) !== "neutral") return "fundamental";
+    return dominant;
+  }
+  // medium-term: use the score-derived dominant dimension
+  return dominant;
 }
 
 // ─── 2. Profile-specific action copy ─────────────────────────────────────────
@@ -178,8 +223,11 @@ export function generateGuidance(
   dominant:   DominantDimension
 ): GuidanceOutput {
   const profileLabel   = PROFILE_LABEL[profile];
-  const polarity       = getDimensionPolarity(normalized, dominant);
-  const driverCopy     = DIMENSION_DRIVER[dominant][polarity];
+  // Use the profile-preferred dimension for copy so short-term guidance emphasises
+  // technicals/sentiment and long-term guidance emphasises fundamentals.
+  const profileDimension = getProfileDimension(normalized, dominant, profile);
+  const polarity         = getDimensionPolarity(normalized, profileDimension);
+  const driverCopy       = DIMENSION_DRIVER[profileDimension][polarity];
 
   // ── Headline ──────────────────────────────────────────────────────────────
   const signalLabel = signal === "dont-buy" ? "Avoid" : signal === "sell" ? "Sell" : signal.split("-").map(w => w[0].toUpperCase() + w.slice(1)).join(" ");
