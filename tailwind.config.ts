@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
-        display: ["Outfit", "sans-serif"],
+        sans: ["Barlow", "sans-serif"],
+        display: ["Barlow Condensed", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,108 +6,118 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 220 25% 10%;
+    /* ── Premium dark navy theme (default) ──────────────────────────────────
+     * Background  #0A0F2E  hsl(232 64% 11%)
+     * Cyan accent #00D4FF  hsl(190 100% 50%)
+     * Gold        #FFB800  hsl(43  100% 50%)
+     * Green       #00C896  hsl(165 100% 39%)
+     * Red         #FF4757  hsl(355 100% 64%)
+     * ─────────────────────────────────────────────────────────────────────── */
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --background: 232 64% 11%;
+    --foreground: 210 40% 94%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
+    --card: 232 60% 14%;
+    --card-foreground: 210 40% 94%;
 
-    --primary: 220 70% 50%;
-    --primary-foreground: 0 0% 100%;
+    --popover: 232 60% 14%;
+    --popover-foreground: 210 40% 94%;
 
-    --secondary: 220 15% 94%;
-    --secondary-foreground: 220 25% 10%;
+    --primary: 190 100% 50%;            /* electric cyan #00D4FF */
+    --primary-foreground: 232 64% 11%; /* navy text on cyan buttons */
 
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 10% 46%;
+    --secondary: 232 50% 18%;
+    --secondary-foreground: 210 40% 94%;
 
-    --accent: 220 15% 94%;
-    --accent-foreground: 220 25% 10%;
+    --muted: 232 45% 16%;
+    --muted-foreground: 225 20% 55%;
 
-    --destructive: 0 84% 60%;
+    --accent: 232 50% 18%;
+    --accent-foreground: 210 40% 94%;
+
+    --destructive: 355 100% 64%;        /* #FF4757 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 220 70% 50%;
+    --border: 232 45% 22%;
+    --input: 232 45% 18%;
+    --ring: 190 100% 50%;
 
     --radius: 0.75rem;
 
-    /* Traffic light system */
-    --signal-strong-buy: 150 80% 35%;
-    --signal-buy: 145 65% 42%;
-    --signal-hold: 45 95% 50%;
-    --signal-dont-buy: 25 90% 50%;
-    --signal-sell: 0 75% 50%;
+    /* ── Signal system — calibrated for dark navy background ─────────────── */
+    --signal-strong-buy: 165 100% 39%;  /* #00C896 */
+    --signal-buy: 160 80% 42%;
+    --signal-hold: 43 100% 50%;         /* #FFB800 */
+    --signal-dont-buy: 25 95% 58%;
+    --signal-sell: 355 100% 64%;        /* #FF4757 */
 
-    --signal-strong-buy-bg: 150 80% 94%;
-    --signal-buy-bg: 145 65% 95%;
-    --signal-hold-bg: 45 95% 94%;
-    --signal-dont-buy-bg: 25 90% 95%;
-    --signal-sell-bg: 0 75% 95%;
+    --signal-strong-buy-bg: 165 80% 10%;
+    --signal-buy-bg: 160 70% 10%;
+    --signal-hold-bg: 43 90% 10%;
+    --signal-dont-buy-bg: 25 80% 10%;
+    --signal-sell-bg: 355 80% 10%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* ── Sidebar ──────────────────────────────────────────────────────────── */
+    --sidebar-background: 232 68% 9%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 190 100% 50%;
+    --sidebar-primary-foreground: 232 64% 11%;
+    --sidebar-accent: 232 50% 15%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 232 45% 18%;
+    --sidebar-ring: 190 100% 50%;
   }
 
   .dark {
-    --background: 220 25% 6%;
-    --foreground: 210 20% 96%;
+    /* Slightly deeper navy — explicit dark-mode override */
+    --background: 232 68% 9%;
+    --foreground: 210 40% 96%;
 
-    --card: 220 25% 9%;
-    --card-foreground: 210 20% 96%;
+    --card: 232 62% 12%;
+    --card-foreground: 210 40% 96%;
 
-    --popover: 220 25% 9%;
-    --popover-foreground: 210 20% 96%;
+    --popover: 232 62% 12%;
+    --popover-foreground: 210 40% 96%;
 
-    --primary: 220 70% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 190 100% 50%;
+    --primary-foreground: 232 68% 9%;
 
-    --secondary: 220 20% 16%;
-    --secondary-foreground: 210 20% 96%;
+    --secondary: 232 52% 16%;
+    --secondary-foreground: 210 40% 96%;
 
-    --muted: 220 20% 16%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 232 48% 14%;
+    --muted-foreground: 225 18% 58%;
 
-    --accent: 220 20% 16%;
-    --accent-foreground: 210 20% 96%;
+    --accent: 232 52% 16%;
+    --accent-foreground: 210 40% 96%;
 
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 210 20% 96%;
+    --destructive: 355 100% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 16%;
-    --input: 220 20% 16%;
-    --ring: 220 70% 60%;
+    --border: 232 48% 20%;
+    --input: 232 48% 16%;
+    --ring: 190 100% 50%;
 
-    --signal-strong-buy: 150 80% 45%;
-    --signal-buy: 145 65% 50%;
-    --signal-hold: 45 95% 55%;
-    --signal-dont-buy: 25 90% 55%;
-    --signal-sell: 0 75% 55%;
+    --signal-strong-buy: 165 100% 42%;
+    --signal-buy: 160 80% 45%;
+    --signal-hold: 43 100% 52%;
+    --signal-dont-buy: 25 95% 60%;
+    --signal-sell: 355 100% 66%;
 
-    --signal-strong-buy-bg: 150 80% 14%;
-    --signal-buy-bg: 145 65% 12%;
-    --signal-hold-bg: 45 95% 12%;
-    --signal-dont-buy-bg: 25 90% 12%;
-    --signal-sell-bg: 0 75% 12%;
+    --signal-strong-buy-bg: 165 80% 9%;
+    --signal-buy-bg: 160 70% 9%;
+    --signal-hold-bg: 43 90% 9%;
+    --signal-dont-buy-bg: 25 80% 9%;
+    --signal-sell-bg: 355 80% 9%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 232 70% 7%;
+    --sidebar-foreground: 210 40% 92%;
+    --sidebar-primary: 190 100% 50%;
+    --sidebar-primary-foreground: 232 70% 7%;
+    --sidebar-accent: 232 52% 13%;
+    --sidebar-accent-foreground: 210 40% 92%;
+    --sidebar-border: 232 48% 16%;
+    --sidebar-ring: 190 100% 50%;
   }
 }
 
@@ -118,10 +128,10 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Barlow', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Barlow Condensed', sans-serif;
   }
 }
