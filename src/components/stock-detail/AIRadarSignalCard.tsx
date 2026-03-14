@@ -180,8 +180,3 @@ export function AIRadarSignalCard({ stock, isCrypto, onViewBreakdown, profile, o
     </Card>
   );
 }
-```
-
-**4.** Before committing, confirm **line 5** shows:
-```
-import { PROFILE_WEIGHTS, CRYPTO_PROFILE_WEIGHTS } from "@/lib/types";
