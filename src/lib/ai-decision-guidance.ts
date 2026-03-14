@@ -29,7 +29,6 @@ import type {
   NormalizedScores,
   Confidence,
 } from "./types";
-import { PROFILE_WEIGHTS, CRYPTO_PROFILE_WEIGHTS } from "./types";
 
 // ─── Output interface ────────────────────────────────────────────────────────
 
