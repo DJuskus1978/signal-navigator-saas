@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { StockCard } from "@/components/StockCard";
 import { Exchange } from "@/lib/types";
 import { Search, LogOut, Loader2, Lock, CreditCard, ArrowRight, Menu, MessageCircle } from "lucide-react";
@@ -23,12 +21,30 @@ import { useLiveStocks, useSearchStocks } from "@/hooks/use-live-stocks";
 import { MarketSentiment } from "@/components/MarketSentiment";
 import { useSubscription } from "@/hooks/use-subscription";
 
+// ── Brand tokens ──────────────────────────────────────────────────────────────
+const NAVY       = "#0A0F2E";
+const NAVY2      = "#0F1A3E";
+const CYAN       = "#00D4FF";
+const GREEN      = "#00C896";
+const RED        = "#FF4757";
+const GOLD       = "#FFB800";
+const BORDER_CLR = "#1E3A7B";
+const MUTED      = "#6B7A99";
+const WHITE      = "#FFFFFF";
+
 const TIER_LABELS: Record<string, string> = {
   novice: "Novice Trader",
   day_trader: "Day Trader",
   pro_day_trader: "Pro Day Trader",
   bull_trader: "Bull Trader",
 };
+
+const TABS: { value: Exchange; label: string }[] = [
+  { value: "nasdaq", label: "Nasdaq" },
+  { value: "dow",    label: "Dow Jones" },
+  { value: "sp500",  label: "S&P 500" },
+  { value: "crypto", label: "Crypto" },
+];
 
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -41,9 +57,9 @@ export default function Dashboard() {
       document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
-  const [search, setSearch] = useState("");
-  
+  const [search, setSearch]     = useState("");
   const [activeTab, setActiveTab] = useState<Exchange>("nasdaq");
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const { data: subscription } = useSubscription();
   const { data: stocks = [], isLoading, error } = useLiveStocks(activeTab);
@@ -54,49 +70,49 @@ export default function Dashboard() {
   useEffect(() => {
     if (searchParams.get("checkout") === "success" && !hasHandledCheckout.current) {
       hasHandledCheckout.current = true;
-      // Remove the query param
       setSearchParams({}, { replace: true });
 
-      // Re-sync subscription from Stripe then refresh local cache
       const sync = async () => {
         await supabase.functions.invoke("check-subscription");
         await queryClient.invalidateQueries({ queryKey: ["subscription"] });
-        // Read updated tier
         const { data } = await supabase
           .from("profiles")
           .select("subscription_tier")
           .eq("user_id", user?.id ?? "")
           .single();
         const tierLabel = TIER_LABELS[data?.subscription_tier ?? "novice"] ?? "your new plan";
-        toast.success(`Congrats, you are now a "${tierLabel}"! 🎉`, {
-          duration: 6000,
-        });
+        toast.success(`Congrats, you are now a "${tierLabel}"! 🎉`, { duration: 6000 });
       };
       sync();
     }
   }, [searchParams, setSearchParams, queryClient, user]);
 
   const isSearchActive = search.length >= 2;
-  const hasCrypto = subscription?.hasCryptoAccess ?? false;
-  const maxPreloaded = subscription?.tier === "novice" ? 2 : Infinity;
+  const hasCrypto      = subscription?.hasCryptoAccess ?? false;
+  const maxPreloaded   = subscription?.tier === "novice" ? 2 : Infinity;
+  const visibleStocks  = stocks.slice(0, maxPreloaded);
+  const isLimited      = stocks.length > visibleStocks.length;
 
-  const visibleStocks = stocks.slice(0, maxPreloaded);
-  const isLimited = stocks.length > visibleStocks.length;
+  const isTrialActive = subscription?.tier === "novice" && !subscription?.isTrialExpired;
+  const isPaidLimited = subscription && subscription.tier !== "bull_trader" && subscription.tier !== "novice";
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Nav */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <Link to="/" className="flex items-center gap-2">
+    <div style={{ minHeight: "100vh", background: NAVY }}>
+
+      {/* ── Sticky Nav ── */}
+      <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(10,15,46,0.92)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER_CLR}` }}>
+        <div style={{ maxWidth: "860px", margin: "0 auto", padding: "0 1.25rem", height: "60px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Link to="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none" }}>
             <RadarLogo />
-            <span className="font-display font-bold text-xl">Stocks<span className="text-primary">Radars</span></span>
+            <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.2rem", letterSpacing: "0.04em", color: WHITE }}>
+              Stocks<span style={{ color: CYAN }}>Radars</span>
+            </span>
           </Link>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl border border-border bg-card shadow-sm hover:bg-accent">
-                <Menu className="w-6 h-6" />
-              </Button>
+              <button style={{ width: "40px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center", background: NAVY2, border: `1px solid ${BORDER_CLR}`, cursor: "pointer" }}>
+                <Menu size={18} color={WHITE} />
+              </button>
             </SheetTrigger>
             <SheetContent side="right" className="w-72">
               <SheetHeader>
@@ -108,9 +124,7 @@ export default function Dashboard() {
                     {TIER_LABELS[subscription.tier]}
                   </span>
                 )}
-                <span className="text-sm text-muted-foreground truncate">
-                  {user?.email}
-                </span>
+                <span className="text-sm text-muted-foreground truncate">{user?.email}</span>
                 <div className="border-t border-border my-2" />
                 <Button variant="ghost" className="justify-start gap-2" onClick={goToPricing}>
                   <ArrowRight className="w-4 h-4" /> Pricing Plans
@@ -134,60 +148,116 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Trial expired overlay */}
+      <main style={{ maxWidth: "860px", margin: "0 auto", padding: "2rem 1.25rem 4rem" }}>
+
+        {/* ── Trial Expired overlay ── */}
         {subscription?.isTrialExpired && subscription.tier === "novice" && (
-          <div className="mb-8 p-8 rounded-2xl border-2 border-destructive/30 bg-destructive/5 text-center">
-            <h2 className="font-display text-2xl font-bold mb-2">Your free trial has ended</h2>
-            <p className="text-muted-foreground mb-4">
+          <div style={{ marginBottom: "2rem", background: NAVY2, border: `1px solid ${RED}`, borderLeft: `5px solid ${RED}`, padding: "2rem", textAlign: "center" }}>
+            <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.6rem", textTransform: "uppercase", color: WHITE, marginBottom: "0.5rem", letterSpacing: "0.04em" }}>
+              Your free trial has ended
+            </h2>
+            <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.88rem", color: MUTED, marginBottom: "1.25rem", lineHeight: 1.6 }}>
               Upgrade to a paid plan to continue getting real-time stock radars and recommendations.
             </p>
-            <Button size="lg" onClick={goToPricing} className="gap-2">
-              View Plans & Upgrade <ArrowRight className="w-4 h-4" />
-            </Button>
+            <button
+              onClick={goToPricing}
+              style={{ background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.8rem", letterSpacing: "0.16em", textTransform: "uppercase", padding: "0.75rem 1.75rem", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+            >
+              View Plans &amp; Upgrade <ArrowRight size={14} />
+            </button>
           </div>
         )}
 
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">Real-time StocksRadars across major indices</p>
-          {subscription && subscription.tier !== "bull_trader" && (
-            <p className="text-sm text-signal-buy mt-1">
-              {subscription.tier === "novice" && !subscription.isTrialExpired
-                ? <>Free trial — {subscription.trialDaysLeft} day{subscription.trialDaysLeft !== 1 ? "s" : ""} left, {subscription.dailyLimit} stock checks/day. </>
-                : <>{subscription.dailyLimit < Infinity ? `${subscription.dailyLimit} stock checks/day. ` : ""}</>
-              }
-              <button onClick={goToPricing} className="text-primary font-semibold underline underline-offset-2">Upgrade for more</button>
-            </p>
-          )}
+        {/* ── Page Title ── */}
+        <div style={{ marginBottom: "1.5rem" }}>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, marginBottom: "0.3rem" }}>
+            RadarScore™ AI Signals
+          </p>
+          <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "2.5rem", textTransform: "uppercase", color: WHITE, margin: 0, lineHeight: 1, letterSpacing: "-0.01em" }}>
+            Dashboard
+          </h1>
+          <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.88rem", color: "#A0ABBE", marginTop: "0.4rem" }}>
+            Real-time AI signals across major indices
+          </p>
         </div>
 
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder={activeTab === "crypto" ? "Search any cryptocurrency (e.g. Bitcoin, ETH, Solana...)" : "Search any stock (e.g. MCD, Disney, Tesla...)"}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
+        {/* ── Free Trial Banner ── */}
+        {isTrialActive && (
+          <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${GOLD}`, padding: "0.875rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: GOLD, flexShrink: 0, animation: "pulse 2s ease-in-out infinite" }} />
+              <div>
+                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.65rem", letterSpacing: "0.22em", textTransform: "uppercase", color: GOLD }}>
+                  Free Trial
+                </span>
+                <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: WHITE, margin: 0, marginTop: "0.1rem" }}>
+                  {subscription.trialDaysLeft} day{subscription.trialDaysLeft !== 1 ? "s" : ""} left &middot; {subscription.dailyLimit} stock check{subscription.dailyLimit !== 1 ? "s" : ""} per day
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={goToPricing}
+              style={{ background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.16em", textTransform: "uppercase", padding: "0.5rem 1.1rem", border: "none", cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}
+            >
+              Upgrade Now
+            </button>
           </div>
+        )}
+
+        {/* ── Paid-but-limited note ── */}
+        {isPaidLimited && (subscription?.dailyLimit ?? Infinity) < Infinity && (
+          <div style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+            <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.82rem", color: MUTED, margin: 0 }}>
+              {subscription!.dailyLimit} stock checks/day on your current plan.
+            </p>
+            <button onClick={goToPricing} style={{ background: "transparent", border: "none", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.14em", textTransform: "uppercase", color: CYAN, cursor: "pointer", padding: 0 }}>
+              Upgrade for more
+            </button>
+          </div>
+        )}
+
+        {/* ── Search ── */}
+        <div style={{ position: "relative", marginBottom: "1.5rem" }}>
+          <Search size={16} color={searchFocused ? CYAN : MUTED} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", transition: "color 0.15s ease" }} />
+          <input
+            type="text"
+            placeholder={activeTab === "crypto" ? "Search any cryptocurrency (e.g. Bitcoin, ETH, Solana...)" : "Search any stock (e.g. MCD, Disney, Tesla...)"}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            style={{
+              width: "100%",
+              height: "48px",
+              background: NAVY2,
+              border: `1px solid ${searchFocused ? CYAN : BORDER_CLR}`,
+              borderRadius: 0,
+              paddingLeft: "42px",
+              paddingRight: "1rem",
+              fontFamily: "'Barlow', sans-serif",
+              fontSize: "0.88rem",
+              color: WHITE,
+              outline: "none",
+              boxSizing: "border-box",
+              transition: "border-color 0.15s ease",
+            }}
+          />
+          <style>{`input::placeholder { color: rgba(255,255,255,0.35); }`}</style>
         </div>
 
-        {/* Search Results */}
+        {/* ── Search Results ── */}
         {isSearchActive && (
-          <div className="mb-6">
+          <div style={{ marginBottom: "1.5rem" }}>
             {isSearching ? (
-              <div className="flex items-center gap-2 py-4">
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Searching...</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "1rem 0" }}>
+                <Loader2 size={16} color={MUTED} style={{ animation: "spin 1s linear infinite" }} />
+                <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: MUTED }}>Searching...</span>
               </div>
             ) : searchResults.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">No results for "{search}"</p>
+              <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: MUTED, padding: "1rem 0" }}>No results for "{search}"</p>
             ) : (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.78rem", color: MUTED }}>{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</p>
                 {searchResults.map((stock) => (
                   <StockCard key={stock.ticker} stock={stock} defaultExpanded={true} />
                 ))}
@@ -196,60 +266,103 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Tab view (hidden while searching) */}
+        {/* ── Tab view (hidden while searching) ── */}
         {!isSearchActive && (
-          <Tabs defaultValue="nasdaq" onValueChange={(v) => setActiveTab(v as Exchange)}>
-            <TabsList className="mb-6 w-full">
-              <TabsTrigger value="nasdaq">Nasdaq</TabsTrigger>
-              <TabsTrigger value="dow">Dow Jones</TabsTrigger>
-              <TabsTrigger value="sp500">S&P 500</TabsTrigger>
-              {hasCrypto ? (
-                <TabsTrigger value="crypto">Crypto</TabsTrigger>
-              ) : (
-                <TabsTrigger value="crypto" disabled className="gap-1.5 opacity-50">
-                  <Lock className="w-3 h-3" /> Crypto
-                </TabsTrigger>
-              )}
-            </TabsList>
+          <div>
+            {/* Tab bar */}
+            <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${CYAN}`, display: "flex", marginBottom: "1.5rem", overflowX: "auto" }}>
+              {TABS.map(({ value, label }) => {
+                const isActive  = activeTab === value;
+                const isLocked  = value === "crypto" && !hasCrypto;
+                return (
+                  <button
+                    key={value}
+                    onClick={() => !isLocked && setActiveTab(value)}
+                    style={{
+                      flex: "1 1 auto",
+                      padding: "0.875rem 1rem",
+                      background: "transparent",
+                      border: "none",
+                      borderBottom: isActive ? `2px solid ${CYAN}` : "2px solid transparent",
+                      color: isActive ? CYAN : isLocked ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.5)",
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontWeight: isActive ? 700 : 500,
+                      fontSize: "0.82rem",
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      cursor: isLocked ? "default" : "pointer",
+                      transition: "all 0.15s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "0.35rem",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {isLocked && <Lock size={10} color={GOLD} />}
+                    {label}
+                    {isLocked && (
+                      <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.55rem", letterSpacing: "0.12em", background: GOLD, color: NAVY, padding: "0.1rem 0.35rem" }}>
+                        PRO
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
-            <TabsContent value={activeTab}>
-              {activeTab === "crypto" && !hasCrypto ? (
-                <div className="text-center py-16 space-y-3">
-                  <Lock className="w-8 h-8 text-muted-foreground mx-auto" />
-                  <p className="text-muted-foreground font-medium">Crypto radars are exclusive to the Bull Trader plan</p>
-                  <Link to="/#pricing">
-                    <Button size="sm">Upgrade to Bull Trader</Button>
-                  </Link>
+            {/* Tab content */}
+            {activeTab === "crypto" && !hasCrypto ? (
+              <div style={{ textAlign: "center", padding: "4rem 0" }}>
+                <div style={{ width: "48px", height: "48px", background: NAVY2, border: `1px solid ${BORDER_CLR}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1rem" }}>
+                  <Lock size={20} color={MUTED} />
                 </div>
-              ) : isLoading ? (
-                <div className="flex items-center justify-center py-16">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  <span className="ml-2 text-muted-foreground">Fetching live data...</span>
-                </div>
-              ) : error ? (
-                <div className="text-center py-16">
-                  <p className="text-destructive mb-2">Failed to load live data</p>
-                  <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
-                </div>
-              ) : visibleStocks.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No stocks match your filters.</p>
-              ) : (
-                <div className="space-y-3">
-                  {visibleStocks.map((stock) => (
-                    <StockCard key={stock.ticker} stock={stock} defaultExpanded={true} />
-                  ))}
-                  {isLimited && (
-                    <div className="text-center py-6 border border-dashed border-border rounded-xl">
-                      <p className="text-muted-foreground text-sm mb-2">
-                        You can see, open, search and get full radars of only {maxPreloaded} Stocks/Tickers per day
-                      </p>
-                      <Button size="sm" onClick={goToPricing}>Upgrade to see all</Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+                <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "1rem", letterSpacing: "0.08em", textTransform: "uppercase", color: WHITE, marginBottom: "0.5rem" }}>
+                  Crypto Signals Locked
+                </p>
+                <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: MUTED, marginBottom: "1.25rem" }}>
+                  Crypto radars are exclusive to the Bull Trader plan
+                </p>
+                <button
+                  onClick={goToPricing}
+                  style={{ background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.75rem", letterSpacing: "0.16em", textTransform: "uppercase", padding: "0.625rem 1.5rem", border: "none", cursor: "pointer" }}
+                >
+                  Upgrade to Bull Trader
+                </button>
+              </div>
+            ) : isLoading ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.6rem", padding: "4rem 0" }}>
+                <Loader2 size={20} color={MUTED} style={{ animation: "spin 1s linear infinite" }} />
+                <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.88rem", color: MUTED }}>Fetching live data...</span>
+              </div>
+            ) : error ? (
+              <div style={{ textAlign: "center", padding: "4rem 0" }}>
+                <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.88rem", color: RED, marginBottom: "0.5rem" }}>Failed to load live data</p>
+                <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED }}>{(error as Error).message}</p>
+              </div>
+            ) : visibleStocks.length === 0 ? (
+              <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: MUTED, textAlign: "center", padding: "2rem 0" }}>No stocks match your filters.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {visibleStocks.map((stock) => (
+                  <StockCard key={stock.ticker} stock={stock} defaultExpanded={true} />
+                ))}
+                {isLimited && (
+                  <div style={{ textAlign: "center", padding: "1.5rem", background: NAVY2, border: `1px dashed ${BORDER_CLR}` }}>
+                    <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: MUTED, marginBottom: "1rem" }}>
+                      You can see, open, search and get full radars of only {maxPreloaded} Stocks/Tickers per day
+                    </p>
+                    <button
+                      onClick={goToPricing}
+                      style={{ background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.16em", textTransform: "uppercase", padding: "0.5rem 1.25rem", border: "none", cursor: "pointer" }}
+                    >
+                      Upgrade to see all
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
       </main>
