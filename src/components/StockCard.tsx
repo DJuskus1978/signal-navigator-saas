@@ -144,11 +144,6 @@ export function StockCard({ stock, blurred = false, defaultExpanded = false }: S
       {/* ── Expanded indicators ── */}
       {expanded && !blurred && (
         <div style={{ borderTop: `1px solid ${BORDER_CLR}` }}>
-          <div style={{ padding: "0.875rem 1rem 0.5rem" }}>
-            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.65rem", letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, margin: 0 }}>
-              RadarScore™ AI Signal
-            </p>
-          </div>
           <ExpandedStockIndicators stock={stock} />
         </div>
       )}
