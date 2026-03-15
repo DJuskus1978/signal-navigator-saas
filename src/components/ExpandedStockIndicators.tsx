@@ -4,7 +4,7 @@ import type { InvestorProfile } from "@/lib/types";
 import { useLiveStockDetail } from "@/hooks/use-live-stocks";
 import { MarketSentiment } from "./MarketSentiment";
 import { AnalystRatingsSection } from "./stock-detail/AnalystRatingsSection";
-import { AIRadarSignalCard } from "./stock-detail/AIRadarSignalCard";
+import { StockSignalPanel } from "./stock-detail/StockSignalPanel";
 import { AISignalsCard } from "./AISignalsCard";
 import { AIDecisionGuidance } from "./stock-detail/AIDecisionGuidance";
 import { PhaseCard } from "./stock-detail/PhaseCard";
@@ -39,7 +39,7 @@ export function ExpandedStockIndicators({ stock }: Props) {
   return (
     <div className="px-4 pb-4 space-y-4">
       {/* AI Radar Signal Card */}
-      <AIRadarSignalCard
+      <StockSignalPanel
         stock={displayStock}
         isCrypto={isCrypto}
         onViewBreakdown={() => breakdownRef.current?.scrollIntoView({ behavior: "smooth" })}
