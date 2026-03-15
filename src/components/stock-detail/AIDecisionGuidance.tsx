@@ -1,33 +1,34 @@
-import { Card, CardContent } from "@/components/ui/card";
 import type { Stock, InvestorProfile } from "@/lib/types";
 import { generateGuidance } from "@/lib/ai-decision-guidance";
 import { Compass, ArrowRight, ShieldAlert } from "lucide-react";
-import { cn } from "@/lib/utils";
 
-interface Props {
-  stock: Stock;
-  isCrypto: boolean;
-  profile: InvestorProfile;
-}
+const NAVY       = "#0A0F2E";
+const NAVY2      = "#0F1A3E";
+const CYAN       = "#00D4FF";
+const GREEN      = "#00C896";
+const GOLD       = "#FFB800";
+const BORDER_CLR = "#1E3A7B";
+const MUTED      = "#6B7A99";
+const WHITE      = "#FFFFFF";
 
-export function AIDecisionGuidance({ stock, isCrypto, profile }: Props) {
+interface Props { stock: Stock; isCrypto: boolean; profile: InvestorProfile }
+
+export function AIDecisionGuidance({ stock, isCrypto: _isCrypto, profile }: Props) {
   const radar = stock.radarScores?.[profile];
 
   if (!radar) {
     return (
-      <Card className="border-2 border-primary bg-background">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Compass className="w-5 h-5 text-primary" />
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-              StocksRadars Decision Guidance
-            </p>
-          </div>
-          <p className="text-sm text-primary/60 leading-relaxed">
-            Guidance is generated once RadarScore™ data has loaded for this stock.
+      <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${CYAN}`, padding: "1.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+          <Compass size={16} color={CYAN} />
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, margin: 0 }}>
+            StocksRadars Decision Guidance
           </p>
-        </CardContent>
-      </Card>
+        </div>
+        <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: MUTED, lineHeight: 1.6, margin: 0 }}>
+          Guidance is generated once RadarScore™ data has loaded for this stock.
+        </p>
+      </div>
     );
   }
 
@@ -39,44 +40,55 @@ export function AIDecisionGuidance({ stock, isCrypto, profile }: Props) {
     radar.dominantDimension,
   );
 
-  const confidenceColor =
-    radar.confidence === "Strong"   ? "text-signal-buy" :
-    radar.confidence === "Moderate" ? "text-signal-hold" :
-                                      "text-muted-foreground";
+  const headlineColor =
+    radar.confidence === "Strong"   ? GREEN :
+    radar.confidence === "Moderate" ? GOLD  :
+                                      MUTED;
 
   return (
-    <Card className="border-2 border-primary bg-background">
-      <CardContent className="p-6 space-y-5">
-        <div className="flex items-center gap-2">
-          <Compass className="w-5 h-5 text-primary shrink-0" />
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-            StocksRadars Decision Guidance
-          </p>
-        </div>
-        <p className={cn("text-base font-semibold leading-snug", confidenceColor)}>
+    <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${CYAN}`, boxShadow: "0 4px 20px rgba(0,0,0,0.25)" }}>
+
+      {/* Header */}
+      <div style={{ padding: "1.25rem 1.25rem 1rem", borderBottom: `1px solid ${BORDER_CLR}`, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <Compass size={15} color={CYAN} style={{ flexShrink: 0 }} />
+        <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, margin: 0 }}>
+          StocksRadars Decision Guidance
+        </p>
+      </div>
+
+      <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+
+        {/* Headline */}
+        <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "1.05rem", letterSpacing: "0.03em", color: headlineColor, margin: 0, lineHeight: 1.3 }}>
           {guidance.headline}
         </p>
-        <p className="text-sm text-primary leading-relaxed">
+
+        {/* Rationale */}
+        <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: WHITE, lineHeight: 1.65, margin: 0 }}>
           {guidance.rationale}
         </p>
-        <div className="flex items-start gap-2 rounded-md bg-primary/5 border border-primary/20 p-3">
-          <ArrowRight className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-          <p className="text-sm text-primary leading-relaxed">
+
+        {/* Action box */}
+        <div style={{ background: NAVY, border: `1px solid ${BORDER_CLR}`, borderLeft: `3px solid ${CYAN}`, padding: "0.875rem 1rem", display: "flex", alignItems: "flex-start", gap: "0.6rem" }}>
+          <ArrowRight size={14} color={CYAN} style={{ flexShrink: 0, marginTop: "2px" }} />
+          <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: WHITE, lineHeight: 1.6, margin: 0 }}>
             {guidance.action}
           </p>
         </div>
-        <div className="flex items-start gap-2">
-          <ShieldAlert className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 mt-0.5" />
-          <p className="text-xs text-muted-foreground/60 leading-relaxed">
+
+        {/* Caveat */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
+          <ShieldAlert size={12} color={MUTED} style={{ flexShrink: 0, marginTop: "2px", opacity: 0.6 }} />
+          <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.75rem", color: MUTED, lineHeight: 1.6, margin: 0 }}>
             {guidance.caveat}
           </p>
         </div>
-        <p className="text-[10px] text-primary/40 border-t border-primary/10 pt-3">
-          This information is not a personal recommendation or investment advice.
-          Conduct your own research and consider your financial situation before
-          making any investment decisions.
+
+        {/* Disclaimer */}
+        <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.68rem", color: MUTED, lineHeight: 1.5, margin: 0, paddingTop: "0.75rem", borderTop: `1px solid ${BORDER_CLR}`, opacity: 0.6 }}>
+          This information is not a personal recommendation or investment advice. Conduct your own research and consider your financial situation before making any investment decisions.
         </p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

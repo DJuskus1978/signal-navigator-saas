@@ -1,8 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
 import { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis } from "recharts";
 import { Loader2 } from "lucide-react";
+
+const NAVY       = "#0A0F2E";
+const NAVY2      = "#0F1A3E";
+const CYAN       = "#00D4FF";
+const GREEN      = "#00C896";
+const RED        = "#FF4757";
+const GOLD       = "#FFB800";
+const BORDER_CLR = "#1E3A7B";
+const MUTED      = "#6B7A99";
+const WHITE      = "#FFFFFF";
 
 interface SentimentData {
   sentiment: string;
@@ -35,71 +44,41 @@ function useMarketSentiment() {
   });
 }
 
-// Gauge matching the ConsensusGauge style from AnalystRatingsSection
 function SentimentGauge({ value, label }: { value: number; label: string }) {
-  // value 0-100: 0=bearish, 50=neutral, 100=bullish
-  // Map to needle angle: -90 (bearish) to +90 (bullish)
   const needleRotation = -90 + (value / 100) * 180;
-
-  const color =
-    value > 55 ? "text-signal-buy" :
-    value < 45 ? "text-signal-sell" :
-    "text-signal-hold"; // Neutral = hold/yellow color
+  const color = value > 55 ? GREEN : value < 45 ? RED : GOLD;
 
   return (
-    <Card>
-      <div className="p-6 text-center">
-        <div className="relative w-48 h-28 mx-auto mb-4">
-          <svg viewBox="0 0 200 110" className="w-full h-full">
-            {/* Gray arc background */}
-            <path
-              d="M 20 100 A 80 80 0 0 1 180 100"
-              fill="none"
-              stroke="hsl(var(--muted))"
-              strokeWidth="16"
-              strokeLinecap="round"
-            />
-            {/* Colored gradient arc */}
-            <defs>
-              <linearGradient id="sentimentGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="hsl(0, 75%, 50%)" />
-                <stop offset="25%" stopColor="hsl(25, 90%, 50%)" />
-                <stop offset="50%" stopColor="hsl(45, 95%, 50%)" />
-                <stop offset="75%" stopColor="hsl(145, 65%, 42%)" />
-                <stop offset="100%" stopColor="hsl(150, 80%, 35%)" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M 20 100 A 80 80 0 0 1 180 100"
-              fill="none"
-              stroke="url(#sentimentGaugeGradient)"
-              strokeWidth="16"
-              strokeLinecap="round"
-            />
-            {/* Needle */}
-            <g transform={`rotate(${needleRotation}, 100, 100)`}>
-              <line
-                x1="100"
-                y1="100"
-                x2="100"
-                y2="30"
-                stroke="hsl(var(--foreground))"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <circle cx="100" cy="100" r="5" fill="hsl(var(--foreground))" />
-            </g>
-          </svg>
-          {/* Labels around arc */}
-          <span className="absolute -left-2 -bottom-5 text-[10px] text-muted-foreground whitespace-nowrap">Bearish</span>
-          <span className="absolute left-1/2 -translate-x-1/2 -top-4 text-[10px] text-muted-foreground">Neutral</span>
-          <span className="absolute -right-2 -bottom-5 text-[10px] text-muted-foreground whitespace-nowrap">Bullish</span>
-        </div>
-        <p className={`text-3xl font-display font-bold ${color}`}>
-          {label}
-        </p>
+    <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${color}`, padding: "1.5rem", textAlign: "center" }}>
+      <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, marginBottom: "1rem" }}>
+        Market Sentiment Gauge
+      </p>
+      <div style={{ position: "relative", width: "192px", height: "112px", margin: "0 auto 1rem" }}>
+        <svg viewBox="0 0 200 110" style={{ width: "100%", height: "100%" }}>
+          <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke={BORDER_CLR} strokeWidth="16" strokeLinecap="round" />
+          <defs>
+            <linearGradient id="sentimentGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%"   stopColor={RED}  />
+              <stop offset="25%"  stopColor="#FF8C42" />
+              <stop offset="50%"  stopColor={GOLD} />
+              <stop offset="75%"  stopColor="#00A878" />
+              <stop offset="100%" stopColor={GREEN} />
+            </linearGradient>
+          </defs>
+          <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#sentimentGaugeGradient)" strokeWidth="16" strokeLinecap="round" />
+          <g transform={`rotate(${needleRotation}, 100, 100)`}>
+            <line x1="100" y1="100" x2="100" y2="30" stroke={WHITE} strokeWidth="3" strokeLinecap="round" />
+            <circle cx="100" cy="100" r="5" fill={WHITE} />
+          </g>
+        </svg>
+        <span style={{ position: "absolute", left: "-4px", bottom: "-18px", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.58rem", fontWeight: 700, color: RED, textTransform: "uppercase" }}>Bearish</span>
+        <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", top: "-14px", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.58rem", fontWeight: 700, color: MUTED, textTransform: "uppercase" }}>Neutral</span>
+        <span style={{ position: "absolute", right: "-4px", bottom: "-18px", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.58rem", fontWeight: 700, color: GREEN, textTransform: "uppercase" }}>Bullish</span>
       </div>
-    </Card>
+      <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "2rem", color: color, marginTop: "1.75rem", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+        {label}
+      </p>
+    </div>
   );
 }
 
@@ -108,127 +87,89 @@ export function MarketSentiment() {
 
   if (isLoading) {
     return (
-      <Card className="p-6 mb-6">
-        <div className="flex items-center gap-2 justify-center py-8">
-          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Loading market sentiment...</span>
-        </div>
-      </Card>
+      <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${CYAN}`, padding: "2rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.6rem" }}>
+        <Loader2 size={16} color={MUTED} style={{ animation: "spin 1s linear infinite" }} />
+        <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: MUTED }}>Loading market sentiment...</span>
+      </div>
     );
   }
 
   if (error || !data) return null;
 
-  // Build 4 specific ticks: Aug, Oct, Dec, Today
   const chartEntries = data.chartData;
   const lastDate = chartEntries[chartEntries.length - 1]?.date;
-
-  // Find first entry in target months
-  const findMonthEntry = (targetMonth: number) => {
-    return chartEntries.find(e => {
-      const d = new Date(e.date);
-      return d.getMonth() === targetMonth;
-    });
-  };
-
-  const sepEntry = findMonthEntry(8); // September = 8
-  const novEntry = findMonthEntry(10); // November = 10
-  const janEntry = findMonthEntry(0); // January = 0
-
-  const monthTicks: string[] = [];
-  if (sepEntry) monthTicks.push(sepEntry.date);
-  if (novEntry) monthTicks.push(novEntry.date);
-  if (janEntry) monthTicks.push(janEntry.date);
+  const findMonthEntry = (m: number) => chartEntries.find(e => new Date(e.date).getMonth() === m);
+  const monthTicks = [findMonthEntry(8), findMonthEntry(10), findMonthEntry(0)].filter(Boolean).map(e => e!.date);
   if (lastDate) monthTicks.push(lastDate);
-
-  const formatTick = (d: string) => {
-    if (d === lastDate) return "Today";
-    const m = new Date(d);
-    return m.toLocaleDateString("en-US", { month: "short" });
-  };
+  const formatTick = (d: string) => d === lastDate ? "Today" : new Date(d).toLocaleDateString("en-US", { month: "short" });
 
   const priceMin = Math.min(...data.chartData.map(d => Math.min(d.close, d.ma)));
   const priceMax = Math.max(...data.chartData.map(d => Math.max(d.close, d.ma)));
   const yPad = (priceMax - priceMin) * 0.1;
 
   return (
-    <div className="mb-6 space-y-3">
-      <h2 className="font-display text-xl font-bold">General Market Sentiment</h2>
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.88rem", letterSpacing: "0.12em", textTransform: "uppercase", color: WHITE, margin: 0 }}>
+        General Market Sentiment
+      </h2>
 
-      {/* Gauge card */}
       <SentimentGauge value={data.gaugeValue} label={data.sentiment} />
 
-
-      {/* Traffic light explanation */}
-      <Card className="p-4 bg-card border-border">
-        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
-          <span className="font-semibold text-muted-foreground col-span-1">Signal</span>
-          <span className="font-semibold text-muted-foreground">What it means for a normal investor</span>
-
-          <span className="text-lg leading-none">🟢</span>
-          <p className="text-muted-foreground"><span className="font-medium text-signal-buy">Bullish</span> — Market has positive momentum — generally a good environment to invest or hold stocks</p>
-
-          <span className="text-lg leading-none">🟡</span>
-          <p className="text-muted-foreground"><span className="font-medium text-signal-hold">Neutral</span> — Market is flat — no strong signal either way, stay the course</p>
-
-          <span className="text-lg leading-none">🔴</span>
-          <p className="text-muted-foreground"><span className="font-medium text-signal-sell">Bearish</span> — Market is trending down — be cautious, maybe hold off on new investments</p>
+      {/* Signal legend */}
+      <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${CYAN}`, padding: "1.25rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "0.75rem 1rem", alignItems: "start" }}>
+          <span style={{ fontSize: "1rem" }}>🟢</span>
+          <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED, margin: 0, lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 600, color: GREEN }}>Bullish</span> — Market has positive momentum — generally a good environment to invest or hold stocks
+          </p>
+          <span style={{ fontSize: "1rem" }}>🟡</span>
+          <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED, margin: 0, lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 600, color: GOLD }}>Neutral</span> — Market is flat — no strong signal either way, stay the course
+          </p>
+          <span style={{ fontSize: "1rem" }}>🔴</span>
+          <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED, margin: 0, lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 600, color: RED }}>Bearish</span> — Market is trending down — be cautious, maybe hold off on new investments
+          </p>
         </div>
-      </Card>
+      </div>
 
-      <Card className="p-5 bg-card border-border">
-        <div className="flex gap-6 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-sm bg-signal-buy inline-block" />
+      {/* S&P500 chart */}
+      <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${GREEN}`, padding: "1.25rem" }}>
+        <div style={{ display: "flex", gap: "1.5rem", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ width: "10px", height: "10px", background: GREEN, flexShrink: 0 }} />
             <div>
-              <p className="text-xs text-muted-foreground">S&P 500 tracker</p>
-              <p className="font-display font-bold text-lg">{(data.currentPrice / 1000).toFixed(3)}</p>
+              <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.72rem", color: MUTED, margin: 0 }}>S&amp;P 500 tracker</p>
+              <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "1.1rem", color: WHITE, margin: 0 }}>{(data.currentPrice / 1000).toFixed(3)}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-sm bg-signal-hold inline-block" />
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ width: "10px", height: "10px", background: GOLD, flexShrink: 0 }} />
             <div>
-              <p className="text-xs text-muted-foreground">125-day moving average</p>
-              <p className="font-display font-bold text-lg">{(data.ma / 1000).toFixed(3)}</p>
+              <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.72rem", color: MUTED, margin: 0 }}>125-day moving average</p>
+              <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "1.1rem", color: WHITE, margin: 0 }}>{(data.ma / 1000).toFixed(3)}</p>
             </div>
           </div>
         </div>
 
-        <div className="h-48">
+        <div style={{ height: "192px" }}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data.chartData} margin={{ top: 5, right: 5, left: 0, bottom: 20 }}>
-               <XAxis
-                dataKey="date"
-                tickFormatter={formatTick}
-                ticks={monthTicks}
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                axisLine={false}
-                tickLine={false}
-                orientation="bottom"
-              />
-              <YAxis
-                domain={[priceMin - yPad, priceMax + yPad]}
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                axisLine={false}
-                tickLine={false}
-                width={45}
-                orientation="right"
-                tickCount={6}
-                tickFormatter={(v: number) => (v / 1000).toFixed(3)}
-              />
-              <Line type="monotone" dataKey="close" stroke="hsl(var(--signal-buy))" strokeWidth={1.5} dot={false} />
-              <Line type="monotone" dataKey="ma" stroke="hsl(var(--signal-hold))" strokeWidth={2} dot={false} />
+              <XAxis dataKey="date" tickFormatter={formatTick} ticks={monthTicks} tick={{ fontSize: 10, fill: MUTED }} axisLine={false} tickLine={false} />
+              <YAxis domain={[priceMin - yPad, priceMax + yPad]} tick={{ fontSize: 10, fill: MUTED }} axisLine={false} tickLine={false} width={45} orientation="right" tickCount={6} tickFormatter={(v: number) => (v / 1000).toFixed(3)} />
+              <Line type="monotone" dataKey="close" stroke={GREEN} strokeWidth={1.5} dot={false} />
+              <Line type="monotone" dataKey="ma"    stroke={GOLD}  strokeWidth={2}   dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
 
-        <p className="text-[10px] text-foreground/70 mt-3 text-center leading-relaxed">
-          When the S&P 500 tracker is above its moving average of the prior 125 days, that's a sign of positive momentum. If it's below, it could indicate that the market is more cautious.
+        <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.68rem", color: MUTED, textAlign: "center", lineHeight: 1.6, marginTop: "0.75rem" }}>
+          When the S&amp;P 500 tracker is above its 125-day moving average, that's a sign of positive momentum. If it's below, the market may be more cautious.
         </p>
-      </Card>
+      </div>
 
-      <p className="text-[10px] text-muted-foreground/60 text-center">
-        The data is provided by Alpha Vantage and should not be considered investment advice.
+      <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.68rem", color: MUTED, textAlign: "center", opacity: 0.6 }}>
+        Data provided by Alpha Vantage and should not be considered investment advice.
       </p>
     </div>
   );

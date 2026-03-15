@@ -3,11 +3,8 @@ import type { InvestorProfile } from "@/lib/types";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useLiveStockDetail } from "@/hooks/use-live-stocks";
 import { useSubscription } from "@/hooks/use-subscription";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ArrowLeft, BarChart3, Newspaper, TrendingUp, Loader2, Lock, ChevronDown, ChevronUp } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
-import { cn } from "@/lib/utils";
 
 import { StockSignalPanel } from "@/components/stock-detail/StockSignalPanel";
 import { PhaseCard } from "@/components/stock-detail/PhaseCard";
@@ -17,37 +14,37 @@ import { AISignalsCard } from "@/components/AISignalsCard";
 import { MarketSentiment } from "@/components/MarketSentiment";
 import { getFundamentalPhase, getSentimentPhase, getTechnicalPhase } from "@/components/stock-detail/phase-data";
 
-function ViewModeToggle({ simple, onToggle, advancedLocked, onLockedClick }: { simple: boolean; onToggle: () => void; advancedLocked?: boolean; onLockedClick?: () => void }) {
+// ── Brand tokens ──────────────────────────────────────────────────────────────
+const NAVY       = "#0A0F2E";
+const NAVY2      = "#0F1A3E";
+const CYAN       = "#00D4FF";
+const GREEN      = "#00C896";
+const RED        = "#FF4757";
+const BORDER_CLR = "#1E3A7B";
+const MUTED      = "#6B7A99";
+const WHITE      = "#FFFFFF";
+
+// ── View mode toggle ──────────────────────────────────────────────────────────
+function ViewModeToggle({ simple, onToggle, advancedLocked, onLockedClick }: {
+  simple: boolean; onToggle: () => void; advancedLocked?: boolean; onLockedClick?: () => void;
+}) {
   return (
-    <div className="inline-flex items-center rounded-full border border-border bg-card p-0.5">
+    <div style={{ display: "inline-flex", alignItems: "center", background: NAVY2, border: `1px solid ${BORDER_CLR}`, padding: "2px" }}>
       <button
         onClick={simple ? undefined : onToggle}
-        className={cn(
-          "rounded-full px-4 py-1.5 text-xs font-semibold transition-all",
-          simple
-            ? "bg-primary text-primary-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
-        )}
-      >
+        style={{ padding: "0.3rem 0.9rem", background: simple ? CYAN : "transparent", color: simple ? NAVY : MUTED, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.14em", textTransform: "uppercase", border: "none", cursor: simple ? "default" : "pointer", transition: "all 0.15s ease" }}>
         Simple
       </button>
       {advancedLocked ? (
         <button
           onClick={onLockedClick}
-          className="rounded-full px-4 py-1.5 text-xs font-semibold text-muted-foreground opacity-50 flex items-center gap-1"
-        >
-          <Lock className="w-3 h-3" /> Advanced
+          style={{ padding: "0.3rem 0.9rem", background: "transparent", color: MUTED, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.14em", textTransform: "uppercase", border: "none", cursor: "pointer", opacity: 0.5, display: "flex", alignItems: "center", gap: "0.3rem" }}>
+          <Lock size={10} /> Advanced
         </button>
       ) : (
         <button
           onClick={simple ? onToggle : undefined}
-          className={cn(
-            "rounded-full px-4 py-1.5 text-xs font-semibold transition-all",
-            !simple
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
+          style={{ padding: "0.3rem 0.9rem", background: !simple ? CYAN : "transparent", color: !simple ? NAVY : MUTED, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.14em", textTransform: "uppercase", border: "none", cursor: !simple ? "default" : "pointer", transition: "all 0.15s ease" }}>
           Advanced
         </button>
       )}
@@ -55,17 +52,17 @@ function ViewModeToggle({ simple, onToggle, advancedLocked, onLockedClick }: { s
   );
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function StockDetail() {
-  const { ticker } = useParams<{ ticker: string }>();
-  const { data: stock, isLoading, error } = useLiveStockDetail(ticker || "");
-  const { data: subscription } = useSubscription();
-  const navigate = useNavigate();
-  const breakdownRef = useRef<HTMLDivElement>(null);
-  const [simpleMode, setSimpleMode] = useState(true);
-  const [profile, setProfile] = useState<InvestorProfile>("medium-term");
-  const [showMore, setShowMore] = useState(false);
+  const { ticker }                          = useParams<{ ticker: string }>();
+  const { data: stock, isLoading, error }   = useLiveStockDetail(ticker || "");
+  const { data: subscription }              = useSubscription();
+  const navigate                            = useNavigate();
+  const breakdownRef                        = useRef<HTMLDivElement>(null);
+  const [simpleMode, setSimpleMode]         = useState(true);
+  const [profile, setProfile]               = useState<InvestorProfile>("medium-term");
+  const [showMore, setShowMore]             = useState(false);
 
-  // Advanced mode requires pro_day_trader or bull_trader
   const hasAdvancedAccess = subscription?.tier === "pro_day_trader" || subscription?.tier === "bull_trader";
   const goToPricing = () => {
     navigate("/");
@@ -74,68 +71,81 @@ export default function StockDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Loading live data...</span>
+      <div style={{ minHeight: "100vh", background: NAVY, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.6rem" }}>
+        <Loader2 size={20} color={MUTED} style={{ animation: "spin 1s linear infinite" }} />
+        <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.9rem", color: MUTED }}>Loading live data...</span>
       </div>
     );
   }
 
   if (error || !stock) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h1 className="font-display text-2xl font-bold mb-4">
+      <div style={{ minHeight: "100vh", background: NAVY, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.8rem", textTransform: "uppercase", color: WHITE, marginBottom: "1rem" }}>
             {error ? "Failed to load stock data" : "Stock not found"}
           </h1>
-          {error && <p className="text-sm text-muted-foreground mb-4">{(error as Error).message}</p>}
-          <Link to="/dashboard"><Button>Back to Dashboard</Button></Link>
+          {error && <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: MUTED, marginBottom: "1.5rem" }}>{(error as Error).message}</p>}
+          <Link to="/dashboard" style={{ display: "inline-block", background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.8rem", letterSpacing: "0.14em", textTransform: "uppercase", padding: "0.8rem 1.5rem", textDecoration: "none" }}>
+            Back to Dashboard
+          </Link>
         </div>
       </div>
     );
   }
 
-  const isPositive = stock.change >= 0;
-  const isCrypto = stock.assetType === "crypto";
+  const isPositive    = stock.change >= 0;
+  const isCrypto      = stock.assetType === "crypto";
   const displayTicker = isCrypto ? stock.ticker.replace("USD", "") : stock.ticker;
 
   const fundamentalPhase = getFundamentalPhase(stock);
-  const sentimentPhase = getSentimentPhase(stock);
-  const technicalPhase = getTechnicalPhase(stock);
+  const sentimentPhase   = getSentimentPhase(stock);
+  const technicalPhase   = getTechnicalPhase(stock);
 
-  const handleViewBreakdown = () => {
-    breakdownRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const handleViewBreakdown = () => breakdownRef.current?.scrollIntoView({ behavior: "smooth" });
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <Link to="/" className="flex items-center gap-2">
+    <div style={{ minHeight: "100vh", background: NAVY }}>
+
+      {/* ── Header ── */}
+      <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(10,15,46,0.9)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER_CLR}` }}>
+        <div style={{ maxWidth: "800px", margin: "0 auto", padding: "0 1.25rem", height: "60px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Link to="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none" }}>
             <RadarLogo />
-            <span className="font-display font-bold text-xl">Stocks<span className="text-primary">Radars</span></span>
+            <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.2rem", letterSpacing: "0.04em", color: WHITE }}>
+              Stocks<span style={{ color: CYAN }}>Radars</span>
+            </span>
           </Link>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
-        <Link to="/dashboard" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
-          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+      <main style={{ maxWidth: "800px", margin: "0 auto", padding: "2rem 1.25rem 4rem" }}>
+
+        {/* ── Back link ── */}
+        <Link to="/dashboard" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED, textDecoration: "none", marginBottom: "1.75rem" }}>
+          <ArrowLeft size={14} /> Back to Dashboard
         </Link>
 
-        {/* Price Header + Toggle */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        {/* ── Price header ── */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", marginBottom: "2rem" }}>
           <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="font-display text-3xl font-bold">{displayTicker}</h1>
-              <Badge variant="secondary">{isCrypto ? "CRYPTO" : stock.exchange.toUpperCase()}</Badge>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem" }}>
+              <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "2.5rem", color: WHITE, letterSpacing: "-0.01em", margin: 0, lineHeight: 1 }}>
+                {displayTicker}
+              </h1>
+              <span style={{ background: "rgba(0,212,255,0.1)", border: `1px solid rgba(0,212,255,0.3)`, color: CYAN, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.62rem", letterSpacing: "0.18em", textTransform: "uppercase", padding: "0.2rem 0.6rem" }}>
+                {isCrypto ? "CRYPTO" : stock.exchange.toUpperCase()}
+              </span>
             </div>
-            <p className="text-muted-foreground">{stock.name}</p>
+            <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: MUTED, margin: 0 }}>{stock.name}</p>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <div className="text-right">
-              <p className="font-display text-3xl font-bold">${stock.price.toFixed(2)}</p>
-              <p className={cn("font-medium", isPositive ? "text-signal-buy" : "text-signal-sell")}>
+
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.6rem" }}>
+            <div style={{ textAlign: "right" }}>
+              <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "2rem", color: WHITE, margin: 0, lineHeight: 1 }}>
+                ${stock.price.toFixed(2)}
+              </p>
+              <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.88rem", color: isPositive ? GREEN : RED, margin: 0 }}>
                 {isPositive ? "+" : ""}{stock.change.toFixed(2)} ({isPositive ? "+" : ""}{stock.changePercent.toFixed(2)}%)
               </p>
             </div>
@@ -143,7 +153,7 @@ export default function StockDetail() {
           </div>
         </div>
 
-        {/* 1️⃣ AI Radar Signal Card */}
+        {/* ── StockSignalPanel ── */}
         <StockSignalPanel
           stock={stock}
           isCrypto={isCrypto}
@@ -154,20 +164,20 @@ export default function StockDetail() {
           onLockedProfileClick={goToPricing}
         />
 
-        {/* AI Signals */}
-        <div className="mt-8">
+        {/* ── AI Signals ── */}
+        <div style={{ marginTop: "1.5rem" }}>
           <AISignalsCard stock={stock} />
         </div>
 
-        {/* AI Decision Guidance */}
-        <div className="mt-6 mb-6">
+        {/* ── Decision Guidance ── */}
+        <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
           <AIDecisionGuidance stock={stock} isCrypto={isCrypto} profile={profile} />
         </div>
 
-        {/* 3-Phase Breakdown */}
-        <div ref={breakdownRef} className="space-y-6 mb-6">
+        {/* ── 3-Phase Breakdown ── */}
+        <div ref={breakdownRef} style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1rem" }}>
           <PhaseCard
-            icon={<BarChart3 className="w-5 h-5" />}
+            icon={<BarChart3 size={16} />}
             title={isCrypto ? "Market Structure" : "Fundamental Strength"}
             score={stock.phaseScores.fundamental}
             simple={simpleMode}
@@ -175,14 +185,14 @@ export default function StockDetail() {
             {...fundamentalPhase}
           />
           <PhaseCard
-            icon={<Newspaper className="w-5 h-5" />}
+            icon={<Newspaper size={16} />}
             title="News & Sentiment"
             score={stock.phaseScores.sentiment}
             simple={simpleMode}
             {...sentimentPhase}
           />
           <PhaseCard
-            icon={<TrendingUp className="w-5 h-5" />}
+            icon={<TrendingUp size={16} />}
             title="Technical Momentum"
             score={stock.phaseScores.technical}
             simple={simpleMode}
@@ -190,25 +200,29 @@ export default function StockDetail() {
           />
         </div>
 
-        {/* More Indicators toggle */}
+        {/* ── More Indicators toggle ── */}
         <button
           onClick={() => setShowMore(!showMore)}
-          className="w-full py-2 flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:bg-accent/50 transition-colors rounded-lg border border-border mb-6"
-        >
+          style={{ width: "100%", padding: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", background: "transparent", border: `1px solid ${BORDER_CLR}`, color: CYAN, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.16em", textTransform: "uppercase", cursor: "pointer", marginBottom: "1rem", transition: "background 0.15s ease" }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,212,255,0.06)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
           More Indicators
-          {showMore ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          {showMore ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </button>
 
         {showMore && (
-          <div className="space-y-6 mb-8">
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", marginBottom: "2rem" }}>
             {!isCrypto && stock.analystData ? (
               <AnalystRatingsSection analystData={stock.analystData} currentPrice={stock.price} ticker={displayTicker} />
             ) : !isCrypto ? (
-              <p className="text-xs text-muted-foreground text-center py-2">No analyst data available for this ticker</p>
+              <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED, textAlign: "center", padding: "1rem 0" }}>
+                No analyst data available for this ticker
+              </p>
             ) : null}
             <MarketSentiment />
           </div>
         )}
+
       </main>
     </div>
   );

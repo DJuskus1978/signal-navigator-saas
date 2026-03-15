@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { ChevronDown, DollarSign, Landmark, BarChartHorizontal, Newspaper, TrendingUp, Search, Gauge, Activity, PieChart } from "lucide-react";
 import type { SignalLevel } from "./types";
+
+const NAVY       = "#0A0F2E";
+const NAVY2      = "#0F1A3E";
+const CYAN       = "#00D4FF";
+const GREEN      = "#00C896";
+const RED        = "#FF4757";
+const GOLD       = "#FFB800";
+const BORDER_CLR = "#1E3A7B";
+const MUTED      = "#6B7A99";
+const WHITE      = "#FFFFFF";
 
 interface SubBlock {
   icon: string;
@@ -24,39 +31,57 @@ interface PhaseCardProps {
   simple?: boolean;
 }
 
-function getStatusColor(level: SignalLevel) {
-  if (level === "bullish") return { bg: "hsl(var(--signal-buy))", text: "white" };
-  if (level === "bearish") return { bg: "hsl(var(--signal-sell))", text: "white" };
-  return { bg: "hsl(var(--signal-hold))", text: "white" };
+function signalColor(level: SignalLevel): string {
+  if (level === "bullish") return GREEN;
+  if (level === "bearish") return RED;
+  return GOLD;
 }
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  "dollar-sign": DollarSign,
-  "landmark": Landmark,
+function leftBorderColor(level: SignalLevel): string {
+  if (level === "bullish") return GREEN;
+  if (level === "bearish") return RED;
+  return GOLD;
+}
+
+function valueColor(signal?: SignalLevel, isNA?: boolean): string {
+  if (isNA) return MUTED;
+  if (signal === "bullish") return GREEN;
+  if (signal === "bearish") return RED;
+  if (signal === "neutral") return GOLD;
+  return WHITE;
+}
+
+const iconMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
+  "dollar-sign":          DollarSign,
+  "landmark":             Landmark,
   "bar-chart-horizontal": BarChartHorizontal,
-  "newspaper": Newspaper,
-  "trending-up": TrendingUp,
-  "search": Search,
-  "gauge": Gauge,
-  "activity": Activity,
-  "pie-chart": PieChart,
+  "newspaper":            Newspaper,
+  "trending-up":          TrendingUp,
+  "search":               Search,
+  "gauge":                Gauge,
+  "activity":             Activity,
+  "pie-chart":            PieChart,
 };
 
 function SubBlockSection({ block }: { block: SubBlock }) {
-  const IconComponent = iconMap[block.icon];
+  const IconComp = iconMap[block.icon];
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-        {IconComponent ? <IconComponent className="w-3.5 h-3.5" /> : <span>{block.icon}</span>} {block.title}
-      </p>
-      <div className="space-y-1">
+    <div style={{ marginBottom: "1rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.5rem" }}>
+        {IconComp && <IconComp size={12} color={MUTED} />}
+        <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.63rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: MUTED, margin: 0 }}>
+          {block.title}
+        </p>
+      </div>
+      <div>
         {block.items.map((item) => {
           const isNA = item.value === "N/A";
-          const color = isNA ? "text-muted-foreground/50 italic" : item.signal === "bullish" ? "text-signal-buy" : item.signal === "bearish" ? "text-signal-sell" : "text-signal-hold";
           return (
-            <div key={item.label} className="flex justify-between items-center text-sm py-0.5">
-              <span className="text-muted-foreground">{item.label}</span>
-              <span className={cn("font-medium", color)}>{item.value}</span>
+            <div key={item.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.35rem 0", borderBottom: `1px solid ${BORDER_CLR}` }}>
+              <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED }}>{item.label}</span>
+              <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.82rem", color: valueColor(item.signal, isNA), fontStyle: isNA ? "italic" : "normal" }}>
+                {item.value}
+              </span>
             </div>
           );
         })}
@@ -67,78 +92,91 @@ function SubBlockSection({ block }: { block: SubBlock }) {
 
 export function PhaseCard({ icon, title, score, statusLabel, statusLevel, interpretation, subBlocks, detailRows, simple = false, initialExpanded = false }: PhaseCardProps) {
   const [expanded, setExpanded] = useState(!simple && initialExpanded);
+  useEffect(() => { if (initialExpanded) setExpanded(!simple); }, [simple, initialExpanded]);
 
-  useEffect(() => {
-    if (initialExpanded) {
-      setExpanded(!simple);
-    }
-  }, [simple, initialExpanded]);
-  const styles = getStatusColor(statusLevel);
+  const accentColor = leftBorderColor(statusLevel);
+  const badgeColor  = signalColor(statusLevel);
 
   return (
-    <Card>
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            {icon} {title}
-          </CardTitle>
-          <div
-            className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
-            style={{ backgroundColor: styles.bg, color: styles.text }}
-          >
-            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-            {statusLabel}
+    <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${accentColor}`, boxShadow: "0 4px 20px rgba(0,0,0,0.25)", overflow: "hidden" }}>
+
+      {/* Header */}
+      <div style={{ padding: "1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <span style={{ color: accentColor, display: "flex", flexShrink: 0 }}>{icon}</span>
+          <div>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.88rem", letterSpacing: "0.08em", textTransform: "uppercase", color: WHITE, margin: 0, lineHeight: 1.2 }}>
+              {title}
+            </p>
+            <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.72rem", color: MUTED, margin: 0, marginTop: "0.15rem" }}>
+              Score: {score}
+            </p>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Interpretation — always visible */}
-        <p className="text-sm text-muted-foreground">
+        {/* Sharp status badge — no rounded-full */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: badgeColor, padding: "0.2rem 0.65rem", flexShrink: 0 }}>
+          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: NAVY, flexShrink: 0, animation: "pulse 2s ease-in-out infinite" }} />
+          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "0.68rem", letterSpacing: "0.12em", textTransform: "uppercase", color: NAVY }}>
+            {statusLabel}
+          </span>
+        </div>
+      </div>
+
+      {/* Interpretation */}
+      <div style={{ padding: "0 1.25rem 1.25rem" }}>
+        <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: MUTED, lineHeight: 1.65, margin: 0 }}>
           {interpretation}
         </p>
+      </div>
 
-        {/* Expandable Details — only in Advanced mode */}
-        {!simple && (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              onClick={() => setExpanded(!expanded)}
-            >
-              {expanded ? "Hide" : "See"} Key Metrics
-              <ChevronDown className={cn("w-3.5 h-3.5 ml-1 transition-transform", expanded && "rotate-180")} />
-            </Button>
+      {/* Advanced expand toggle */}
+      {!simple && (
+        <>
+          <div style={{ height: "1px", background: BORDER_CLR }} />
+          <button
+            onClick={() => setExpanded(!expanded)}
+            style={{ width: "100%", background: "none", border: "none", padding: "0.75rem 1.25rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", color: CYAN, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.72rem", letterSpacing: "0.16em", textTransform: "uppercase" }}>
+            {expanded ? "Hide" : "See"} Key Metrics
+            <ChevronDown size={13} style={{ transition: "transform 0.2s", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }} />
+          </button>
 
-            {expanded && (
-              <div className="space-y-0 border-t border-border pt-2">
-                {detailRows.map((row) => {
-                  const isNA = row.value === "N/A";
-                  return (
-                  <div key={row.label} className="flex justify-between items-center py-2.5 border-b border-border last:border-0">
-                    <span className="text-sm text-muted-foreground">{row.label}</span>
-                    <div className="flex items-center gap-2">
+          {expanded && (
+            <div style={{ borderTop: `1px solid ${BORDER_CLR}`, padding: "1.25rem" }}>
+              {detailRows.map((row) => {
+                const isNA = row.value === "N/A";
+                return (
+                  <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: `1px solid ${BORDER_CLR}` }}>
+                    <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED }}>{row.label}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       {row.hint && row.signal && (
-                        <span
-                          className={cn("text-[11px] font-medium px-2 py-0.5 rounded-full", isNA && "opacity-50")}
-                          style={isNA ? { color: "hsl(var(--muted-foreground))", backgroundColor: "hsl(var(--muted) / 0.5)" } : {
-                            color: row.signal === "bullish" ? "hsl(var(--signal-buy))" : row.signal === "bearish" ? "hsl(var(--signal-sell))" : "hsl(var(--signal-hold))",
-                            backgroundColor: row.signal === "bullish" ? "hsl(var(--signal-buy-bg))" : row.signal === "bearish" ? "hsl(var(--signal-sell-bg))" : "hsl(var(--signal-hold-bg))",
-                          }}
-                        >
+                        <span style={{
+                          fontFamily: "'Barlow Condensed', sans-serif",
+                          fontWeight: 700,
+                          fontSize: "0.65rem",
+                          letterSpacing: "0.1em",
+                          textTransform: "uppercase",
+                          padding: "0.15rem 0.45rem",
+                          color: isNA ? MUTED : (row.signal === "bullish" ? NAVY : row.signal === "bearish" ? NAVY : NAVY),
+                          background: isNA ? "rgba(107,122,153,0.2)" : (row.signal === "bullish" ? GREEN : row.signal === "bearish" ? RED : GOLD),
+                          opacity: isNA ? 0.5 : 1,
+                        }}>
                           {row.hint}
                         </span>
                       )}
-                      <span className={cn("font-medium text-sm font-display", isNA && "text-muted-foreground/50 italic")}>{row.value}</span>
+                      <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.85rem", color: valueColor(row.signal, isNA), fontStyle: isNA ? "italic" : "normal" }}>
+                        {row.value}
+                      </span>
                     </div>
                   </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Colored bottom accent bar */}
+      <div style={{ height: "3px", background: accentColor }} />
+    </div>
   );
 }

@@ -1,46 +1,61 @@
 import type { Stock } from "@/lib/types";
 import { generateAISignals, getAIVerdict } from "@/lib/ai-signals";
-import { Card, CardContent } from "@/components/ui/card";
 import { Check, X } from "lucide-react";
 
-interface AISignalsCardProps {
-  stock: Stock;
-}
+const NAVY2      = "#0F1A3E";
+const CYAN       = "#00D4FF";
+const GREEN      = "#00C896";
+const RED        = "#FF4757";
+const BORDER_CLR = "#1E3A7B";
+const MUTED      = "#6B7A99";
+const WHITE      = "#FFFFFF";
+
+interface AISignalsCardProps { stock: Stock }
 
 export function AISignalsCard({ stock }: AISignalsCardProps) {
   const signals = generateAISignals(stock);
   const verdict = getAIVerdict(stock);
-  const score = stock.radarScores?.["medium-term"]?.radarScore ?? stock.score;
+  const score   = stock.radarScores?.["medium-term"]?.radarScore ?? stock.score;
 
   if (signals.length === 0) return null;
 
   return (
-    <Card className="border border-border overflow-hidden">
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-semibold text-sm text-foreground">
+    <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${CYAN}`, boxShadow: "0 4px 20px rgba(0,0,0,0.25)" }}>
+      {/* Header */}
+      <div style={{ padding: "1.25rem 1.25rem 0" }}>
+        <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, marginBottom: "0.5rem" }}>
+          AI Signals
+        </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.95rem", letterSpacing: "0.05em", textTransform: "uppercase", color: WHITE, margin: 0 }}>
             {verdict.title}
-          </h3>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">Confidence:</span>
-            <span className="font-display font-bold text-sm text-foreground">{score}</span>
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.72rem", color: MUTED }}>Confidence:</span>
+            <span style={{ background: CYAN, color: NAVY2, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "0.72rem", letterSpacing: "0.1em", padding: "0.15rem 0.5rem", borderRadius: "2px" }}>
+              {score}
+            </span>
           </div>
         </div>
+      </div>
 
-        <p className="text-xs font-medium text-muted-foreground mb-3">AI signals:</p>
-        <div className="space-y-2">
-          {signals.map((signal, i) => (
-            <div key={i} className="flex items-center gap-2 text-sm">
-              {signal.positive ? (
-                <Check className="w-4 h-4 text-signal-buy shrink-0" />
-              ) : (
-                <X className="w-4 h-4 text-signal-sell shrink-0" />
-              )}
-              <span className="text-foreground">{signal.label}</span>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+      {/* Divider */}
+      <div style={{ height: "1px", background: BORDER_CLR, margin: "0 1.25rem" }} />
+
+      {/* Signal rows */}
+      <div style={{ padding: "0.875rem 1.25rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        {signals.map((signal, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            {signal.positive
+              ? <Check size={14} color={GREEN} style={{ flexShrink: 0 }} />
+              : <X size={14} color={RED} style={{ flexShrink: 0 }} />
+            }
+            <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: WHITE, lineHeight: 1.4 }}>
+              {signal.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
