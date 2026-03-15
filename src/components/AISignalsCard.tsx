@@ -16,6 +16,12 @@ export function AISignalsCard({ stock }: AISignalsCardProps) {
   const signals = generateAISignals(stock);
   const verdict = getAIVerdict(stock);
   const score   = stock.radarScores?.["medium-term"]?.radarScore ?? stock.score;
+  const confidence = stock.radarScores?.["medium-term"]?.confidence;
+  const confColor = confidence === "Strong" ? GREEN : confidence === "Moderate" ? "#FFB800" : MUTED;
+
+  // Highlight stock name in title
+  const name = stock.name;
+  const titleParts = verdict.title.split(name);
 
   if (signals.length === 0) return null;
 
@@ -26,15 +32,31 @@ export function AISignalsCard({ stock }: AISignalsCardProps) {
         <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, marginBottom: "0.5rem" }}>
           AI Signals
         </p>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
-          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.95rem", letterSpacing: "0.05em", textTransform: "uppercase", color: WHITE, margin: 0 }}>
-            {verdict.title}
-          </p>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.72rem", color: MUTED }}>Confidence:</span>
-            <span style={{ background: CYAN, color: NAVY2, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "0.72rem", letterSpacing: "0.1em", padding: "0.15rem 0.5rem", borderRadius: "2px" }}>
+
+        {/* Title row */}
+        <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "1.05rem", letterSpacing: "0.03em", color: WHITE, margin: "0 0 0.875rem", lineHeight: 1.3 }}>
+          {titleParts[0]}
+          <span style={{ color: CYAN, textTransform: "uppercase" }}>{name}</span>
+          {titleParts[1]}
+        </p>
+
+        {/* Confidence row */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem", padding: "0.75rem 1rem", background: "rgba(0,0,0,0.2)", border: `1px solid ${BORDER_CLR}`, borderLeft: `3px solid ${confColor}` }}>
+          <div>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: MUTED, margin: 0, lineHeight: 1 }}>
+              AI Confidence
+            </p>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.6rem", color: confColor, margin: 0, lineHeight: 1.1 }}>
+              {confidence ?? "—"}
+            </p>
+          </div>
+          <div style={{ marginLeft: "auto", textAlign: "right" }}>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: MUTED, margin: 0, lineHeight: 1 }}>
+              RadarScore™
+            </p>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.6rem", color: CYAN, margin: 0, lineHeight: 1.1 }}>
               {score}
-            </span>
+            </p>
           </div>
         </div>
       </div>

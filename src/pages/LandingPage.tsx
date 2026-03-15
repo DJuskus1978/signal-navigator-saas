@@ -378,10 +378,17 @@ export default function LandingPage() {
             </motion.div>
           </div>
 
-          {/* Right — radar */}
+          {/* Right — iPhone mockup (desktop only) */}
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-            style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-            <RadarVisual />
+            className="hidden md:flex"
+            style={{ justifyContent: "center", alignItems: "center" }}>
+            <IPhoneFrame>
+              <img
+                src={insideDashboardNewImg}
+                alt="StocksRadars dashboard on iPhone"
+                style={{ width: "100%", display: "block" }}
+              />
+            </IPhoneFrame>
           </motion.div>
         </div>
       </section>

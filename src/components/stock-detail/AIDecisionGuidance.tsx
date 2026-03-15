@@ -58,10 +58,22 @@ export function AIDecisionGuidance({ stock, isCrypto: _isCrypto, profile }: Prop
 
       <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
 
-        {/* Headline */}
-        <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "1.05rem", letterSpacing: "0.03em", color: headlineColor, margin: 0, lineHeight: 1.3 }}>
-          {guidance.headline}
-        </p>
+        {/* Headline — split on " — " so signal word gets its own line */}
+        {(() => {
+          const parts = guidance.headline.split(" — ");
+          return (
+            <div style={{ margin: 0 }}>
+              <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.5rem", letterSpacing: "0.04em", textTransform: "uppercase", color: headlineColor, margin: 0, lineHeight: 1 }}>
+                {parts[0]}
+              </p>
+              {parts[1] && (
+                <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: "0.95rem", letterSpacing: "0.03em", color: WHITE, margin: "0.3rem 0 0", lineHeight: 1.3, opacity: 0.85 }}>
+                  {parts[1]}
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Rationale */}
         <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: WHITE, lineHeight: 1.65, margin: 0 }}>
