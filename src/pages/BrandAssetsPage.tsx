@@ -33,12 +33,14 @@ const logos = [
 
 export default function BrandAssetsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
+    <div style={{ minHeight: "100vh", background: "#0A0F2E" }}>
+      <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(10,15,46,0.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid #1E3A7B" }}>
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <Link to="/" className="flex items-center gap-2">
             <RadarLogo />
-            <span className="font-display font-bold text-xl">Stocks<span className="text-primary">Radars</span></span>
+            <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.2rem", color: "#FFFFFF" }}>
+              Stocks<span style={{ color: "#00D4FF" }}>Radars</span>
+            </span>
           </Link>
           <Link to="/">
             <Button variant="ghost" size="sm" className="gap-2">
