@@ -480,6 +480,286 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
+      {/* ── SECTION 1: RADARSCORE AI ENGINE ─────────────────────────────────── */}
+      <section style={{ background: NAVY2, borderTop: `1px solid ${BORDER_CLR}`, borderBottom: `1px solid ${BORDER_CLR}`, padding: "6rem 1.5rem" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp} style={{ textAlign: "center", marginBottom: "3.5rem" }}>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem" }}>RadarScore™ AI Engine</p>
+            <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 3rem)", textTransform: "uppercase", color: WHITE, margin: 0 }}>What Powers Our Intelligence</h2>
+          </motion.div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "2rem", alignItems: "center" }} className="block md:grid">
+            {/* ANALYZES column */}
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} variants={fadeUp}>
+              <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: MUTED, marginBottom: "1rem" }}>ANALYZES</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {[
+                  { label: "Fundamental Analysis", desc: "Financial ratios & earnings" },
+                  { label: "News Sentiment",        desc: "Real-time market news" },
+                  { label: "Momentum",              desc: "Market momentum signals" },
+                  { label: "Institutional",         desc: "Trading behavior patterns" },
+                ].map((item) => (
+                  <div key={item.label} style={{ background: NAVY, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${CYAN}`, padding: "0.875rem 1rem" }}>
+                    <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.82rem", letterSpacing: "0.06em", textTransform: "uppercase", color: WHITE, marginBottom: "0.2rem" }}>{item.label}</div>
+                    <div style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.75rem", color: MUTED }}>{item.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Arrow */}
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={2} variants={fadeUp} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+                <div style={{ width: "48px", height: "48px", border: `2px solid ${CYAN}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.5rem", color: CYAN }}>→</span>
+                </div>
+                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.18em", color: MUTED, textTransform: "uppercase" }}>Output</span>
+              </div>
+            </motion.div>
+
+            {/* DELIVERS column */}
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={3} variants={fadeUp}>
+              <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: MUTED, marginBottom: "1rem" }}>DELIVERS</p>
+              <div style={{ background: NAVY, border: `2px solid ${CYAN}`, borderLeft: `5px solid ${CYAN}`, padding: "1.5rem", boxShadow: `0 0 40px rgba(0,212,255,0.1)` }}>
+                <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, marginBottom: "0.5rem" }}>Simple Stock Radar</p>
+                <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: MUTED, marginBottom: "1.5rem", lineHeight: 1.5 }}>You can act on instantly</p>
+                {/* MSFT sample card */}
+                <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `3px solid ${GREEN}`, padding: "1rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+                    <div>
+                      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.1rem", color: WHITE }}>MSFT</div>
+                      <div style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.72rem", color: MUTED }}>Microsoft Corp</div>
+                    </div>
+                    <span style={{ background: GREEN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "0.7rem", letterSpacing: "0.1em", padding: "0.2rem 0.6rem", borderRadius: "2px" }}>BUY</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                    <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "2.2rem", color: WHITE, lineHeight: 1 }}>84</span>
+                    <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.16em", color: MUTED, textTransform: "uppercase" }}>RadarScore™</span>
+                  </div>
+                  <div style={{ height: "4px", background: BORDER_CLR, borderRadius: "2px", overflow: "hidden" }}>
+                    <div style={{ width: "84%", height: "100%", background: GREEN, borderRadius: "2px" }} />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 2: INSTITUTIONAL TRADING PRACTICES ───────────────────────── */}
+      <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "6rem 1.5rem" }}>
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp} style={{ marginBottom: "3rem" }}>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem" }}>Professional Edge</p>
+          <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 3rem)", textTransform: "uppercase", color: WHITE, marginBottom: "0.75rem" }}>Institutional Trading Practices</h2>
+          <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.95rem", color: MUTED }}>Professional rules used by hedge funds &amp; investment desks — built into every StocksRadars signal.</p>
+        </motion.div>
+
+        {/* Table header */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "1px", marginBottom: "0.5rem", padding: "0 1rem" }}>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN }}>PRACTICE</div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN }}>IMPLEMENTATION</div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {[
+            { label: "Hard Stop-Loss",  color: RED,   desc: "Auto-exit at -8% loss — strict capital protection rule" },
+            { label: "Trailing Stop",   color: GOLD,  desc: "-12% from peak price — locks profits on winning trades" },
+            { label: "Take-Profit",     color: GREEN, desc: "Sell 50% at +25% gain — institutional profit-taking strategy" },
+            { label: "Position Sizing", color: CYAN,  desc: "Kelly-inspired sizing adjusted for volatility (max 5% per stock)" },
+            { label: "No Chasing",      color: GOLD,  desc: "Avoid buying stocks already +4% intraday or crashing > -5%" },
+            { label: "Cash Reserve",    color: CYAN,  desc: "Keep 20% cash available for opportunities" },
+            { label: "Defensive Mode",  color: RED,   desc: "If portfolio drops >15%, enter only highest conviction signals" },
+          ].map((row, i) => (
+            <motion.div key={row.label} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i * 0.5} variants={fadeUp}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${row.color}`, padding: "0.875rem 1rem", alignItems: "center" }}>
+                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.85rem", letterSpacing: "0.06em", textTransform: "uppercase", color: row.color }}>{row.label}</div>
+                <div style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: MUTED, lineHeight: 1.5 }}>{row.desc}</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── SECTION 3: THE 12 GOLDEN RULES ──────────────────────────────────── */}
+      <section style={{ background: NAVY2, borderTop: `1px solid ${BORDER_CLR}`, borderBottom: `1px solid ${BORDER_CLR}`, padding: "6rem 1.5rem" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp} style={{ textAlign: "center", marginBottom: "3rem" }}>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem" }}>Core Discipline of Successful Investors</p>
+            <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 3rem)", textTransform: "uppercase", color: WHITE, margin: 0 }}>The 12 Golden Rules</h2>
+          </motion.div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "0.75rem" }}>
+            {[
+              { n: 1,  color: CYAN,  rule: "Never invest money you cannot afford to lose" },
+              { n: 2,  color: GOLD,  rule: "Always define your investing horizon" },
+              { n: 3,  color: GREEN, rule: "Diversify across sectors and companies" },
+              { n: 4,  color: CYAN,  rule: "Protect capital before chasing profits" },
+              { n: 5,  color: RED,   rule: "Never risk more than 1–3% of portfolio per trade" },
+              { n: 6,  color: CYAN,  rule: "Avoid emotional trading decisions" },
+              { n: 7,  color: CYAN,  rule: "Ignore short-term market hype" },
+              { n: 8,  color: GOLD,  rule: "Focus on strong companies with real growth" },
+              { n: 9,  color: GREEN, rule: "Patience beats frequent trading" },
+              { n: 10, color: CYAN,  rule: "Continuously learn from market data" },
+              { n: 11, color: RED,   rule: "Use objective tools and analytics" },
+              { n: 12, color: CYAN,  rule: "Let data guide decisions — not emotions" },
+            ].map((item, i) => (
+              <motion.div key={item.n} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i * 0.1} variants={fadeUp}>
+                <div style={{ background: NAVY, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${item.color}`, padding: "1rem 1rem 1rem 0.875rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+                  <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: item.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.9rem", color: NAVY }}>{item.n}</span>
+                  </div>
+                  <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: WHITE, lineHeight: 1.4, margin: 0 }}>{item.rule}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 4: RISK MANAGEMENT FRAMEWORK ────────────────────────────── */}
+      <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "6rem 1.5rem" }}>
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp} style={{ marginBottom: "3rem" }}>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem" }}>How professionals think about capital</p>
+          <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 3rem)", textTransform: "uppercase", color: WHITE, margin: 0 }}>Risk Management Framework</h2>
+        </motion.div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.25rem", marginBottom: "1.25rem" }}>
+          {/* The Professional Mindset */}
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} variants={fadeUp}>
+            <div style={{ ...navyCard(CYAN), padding: "1.75rem", height: "100%" }}>
+              <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, marginBottom: "1.25rem" }}>The Professional Mindset</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div style={{ background: NAVY, border: `1px solid ${BORDER_CLR}`, padding: "1rem" }}>
+                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: MUTED, marginBottom: "0.35rem" }}>First ask</p>
+                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.2rem", color: CYAN, margin: 0 }}>"How much can I lose?"</p>
+                </div>
+                <div style={{ background: NAVY, border: `1px solid ${BORDER_CLR}`, padding: "1rem" }}>
+                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: MUTED, marginBottom: "0.35rem" }}>Then ask</p>
+                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.2rem", color: GOLD, margin: 0 }}>"How much can I gain?"</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Portfolio Allocation Model */}
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={2} variants={fadeUp}>
+            <div style={{ ...navyCard(CYAN), padding: "1.75rem", height: "100%" }}>
+              <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, marginBottom: "1.25rem" }}>Portfolio Allocation Model</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {[
+                  { label: "Core Holdings",          pct: "50–60%", width: 55, color: CYAN  },
+                  { label: "Growth Opportunities",   pct: "20–30%", width: 25, color: GREEN },
+                  { label: "Tactical Trades",        pct: "10–20%", width: 15, color: GOLD  },
+                  { label: "Cash Reserve",           pct: "20%",    width: 20, color: MUTED },
+                ].map((row) => (
+                  <div key={row.label}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+                      <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.78rem", color: WHITE }}>{row.label}</span>
+                      <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.78rem", color: row.color }}>{row.pct}</span>
+                    </div>
+                    <div style={{ height: "5px", background: BORDER_CLR, overflow: "hidden" }}>
+                      <div style={{ width: `${row.width}%`, height: "100%", background: row.color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Full-width proportion bar */}
+        <div style={{ height: "12px", display: "flex", overflow: "hidden", marginBottom: "1rem" }}>
+          {[{ w: 55, c: CYAN }, { w: 25, c: GREEN }, { w: 15, c: GOLD }, { w: 5, c: MUTED }].map((s, i) => (
+            <div key={i} style={{ flex: s.w, background: s.c }} />
+          ))}
+        </div>
+
+        {/* Banner */}
+        <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${CYAN}`, padding: "1.25rem 1.5rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.1rem", letterSpacing: "0.18em", textTransform: "uppercase", color: CYAN }}>CAPITAL PROTECTION FIRST</span>
+        </div>
+      </section>
+
+      {/* ── SECTION 5: DAILY TRADING DISCIPLINE ─────────────────────────────── */}
+      <section style={{ background: NAVY2, borderTop: `1px solid ${BORDER_CLR}`, borderBottom: `1px solid ${BORDER_CLR}`, padding: "6rem 1.5rem" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp} style={{ textAlign: "center", marginBottom: "3rem" }}>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem" }}>Before entering any trade, ask these 4 questions</p>
+            <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 3rem)", textTransform: "uppercase", color: WHITE, margin: 0 }}>Daily Trading Discipline</h2>
+          </motion.div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.25rem", marginBottom: "1.25rem" }}>
+            {[
+              { n: 1, color: CYAN,  q: "What is my risk?",                        a: "Define maximum acceptable loss before entry",        bar: CYAN  },
+              { n: 2, color: GOLD,  q: "What is my exit level?",                  a: "Set stop-loss and take-profit targets",              bar: GOLD  },
+              { n: 3, color: GREEN, q: "What is my position size?",               a: "Size based on risk tolerance (1–3% per trade)",      bar: GREEN },
+              { n: 4, color: RED,   q: "Does signal align with my horizon?",      a: "Confirm timeframe matches your strategy",            bar: RED   },
+            ].map((item, i) => (
+              <motion.div key={item.n} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i * 0.15} variants={fadeUp}>
+                <div style={{ background: WHITE, position: "relative", overflow: "hidden", padding: "1.5rem", height: "100%", display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: item.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "1rem", color: NAVY }}>{item.n}</span>
+                    </div>
+                    <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.04em", color: NAVY, margin: 0 }}>{item.q}</p>
+                  </div>
+                  <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.82rem", color: "#4A5568", lineHeight: 1.5, flex: 1, margin: 0 }}>{item.a}</p>
+                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "4px", background: item.bar }} />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Warning banner */}
+          <div style={{ background: NAVY, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${CYAN}`, padding: "1.5rem 2rem", textAlign: "center" }}>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1rem", letterSpacing: "0.16em", textTransform: "uppercase", color: CYAN, margin: 0 }}>
+              If the answer to any question is unclear — DO NOT TRADE.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 6: THE GOAL OF SUCCESSFUL INVESTING ──────────────────────── */}
+      <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "6rem 1.5rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3rem", alignItems: "center" }} className="block md:grid">
+
+          {/* Left */}
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp}>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "0.5rem" }}>Philosophy</p>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "1rem", fontWeight: 400, color: MUTED, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.25rem" }}>The Goal of</p>
+            <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(2.2rem, 4vw, 3.5rem)", textTransform: "uppercase", color: WHITE, lineHeight: 0.95, margin: "0 0 1.25rem" }}>Successful Investing</h2>
+            <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "1.05rem", color: MUTED, fontStyle: "italic", marginBottom: "1.75rem" }}>is not to win every trade.</p>
+            <div style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${CYAN}`, padding: "1.25rem 1.5rem", marginBottom: "2rem" }}>
+              <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.9rem", color: WHITE, lineHeight: 1.7, margin: 0 }}>
+                It's about <span style={{ color: CYAN }}>protecting capital</span>, staying <span style={{ color: GOLD }}>disciplined</span>, and letting <span style={{ color: GREEN }}>compound returns</span> work over time.
+              </p>
+            </div>
+            <Link to="/auth" style={{ display: "inline-flex", alignItems: "center", background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.85rem", letterSpacing: "0.12em", textTransform: "uppercase", padding: "0.9rem 2rem", textDecoration: "none", borderRadius: 0 }}>
+              Start Your Free Trial
+            </Link>
+          </motion.div>
+
+          {/* Right — comparisons */}
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} variants={fadeUp}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              {[
+                { better: "Consistent returns",  vs: "One big win",      betterColor: GREEN, vsColor: RED   },
+                { better: "Capital protection",  vs: "Chasing gains",    betterColor: GREEN, vsColor: RED   },
+                { better: "Compound growth",     vs: "Frequent trading", betterColor: GREEN, vsColor: RED   },
+                { better: "Data-driven signals", vs: "Gut feeling",      betterColor: GREEN, vsColor: RED   },
+              ].map((row) => (
+                <div key={row.better} style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, padding: "0.875rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem" }}>
+                  <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.88rem", color: row.betterColor }}>✓ {row.better}</span>
+                  <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.12em", color: MUTED, textTransform: "uppercase" }}>over</span>
+                  <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.82rem", color: MUTED, textDecoration: "line-through" }}>{row.vs}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+        </div>
+      </section>
+
       {/* ── PRICING ─────────────────────────────────────────────────────────── */}
       <section id="pricing" ref={pricingRef} style={{ background: NAVY2, borderTop: `1px solid ${BORDER_CLR}`, borderBottom: `1px solid ${BORDER_CLR}`, padding: "6rem 1.5rem" }} aria-label="StocksRadars pricing plans">
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
