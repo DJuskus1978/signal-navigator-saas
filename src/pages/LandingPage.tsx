@@ -17,6 +17,7 @@ import { ChevronLeft, ChevronRight, TrendingUp, Crown, Zap, BarChart3, Shield, M
 import { RadarLogo } from "@/components/RadarLogo";
 import { IPhoneFrame } from "@/components/IPhoneFrame";
 import { useSwipe } from "@/hooks/use-swipe";
+import { AIPerformanceDashboard } from "@/components/AIPerformanceDashboard";
 
 // ── Brand tokens ─────────────────────────────────────────────────────────────
 const NAVY        = "#0A0F2E";
@@ -407,6 +408,26 @@ export default function LandingPage() {
               <StepCard {...step} />
             </motion.div>
           ))}
+        </div>
+      </section>
+
+      {/* ── AI PERFORMANCE TRACKER ──────────────────────────────────────────── */}
+      <section style={{ background: NAVY2, borderTop: `1px solid ${BORDER_CLR}`, borderBottom: `1px solid ${BORDER_CLR}`, padding: "6rem 1.5rem" }} aria-label="AI performance tracker">
+        <div style={{ maxWidth: "820px", margin: "0 auto" }}>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp} style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem" }}>
+              Live Results
+            </p>
+            <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 3rem)", textTransform: "uppercase", letterSpacing: "0.02em", color: WHITE, margin: "0 0 1rem" }}>
+              Live Paper Portfolio
+            </h2>
+            <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "1rem", color: MUTED, lineHeight: 1.6, margin: 0 }}>
+              See how our AI signals perform in real-time with a simulated $100,000 portfolio tracked daily against the S&P 500, Nasdaq and Dow Jones.
+            </p>
+          </motion.div>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} variants={fadeUp}>
+            <AIPerformanceDashboard />
+          </motion.div>
         </div>
       </section>
 
