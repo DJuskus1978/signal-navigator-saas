@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { RadarLogo } from "@/components/RadarLogo";
 import { toast } from "@/hooks/use-toast";
 import { Shield, Loader2 } from "lucide-react";
@@ -69,8 +68,9 @@ export default function AdminLogin() {
   }
 
   const handleOAuth = async (provider: "google" | "apple") => {
-    const { error } = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: `${window.location.origin}/admin/login`,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: "https://www.stocksradars.com/admin/login" },
     });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });

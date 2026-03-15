@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { RadarLogo } from "@/components/RadarLogo";
 import { toast } from "@/hooks/use-toast";
 
@@ -31,8 +30,9 @@ export default function AuthPage() {
   if (user) return <Navigate to={redirectTo} replace />;
 
   const handleOAuth = async (provider: "google" | "apple") => {
-    const { error } = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: `${window.location.origin}${redirectTo}`,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: "https://www.stocksradars.com/dashboard" },
     });
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
   };
