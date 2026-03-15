@@ -18,6 +18,7 @@ import ContactPage from "./pages/ContactPage";
 import BrandAssetsPage from "./pages/BrandAssetsPage";
 import MarketingPlanPage from "./pages/MarketingPlanPage";
 import SocialPostsPage from "./pages/SocialPostsPage";
+import DailyPicksPage from "./pages/DailyPicksPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/brand" element={<BrandAssetsPage />} />
             <Route path="/marketing-plan" element={<MarketingPlanPage />} />
             <Route path="/social-posts" element={<SocialPostsPage />} />
+            <Route path="/daily-picks" element={<ProtectedRoute><DailyPicksPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

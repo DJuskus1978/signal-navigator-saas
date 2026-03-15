@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StockCard } from "@/components/StockCard";
 import { Exchange } from "@/lib/types";
-import { Search, LogOut, Loader2, Lock, CreditCard, ArrowRight, Menu, MessageCircle } from "lucide-react";
+import { Search, LogOut, Loader2, Lock, CreditCard, ArrowRight, Menu, MessageCircle, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -126,6 +126,11 @@ export default function Dashboard() {
                 )}
                 <span className="text-sm text-muted-foreground truncate">{user?.email}</span>
                 <div className="border-t border-border my-2" />
+                <Link to="/daily-picks">
+                  <Button variant="ghost" className="justify-start gap-2 w-full text-amber-400">
+                    <Star className="w-4 h-4" /> Daily Picks
+                  </Button>
+                </Link>
                 <Button variant="ghost" className="justify-start gap-2" onClick={goToPricing}>
                   <ArrowRight className="w-4 h-4" /> Pricing Plans
                 </Button>
@@ -265,6 +270,22 @@ export default function Dashboard() {
             )}
           </div>
         )}
+
+        {/* ── Daily Picks CTA ── */}
+        <Link to="/daily-picks" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${GOLD}`, padding: "0.75rem 1.1rem", textDecoration: "none", marginBottom: "1.5rem", gap: "0.75rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <Star size={14} color={GOLD} fill={GOLD} />
+            <div>
+              <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: GOLD, display: "block" }}>
+                StocksRadars™ Daily Picks
+              </span>
+              <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: WHITE }}>
+                Today's top AI-selected Buy signals
+              </span>
+            </div>
+          </div>
+          <ArrowRight size={14} color={CYAN} style={{ flexShrink: 0 }} />
+        </Link>
 
         {/* ── Tab view (hidden while searching) ── */}
         {!isSearchActive && (

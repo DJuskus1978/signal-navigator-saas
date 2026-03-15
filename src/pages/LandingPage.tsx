@@ -13,7 +13,7 @@ import avatarElena from "@/assets/avatar-elena.jpg";
 import avatarDavid from "@/assets/avatar-david.jpg";
 import avatarPriya from "@/assets/avatar-priya.jpg";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, TrendingUp, Crown, Zap, BarChart3, Shield, Menu, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, TrendingUp, Crown, Zap, BarChart3, Shield, Menu, X, Star } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
 import { IPhoneFrame } from "@/components/IPhoneFrame";
 import { useSwipe } from "@/hooks/use-swipe";
@@ -40,9 +40,23 @@ const fadeUp = {
 };
 
 // ── Radar animation ───────────────────────────────────────────────────────────
+const HERO_DAILY_PICKS = [
+  { ticker: "NVDA", score: 94, signal: "STRONG BUY" },
+  { ticker: "META", score: 91, signal: "STRONG BUY" },
+  { ticker: "MSFT", score: 89, signal: "STRONG BUY" },
+  { ticker: "AAPL", score: 87, signal: "STRONG BUY" },
+  { ticker: "AMZN", score: 86, signal: "STRONG BUY" },
+  { ticker: "TSM",  score: 84, signal: "BUY"        },
+  { ticker: "LLY",  score: 83, signal: "BUY"        },
+];
+
 function RadarVisual() {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+  const pick = HERO_DAILY_PICKS[dayOfYear % HERO_DAILY_PICKS.length];
+  const isStrongBuy = pick.signal === "STRONG BUY";
+
   return (
-    <div style={{ position: "relative", width: "320px", height: "320px", flexShrink: 0 }}>
+    <div className="radar-container" style={{ position: "relative", width: "320px", height: "320px", flexShrink: 0 }}>
       {/* Concentric rings */}
       {[320, 213, 107].map((size, i) => (
         <div key={i} style={{
@@ -99,25 +113,32 @@ function RadarVisual() {
         }} />
       ))}
 
-      {/* Floating RadarScore card */}
+      {/* Daily Pick card */}
       <div style={{
         position: "absolute",
         bottom: "12px", left: "50%",
         transform: "translateX(-50%)",
-        background: "rgba(15,26,62,0.96)",
+        background: "rgba(10,15,46,0.97)",
         border: `1px solid ${BORDER_CLR}`,
-        borderLeft: `3px solid ${CYAN}`,
-        padding: "0.5rem 1.1rem",
+        borderLeft: `3px solid ${isStrongBuy ? GREEN : CYAN}`,
+        padding: "0.55rem 1rem",
         whiteSpace: "nowrap",
         animation: "floatCard 3.5s ease-in-out infinite",
-        boxShadow: `0 8px 32px rgba(0,0,0,0.4)`,
+        boxShadow: `0 8px 32px rgba(0,0,0,0.5)`,
       }}>
-        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.2em", color: CYAN, textTransform: "uppercase", marginBottom: "0.2rem" }}>
-          RadarScore™
+        <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", marginBottom: "0.25rem" }}>
+          <Star size={8} color={GOLD} fill={GOLD} />
+          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.52rem", fontWeight: 700, letterSpacing: "0.2em", color: GOLD, textTransform: "uppercase" }}>
+            StocksRadars™ Daily Pick
+          </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.7rem", color: WHITE, lineHeight: 1 }}>84</span>
-          <span style={{ background: GREEN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "0.65rem", letterSpacing: "0.1em", padding: "0.15rem 0.45rem", borderRadius: "2px" }}>BUY</span>
+          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.3rem", color: WHITE, lineHeight: 1 }}>{pick.ticker}</span>
+          <span style={{ background: isStrongBuy ? GREEN : CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "0.55rem", letterSpacing: "0.1em", padding: "0.15rem 0.4rem" }}>{pick.signal}</span>
+          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.1rem", color: CYAN, lineHeight: 1 }}>{pick.score}</span>
+        </div>
+        <div style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.58rem", color: MUTED, marginTop: "0.2rem" }}>
+          Today's top AI signal
         </div>
       </div>
     </div>
@@ -300,6 +321,14 @@ export default function LandingPage() {
           .hero-ctas > * { width: 100% !important; justify-content: center !important; box-sizing: border-box; }
           .hero-radar-col { max-width: 320px; width: 100%; }
         }
+        /* ── Desktop: scale radar up to ~480px ─────────────────────── */
+        @media (min-width: 768px) {
+          .hero-radar-col { min-height: 480px; }
+          .radar-container {
+            transform: scale(1.5);
+            transform-origin: center center;
+          }
+        }
       `}</style>
 
       {/* ── NAVBAR ──────────────────────────────────────────────────────────── */}
@@ -319,6 +348,10 @@ export default function LandingPage() {
               className="hidden md:block hover:text-white transition-colors">About</Link>
             <a href="#pricing" style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: MUTED, textDecoration: "none", padding: "0.4rem 0.75rem" }}
               className="hidden md:block hover:text-white transition-colors">Pricing</a>
+            <Link to="/daily-picks" style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: GOLD, textDecoration: "none", padding: "0.4rem 0.75rem", fontWeight: 600 }}
+              className="hidden md:inline-flex">
+              <Star size={11} color={GOLD} fill={GOLD} />Daily Picks
+            </Link>
             <Link to="/auth" style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: WHITE, textDecoration: "none", padding: "0.4rem 0.75rem" }}>
               Sign In
             </Link>
@@ -350,6 +383,10 @@ export default function LandingPage() {
                   style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.9rem", color: WHITE, textDecoration: "none", padding: "0.6rem 0", borderBottom: `1px solid ${BORDER_CLR}` }}>
                   Pricing
                 </a>
+                <Link to="/daily-picks" onClick={() => setMenuOpen(false)}
+                  style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontFamily: "'Barlow', sans-serif", fontSize: "0.9rem", color: GOLD, textDecoration: "none", padding: "0.6rem 0", borderBottom: `1px solid ${BORDER_CLR}`, fontWeight: 600 }}>
+                  <Star size={13} color={GOLD} fill={GOLD} /> Daily Picks
+                </Link>
                 <Link to="/auth" onClick={() => setMenuOpen(false)}
                   style={{ display: "inline-flex", justifyContent: "center", background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.85rem", letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.75rem", textDecoration: "none", borderRadius: 0, marginTop: "0.5rem" }}>
                   Get Started Free
@@ -827,7 +864,7 @@ export default function LandingPage() {
 
             {/* Novice Trader */}
             {(() => {
-              const features = ["2 stock checks per day", "Nasdaq, Dow & S&P 500", "Buy/Hold/Sell radars", "Basic technical analysis"];
+              const features = ["1 Daily Pick", "2 stock checks per day", "Nasdaq, Dow & S&P 500", "Buy/Hold/Sell radars", "Basic technical analysis"];
               return (
                 <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp}>
                   <div style={{ ...navyCard(GREEN), padding: "1.75rem", display: "flex", flexDirection: "column", height: "100%" }}>
@@ -854,7 +891,7 @@ export default function LandingPage() {
 
             {/* Day Trader */}
             {(() => {
-              const features = ["25 real-time stock checks/day", "All Nasdaq, Dow & S&P 500", "Simple Traders Radars", "Real-time Buy/Hold/Sell radars", "Technical & fundamental analysis"];
+              const features = ["5 Daily Picks", "25 real-time stock checks/day", "All Nasdaq, Dow & S&P 500", "Simple Traders Radars", "Real-time Buy/Hold/Sell radars", "Technical & fundamental analysis"];
               return (
                 <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} variants={fadeUp}>
                   <div style={{ ...navyCard(CYAN), padding: "1.75rem", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
@@ -883,7 +920,7 @@ export default function LandingPage() {
 
             {/* Pro Day Trader — featured */}
             {(() => {
-              const features = ["50 real-time stock checks/day", "All Nasdaq, Dow & S&P 500", "Simple + Advanced Radars", "Real-time Buy/Hold/Sell radars", "Technical & fundamental analysis", "Radars adapted to Investor Profiles", "Confidence indicators"];
+              const features = ["10 Daily Picks", "50 real-time stock checks/day", "All Nasdaq, Dow & S&P 500", "Simple + Advanced Radars", "Real-time Buy/Hold/Sell radars", "Technical & fundamental analysis", "Radars adapted to Investor Profiles", "Confidence indicators"];
               return (
                 <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={2} variants={fadeUp}>
                   <div style={{ background: NAVY2, border: `2px solid ${CYAN}`, borderLeft: `5px solid ${CYAN}`, boxShadow: `0 0 40px rgba(0,212,255,0.15)`, padding: "1.75rem", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
@@ -913,7 +950,7 @@ export default function LandingPage() {
 
             {/* Bull Trader */}
             {(() => {
-              const features = ["Unlimited real-time stock checks", "All Nasdaq, Dow & S&P 500", "Simple + Advanced Radars", "Real-time Buy/Hold/Sell radars", "Technical & fundamental analysis", "Crypto radars (BTC, ETH & more)", "Radars adapted to Investor Profiles", "Confidence indicators", "Priority support"];
+              const features = ["15 Daily Picks (all picks)", "Unlimited real-time stock checks", "All Nasdaq, Dow & S&P 500", "Simple + Advanced Radars", "Real-time Buy/Hold/Sell radars", "Technical & fundamental analysis", "Crypto radars (BTC, ETH & more)", "Radars adapted to Investor Profiles", "Confidence indicators", "Priority support"];
               return (
                 <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={3} variants={fadeUp}>
                   <div style={{ ...navyCard(GOLD), padding: "1.75rem", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
