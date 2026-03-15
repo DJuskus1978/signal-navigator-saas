@@ -2,199 +2,330 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { startCheckout } from "@/lib/stripe-helpers";
-import heroBannerImg from "@/assets/hero-banner-new.jpg";
 import insideDashboardNewImg from "@/assets/inside-radar-dashboard-new.jpeg";
 import insideSignalScoreImg from "@/assets/inside-radar-signal-score-new.jpeg";
 import insideAnalystRatingsImg from "@/assets/inside-radar-analyst-ratings.jpeg";
 import decisionGuidanceImg from "@/assets/decision-guidance.jpeg";
-import marketTrackerImg from "@/assets/market-tracker.jpeg";
 import marketSentimentImg from "@/assets/market-sentiment-dashboard.jpeg";
-
-
 import avatarSarah from "@/assets/avatar-sarah.jpg";
 import avatarJames from "@/assets/avatar-james.jpg";
 import avatarElena from "@/assets/avatar-elena.jpg";
 import avatarDavid from "@/assets/avatar-david.jpg";
 import avatarPriya from "@/assets/avatar-priya.jpg";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { TrafficLight } from "@/components/TrafficLight";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { ArrowRight, BarChart3, Shield, Zap, Menu, X, TrendingUp, Crown, ChevronLeft, ChevronRight } from "lucide-react";
-
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight, TrendingUp, Crown, Zap, BarChart3, Shield, Menu, X } from "lucide-react";
 import { RadarLogo } from "@/components/RadarLogo";
 import { IPhoneFrame } from "@/components/IPhoneFrame";
 import { useSwipe } from "@/hooks/use-swipe";
-import { AIPerformanceDashboard } from "@/components/AIPerformanceDashboard";
 
-const fadeUp: Variants = {
+// ── Brand tokens ─────────────────────────────────────────────────────────────
+const NAVY        = "#0A0F2E";
+const NAVY2       = "#0F1A3E";
+const CYAN        = "#00D4FF";
+const GREEN       = "#00C896";
+const RED         = "#FF4757";
+const GOLD        = "#FFB800";
+const BORDER_CLR  = "#1E3A7B";
+const MUTED       = "#6B7A99";
+const WHITE       = "#FFFFFF";
+
+// ── Framer variants ───────────────────────────────────────────────────────────
+const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.15, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] },
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.15, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as const },
   }),
 };
 
+// ── Radar animation ───────────────────────────────────────────────────────────
+function RadarVisual() {
+  return (
+    <div style={{ position: "relative", width: "320px", height: "320px", flexShrink: 0 }}>
+      {/* Concentric rings */}
+      {[320, 213, 107].map((size, i) => (
+        <div key={i} style={{
+          position: "absolute",
+          top: "50%", left: "50%",
+          width: `${size}px`, height: `${size}px`,
+          transform: "translate(-50%, -50%)",
+          borderRadius: "50%",
+          border: `1px solid rgba(0,212,255,${0.12 + i * 0.1})`,
+          animation: `radarRingPulse ${2.2 + i * 0.6}s ease-in-out infinite`,
+        }} />
+      ))}
+
+      {/* Crosshair lines */}
+      <div style={{ position: "absolute", top: "50%", left: "4px", right: "4px", height: "1px", background: "rgba(0,212,255,0.1)", transform: "translateY(-50%)" }} />
+      <div style={{ position: "absolute", left: "50%", top: "4px", bottom: "4px", width: "1px", background: "rgba(0,212,255,0.1)", transform: "translateX(-50%)" }} />
+
+      {/* Sweep line */}
+      <div style={{
+        position: "absolute",
+        top: "50%", left: "50%",
+        width: "148px", height: "2px",
+        transformOrigin: "left center",
+        background: `linear-gradient(to right, ${CYAN}, transparent)`,
+        animation: "radarSweep 3s linear infinite",
+      }} />
+
+      {/* Sweep fade sector */}
+      <div style={{
+        position: "absolute",
+        top: "50%", left: "50%",
+        width: "148px", height: "148px",
+        transformOrigin: "left bottom",
+        transform: "translate(0, -100%)",
+        background: `conic-gradient(from 270deg, rgba(0,212,255,0.07) 0deg, transparent 80deg)`,
+        animation: "radarSweep 3s linear infinite",
+        pointerEvents: "none",
+      }} />
+
+      {/* Signal dots */}
+      {[
+        { top: "26%", left: "63%", color: GREEN,  delay: "0.4s" },
+        { top: "54%", left: "22%", color: GOLD,   delay: "1.0s" },
+        { top: "71%", left: "67%", color: RED,    delay: "1.7s" },
+      ].map((dot, i) => (
+        <div key={i} style={{
+          position: "absolute",
+          top: dot.top, left: dot.left,
+          width: "10px", height: "10px",
+          borderRadius: "50%",
+          background: dot.color,
+          boxShadow: `0 0 10px ${dot.color}80`,
+          animation: `dotPulse 2s ease-in-out ${dot.delay} infinite`,
+        }} />
+      ))}
+
+      {/* Floating RadarScore card */}
+      <div style={{
+        position: "absolute",
+        bottom: "12px", left: "50%",
+        transform: "translateX(-50%)",
+        background: "rgba(15,26,62,0.96)",
+        border: `1px solid ${BORDER_CLR}`,
+        borderLeft: `3px solid ${CYAN}`,
+        padding: "0.5rem 1.1rem",
+        whiteSpace: "nowrap",
+        animation: "floatCard 3.5s ease-in-out infinite",
+        boxShadow: `0 8px 32px rgba(0,0,0,0.4)`,
+      }}>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.2em", color: CYAN, textTransform: "uppercase", marginBottom: "0.2rem" }}>
+          RadarScore™
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.7rem", color: WHITE, lineHeight: 1 }}>84</span>
+          <span style={{ background: GREEN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "0.65rem", letterSpacing: "0.1em", padding: "0.15rem 0.45rem", borderRadius: "2px" }}>BUY</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Ticker bar ────────────────────────────────────────────────────────────────
+const TICKERS = [
+  { sym: "AAPL", val: "+2.3%", color: GREEN },
+  { sym: "MSFT", val: "+1.8%", color: GREEN },
+  { sym: "NVDA", val: "+4.1%", color: GREEN },
+  { sym: "GOOGL", val: "-0.6%", color: RED   },
+  { sym: "AMZN", val: "+1.2%", color: GREEN },
+  { sym: "META", val: "+3.4%", color: GREEN },
+  { sym: "TSLA", val: "-1.9%", color: RED   },
+  { sym: "BTC",  val: "+2.7%", color: GREEN },
+  { sym: "ETH",  val: "+1.5%", color: GREEN },
+  { sym: "JPM",  val: "+0.8%", color: GREEN },
+  { sym: "V",    val: "+0.4%", color: GREEN },
+  { sym: "DIS",  val: "-0.3%", color: RED   },
+  { sym: "NFLX", val: "+1.1%", color: GREEN },
+  { sym: "AMD",  val: "+3.2%", color: GREEN },
+  { sym: "SPY",  val: "+0.9%", color: GREEN },
+];
+
+function TickerBar() {
+  const items = [...TICKERS, ...TICKERS];
+  return (
+    <div style={{ background: NAVY2, borderTop: `1px solid ${BORDER_CLR}`, borderBottom: `1px solid ${BORDER_CLR}`, overflow: "hidden", padding: "0.55rem 0" }}>
+      <div style={{ display: "flex", animation: "tickerScroll 35s linear infinite", width: "max-content" }}>
+        {items.map((t, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginRight: "2.5rem", flexShrink: 0 }}>
+            <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.75rem", letterSpacing: "0.1em", color: CYAN }}>{t.sym}</span>
+            <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.72rem", color: t.color, fontWeight: 500 }}>{t.val}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Shared card style ─────────────────────────────────────────────────────────
+function navyCard(leftColor: string = CYAN): React.CSSProperties {
+  return {
+    background: NAVY2,
+    border: `1px solid ${BORDER_CLR}`,
+    borderLeft: `5px solid ${leftColor}`,
+    boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+  };
+}
+
+// ── Step card ─────────────────────────────────────────────────────────────────
+function StepCard({ icon: Icon, num, title, desc }: { icon: React.ElementType; num: number; title: string; desc: string }) {
+  return (
+    <div style={{ ...navyCard(CYAN), padding: "2rem 1.5rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
+        <div style={{ width: "44px", height: "44px", background: "rgba(0,212,255,0.12)", border: `1px solid rgba(0,212,255,0.3)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon size={20} color={CYAN} />
+        </div>
+        <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "2.5rem", color: "rgba(0,212,255,0.15)", lineHeight: 1 }}>{num}</span>
+      </div>
+      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "1rem", letterSpacing: "0.06em", textTransform: "uppercase", color: WHITE, marginBottom: "0.5rem" }}>{title}</div>
+      <div style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: MUTED, lineHeight: 1.6 }}>{desc}</div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function LandingPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen]           = useState(false);
+  const [loadingTier, setLoadingTier]     = useState<string | null>(null);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
-  const [insideIndex, setInsideIndex] = useState(0);
-  const [newsIndex, setNewsIndex] = useState(0);
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const pricingRef = useRef<HTMLElement>(null);
+  const [insideIndex, setInsideIndex]     = useState(0);
+  const [newsIndex, setNewsIndex]         = useState(0);
+  const { user }                          = useAuth();
+  const navigate                          = useNavigate();
+  const pricingRef                        = useRef<HTMLElement>(null);
 
   const testimonials = [
-    {
-      name: "Sarah M.",
-      role: "Retail Investor",
-      avatar: avatarSarah,
-      quote: "StocksRadars cut through all the noise. I used to spend hours reading conflicting opinions online — now I check my radars in 30 seconds and make confident decisions.",
-    },
-    {
-      name: "James T.",
-      role: "Part-time Trader",
-      avatar: avatarJames,
-      quote: "The simplicity is what sold me. No jargon, no complicated charts — just a clear green, yellow, or red light. I've made smarter trades in two weeks than I did in six months on my own.",
-    },
-    {
-      name: "Elena R.",
-      role: "First-time Investor",
-      avatar: avatarElena,
-      quote: "I was overwhelmed by the amount of stock information out there. StocksRadars made it so easy to understand what to buy and what to avoid. It's like having a financial advisor in my pocket.",
-    },
-    {
-      name: "David K.",
-      role: "Freelance Designer",
-      avatar: avatarDavid,
-      quote: "I don't have time to research every stock. StocksRadars saves me hours every week and the recommendations have been spot-on. Fastest investing decisions I've ever made.",
-    },
-    {
-      name: "Priya N.",
-      role: "Software Engineer",
-      avatar: avatarPriya,
-      quote: "I love data but hated sifting through endless financial reports. StocksRadars distills everything into one clear radar — it helped me navigate the market with real confidence.",
-    },
-    {
-      name: "Marcus L.",
-      role: "Small Business Owner",
-      avatar: avatarDavid,
-      quote: "As someone who invests on the side, I needed something dead simple. StocksRadars gives me a quick, reliable read on any stock — I check it every morning before the market opens.",
-    },
+    { name: "Sarah M.",   role: "Retail Investor",      avatar: avatarSarah, quote: "StocksRadars cut through all the noise. I used to spend hours reading conflicting opinions online — now I check my radars in 30 seconds and make confident decisions." },
+    { name: "James T.",   role: "Part-time Trader",     avatar: avatarJames, quote: "The simplicity is what sold me. No jargon, no complicated charts — just a clear green, yellow, or red light. I've made smarter trades in two weeks than I did in six months on my own." },
+    { name: "Elena R.",   role: "First-time Investor",  avatar: avatarElena, quote: "I was overwhelmed by the amount of stock information out there. StocksRadars made it so easy to understand what to buy and what to avoid. It's like having a financial advisor in my pocket." },
+    { name: "David K.",   role: "Freelance Designer",   avatar: avatarDavid, quote: "I don't have time to research every stock. StocksRadars saves me hours every week and the recommendations have been spot-on. Fastest investing decisions I've ever made." },
+    { name: "Priya N.",   role: "Software Engineer",    avatar: avatarPriya, quote: "I love data but hated sifting through endless financial reports. StocksRadars distills everything into one clear radar — it helped me navigate the market with real confidence." },
+    { name: "Marcus L.",  role: "Small Business Owner", avatar: avatarDavid, quote: "As someone who invests on the side, I needed something dead simple. StocksRadars gives me a quick, reliable read on any stock — I check it every morning before the market opens." },
   ];
 
-  const nextTestimonial = () => setTestimonialIndex((prev) => (prev + 1) % testimonials.length);
-  const prevTestimonial = () => setTestimonialIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  const nextTestimonial = () => setTestimonialIndex((p) => (p + 1) % testimonials.length);
+  const prevTestimonial = () => setTestimonialIndex((p) => (p - 1 + testimonials.length) % testimonials.length);
 
-  const insideSwipe = useSwipe(
-    () => setInsideIndex((prev) => (prev + 1) % 3),
-    () => setInsideIndex((prev) => (prev - 1 + 3) % 3)
-  );
-  const newsSwipe = useSwipe(
-    () => setNewsIndex((prev) => (prev + 1) % 3),
-    () => setNewsIndex((prev) => (prev - 1 + 3) % 3)
-  );
+  const insideSwipe     = useSwipe(() => setInsideIndex((p) => (p + 1) % 3), () => setInsideIndex((p) => (p - 1 + 3) % 3));
+  const newsSwipe       = useSwipe(() => setNewsIndex((p) => (p + 1) % 3),   () => setNewsIndex((p) => (p - 1 + 3) % 3));
   const testimonialSwipe = useSwipe(nextTestimonial, prevTestimonial);
 
-  // Track pricing section view on scroll
+  const trackPlanClick = (planName: string, price: number) => {
+    (window as any).gtag?.("event", "select_plan", { event_category: "pricing", plan_name: planName, plan_price: price });
+  };
+
+  const handlePlanClick = async (tier: "day_trader" | "pro_day_trader" | "bull_trader") => {
+    const planMap = { day_trader: { name: "Day Trader", price: 9 }, pro_day_trader: { name: "Pro Day Trader", price: 19 }, bull_trader: { name: "Bull Trader", price: 29 } };
+    trackPlanClick(planMap[tier].name, planMap[tier].price);
+    if (!user) { navigate("/auth"); return; }
+    setLoadingTier(tier);
+    try { await startCheckout(tier); } finally { setLoadingTier(null); }
+  };
+
+  // GA pricing section view
   useEffect(() => {
     const el = pricingRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          (window as any).gtag?.("event", "view_pricing_section", {
-            event_category: "engagement",
-          });
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.3 }
-    );
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { (window as any).gtag?.("event", "view_pricing_section", { event_category: "engagement" }); observer.disconnect(); }
+    }, { threshold: 0.3 });
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
-  const trackPlanClick = (planName: string, price: number) => {
-    (window as any).gtag?.("event", "select_plan", {
-      event_category: "pricing",
-      plan_name: planName,
-      plan_price: price,
-    });
-  };
-
-  const handlePlanClick = async (tier: "day_trader" | "pro_day_trader" | "bull_trader") => {
-    const planMap = {
-      day_trader: { name: "Day Trader", price: 9 },
-      pro_day_trader: { name: "Pro Day Trader", price: 19 },
-      bull_trader: { name: "Bull Trader", price: 29 },
-    };
-    trackPlanClick(planMap[tier].name, planMap[tier].price);
-
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    setLoadingTier(tier);
-    try {
-      await startCheckout(tier);
-    } finally {
-      setLoadingTier(null);
-    }
-  };
+  const insideSlides = [
+    { src: insideDashboardNewImg, alt: "StocksRadars dashboard showing ADBE stock with Buy recommendation, AI score 66, and expanded RadarScore with investor profile selector" },
+    { src: insideSignalScoreImg,  alt: "StocksRadars signal card with Hold recommendation, Fundamentals/News/Technical weight bars, and AI confidence signals" },
+    { src: insideAnalystRatingsImg, alt: "StocksRadars external analyst ratings with gauge, 12-month price target, and ratings distribution for MRK" },
+  ];
+  const newsSlides = [
+    { src: decisionGuidanceImg,   alt: "StocksRadars Decision Guidance showing fundamental strength, news sentiment, and technical momentum analysis" },
+    { src: marketSentimentImg,    alt: "StocksRadars General Market Sentiment gauge with bullish, neutral, bearish signals and S&P 500 tracker chart" },
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Nav */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="w-full flex items-center justify-between h-16 px-4 md:px-8">
-          <Link to="/" className="flex items-center gap-2" aria-label="StocksRadars — Stock Recommendations Home">
+    <div style={{ background: NAVY, minHeight: "100vh", color: WHITE }}>
+
+      {/* ── CSS keyframes ───────────────────────────────────────────────────── */}
+      <style>{`
+        @keyframes radarRingPulse {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.4; }
+        }
+        @keyframes radarSweep {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        @keyframes dotPulse {
+          0%, 100% { transform: scale(1);   opacity: 1; }
+          50%       { transform: scale(1.6); opacity: 0.6; }
+        }
+        @keyframes floatCard {
+          0%, 100% { transform: translateX(-50%) translateY(0); }
+          50%       { transform: translateX(-50%) translateY(-6px); }
+        }
+        @keyframes tickerScroll {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+        @keyframes cyanPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.4); }
+          50%       { box-shadow: 0 0 0 8px rgba(0,212,255,0); }
+        }
+      `}</style>
+
+      {/* ── NAVBAR ──────────────────────────────────────────────────────────── */}
+      <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(10,15,46,0.85)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${BORDER_CLR}` }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 1.5rem", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          {/* Logo */}
+          <Link to="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none" }} aria-label="StocksRadars home">
             <RadarLogo />
-            <span className="font-display font-bold text-xl">Stocks<span className="text-primary">Radars</span></span>
+            <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.3rem", letterSpacing: "0.04em", color: WHITE }}>
+              Stocks<span style={{ color: CYAN }}>Radars</span>
+            </span>
           </Link>
-          <nav className="flex items-center gap-3" aria-label="Main navigation">
-            <Link to="/auth">
-              <Button variant="ghost" size="sm">Sign In</Button>
+
+          {/* Desktop nav */}
+          <nav style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <Link to="/about" style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: MUTED, textDecoration: "none", padding: "0.4rem 0.75rem" }}
+              className="hidden md:block hover:text-white transition-colors">About</Link>
+            <a href="#pricing" style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: MUTED, textDecoration: "none", padding: "0.4rem 0.75rem" }}
+              className="hidden md:block hover:text-white transition-colors">Pricing</a>
+            <Link to="/auth" style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.85rem", color: WHITE, textDecoration: "none", padding: "0.4rem 0.75rem" }}>
+              Sign In
             </Link>
-            <Link to="/auth" className="hidden sm:inline-flex">
-              <Button size="sm">Get Started</Button>
+            <Link to="/auth" style={{ display: "inline-flex", alignItems: "center", background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.8rem", letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.5rem 1.25rem", textDecoration: "none", borderRadius: 0 }}>
+              Get Started
             </Link>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2.5 rounded-xl hover:bg-accent transition-colors border border-border"
-              aria-label="Toggle menu"
-            >
-              {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <button onClick={() => setMenuOpen(!menuOpen)} style={{ background: "none", border: `1px solid ${BORDER_CLR}`, color: WHITE, padding: "0.4rem", cursor: "pointer", display: "flex", alignItems: "center", marginLeft: "0.25rem" }} aria-label="Toggle menu">
+              {menuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           </nav>
         </div>
 
-        {/* Dropdown menu */}
+        {/* Mobile dropdown */}
         <AnimatePresence>
           {menuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="border-t border-border bg-card overflow-hidden"
-            >
-              <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
-                <Link to="/about" className="px-3 py-2 rounded-lg hover:bg-accent transition-colors text-sm font-medium" onClick={() => setMenuOpen(false)}>
-                  About
-                </Link>
-                <a href="#pricing" className="px-3 py-2 rounded-lg hover:bg-accent transition-colors text-sm font-medium" onClick={() => setMenuOpen(false)}>
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+              style={{ background: NAVY2, borderTop: `1px solid ${BORDER_CLR}`, overflow: "hidden" }}>
+              <div style={{ padding: "1rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                {[
+                  { to: "/about", label: "About" },
+                  { to: "/contact", label: "Contact Us" },
+                ].map((item) => (
+                  <Link key={item.to} to={item.to} onClick={() => setMenuOpen(false)}
+                    style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.9rem", color: WHITE, textDecoration: "none", padding: "0.6rem 0", borderBottom: `1px solid ${BORDER_CLR}` }}>
+                    {item.label}
+                  </Link>
+                ))}
+                <a href="#pricing" onClick={() => setMenuOpen(false)}
+                  style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.9rem", color: WHITE, textDecoration: "none", padding: "0.6rem 0", borderBottom: `1px solid ${BORDER_CLR}` }}>
                   Pricing
                 </a>
-                <Link to="/contact" className="px-3 py-2 rounded-lg hover:bg-accent transition-colors text-sm font-medium" onClick={() => setMenuOpen(false)}>
-                  Contact Us
-                </Link>
-                <Link to="/auth" className="px-3 py-2 rounded-lg hover:bg-accent transition-colors text-sm font-medium sm:hidden" onClick={() => setMenuOpen(false)}>
-                  Sign In
-                </Link>
-                <Link to="/auth" className="sm:hidden" onClick={() => setMenuOpen(false)}>
-                  <Button size="sm" className="w-full">Get Started</Button>
+                <Link to="/auth" onClick={() => setMenuOpen(false)}
+                  style={{ display: "inline-flex", justifyContent: "center", background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.85rem", letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.75rem", textDecoration: "none", borderRadius: 0, marginTop: "0.5rem" }}>
+                  Get Started Free
                 </Link>
               </div>
             </motion.div>
@@ -202,533 +333,370 @@ export default function LandingPage() {
         </AnimatePresence>
       </header>
 
-      {/* Hero Banner Image */}
-      <div className="w-full relative">
-        <img
-          src={heroBannerImg}
-          alt="StocksRadars hero banner showing financial charts, radar target, and market analysis illustrations"
-          className="w-full md:h-auto object-contain object-center saturate-[1.35] contrast-[1.08] brightness-[1.03]"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background md:hidden" />
-      </div>
+      {/* ── HERO ────────────────────────────────────────────────────────────── */}
+      <section style={{ maxWidth: "1200px", margin: "0 auto", padding: "5rem 1.5rem 4rem" }} aria-label="Stock recommendations overview">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3rem", alignItems: "center" }} className="block md:grid">
 
-      {/* Hero Text */}
-      <section className="container mx-auto px-4 py-6 md:py-20" aria-label="Stock recommendations overview">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.h1
-            className="font-display text-4xl md:text-6xl font-bold leading-tight mb-6"
-            initial="hidden" animate="visible" custom={2} variants={fadeUp}
-          >
-            Smart, Clear <span className="text-primary">AI Stock Decision Tool</span> — Made Simple for{" "}
-            <span className="text-foreground">Everyday Investors</span>
-          </motion.h1>
-          <motion.p
-            className="text-lg md:text-xl text-muted-foreground mb-6 max-w-2xl mx-auto"
-            initial="hidden" animate="visible" custom={3} variants={fadeUp}
-          >
-            Stop guessing which stocks to buy. Our RadarScore™ analyzes Real-Time Market Data - fundamentals, news sentiment, and technical indicators — delivering clear buy, hold, or sell radars with a simple traffic light.
-          </motion.p>
-          <motion.p
-            className="text-base md:text-xl font-medium text-muted-foreground/50 mb-10 tracking-wide"
-            initial="hidden" animate="visible" custom={3.5} variants={fadeUp}
-          >
-            Nasdaq &nbsp;·&nbsp; Dow Jones &nbsp;·&nbsp; S&amp;P 500 &nbsp;·&nbsp; Crypto
-          </motion.p>
-          <motion.div
-            className="flex flex-col sm:flex-row gap-4 justify-center"
-            initial="hidden" animate="visible" custom={4} variants={fadeUp}
-          >
-            <Link to="/auth">
-              <Button size="lg" className="gap-2 text-base px-8">
-                Start Free <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-            <a href="#pricing">
-              <Button size="lg" variant="outline" className="text-base px-8">
-                View Pricing
-              </Button>
-            </a>
-          </motion.div>
-
-          {/* Traffic light preview */}
-          <motion.div
-            className="mt-16 flex flex-wrap justify-center gap-4"
-            initial="hidden" animate="visible" custom={5} variants={fadeUp}
-            role="img"
-            aria-label="Stock recommendation traffic lights showing buy, hold, don't buy, and sell signals"
-          >
-            <TrafficLight recommendation="buy" size="lg" />
-            <TrafficLight recommendation="hold" size="lg" />
-            <TrafficLight recommendation="dont-buy" size="lg" />
-            <TrafficLight recommendation="sell" size="lg" />
-            <p className="w-full text-center text-xs font-semibold text-muted-foreground tracking-wide mt-2">RadarScore™</p>
-          </motion.div>
-
-        </div>
-      </section>
-
-      {/* Live AI Performance Dashboard */}
-      <section className="container mx-auto px-4 py-16" aria-label="AI performance tracker">
-        <div className="max-w-2xl mx-auto">
-          <AIPerformanceDashboard />
-        </div>
-      </section>
-
-      {/* Inside Radar */}
-      <section className="container mx-auto px-4 py-16 md:py-20" aria-label="Inside StocksRadars">
-        <motion.div
-          className="max-w-3xl mx-auto text-center"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          custom={0}
-          variants={fadeUp}
-        >
-          <h2 className="font-display text-3xl font-bold mb-4">Inside the StocksRadars</h2>
-          <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
-            Select your investment horizon — <em>Short</em>, <em>Medium</em>, or <em>Long term</em> — and get personalized AI-powered Stock Radars instantly.
-          </p>
-          {(() => {
-            const insideSlides = [
-              { src: insideDashboardNewImg, alt: "StocksRadars dashboard showing ADBE stock with Buy recommendation, AI score 66, and expanded RadarScore with investor profile selector" },
-              { src: insideSignalScoreImg, alt: "StocksRadars signal card with Hold recommendation, Fundamentals/News/Technical weight bars, and AI confidence signals" },
-              { src: insideAnalystRatingsImg, alt: "StocksRadars external analyst ratings with gauge, 12-month price target, and ratings distribution for MRK" },
-            ];
-            return (
-              <>
-                <div className="flex justify-center" {...insideSwipe}>
-                  <div className="w-full max-w-xs mx-auto">
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={insideIndex}
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -50 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <IPhoneFrame>
-                          <img
-                            src={insideSlides[insideIndex].src}
-                            alt={insideSlides[insideIndex].alt}
-                            className="w-full h-auto"
-                            loading="lazy"
-                          />
-                        </IPhoneFrame>
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
-                </div>
-                <div className="flex items-center justify-center gap-4 mt-6">
-                  <button
-                    onClick={() => setInsideIndex((prev) => (prev - 1 + insideSlides.length) % insideSlides.length)}
-                    className="p-2 rounded-full border border-border hover:bg-accent transition-colors"
-                    aria-label="Previous screenshot"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <div className="flex gap-2">
-                    {insideSlides.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setInsideIndex(i)}
-                        className={`w-2.5 h-2.5 rounded-full transition-colors ${i === insideIndex ? "bg-primary" : "bg-border"}`}
-                        aria-label={`Go to screenshot ${i + 1}`}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => setInsideIndex((prev) => (prev + 1) % insideSlides.length)}
-                    className="p-2 rounded-full border border-border hover:bg-accent transition-colors"
-                    aria-label="Next screenshot"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
-              </>
-            );
-          })()}
-        </motion.div>
-      </section>
-
-      {/* News & Sentiment */}
-      <section className="container mx-auto px-4 pb-20" aria-label="News sentiment analysis">
-        <motion.div
-          className="max-w-3xl mx-auto text-center"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          custom={0}
-          variants={fadeUp}
-        >
-          <h2 className="font-display text-3xl font-bold mb-4">User Friendly Real-Time Stock News, Fundamentals & Technical Radars</h2>
-          <p className="text-muted-foreground mb-10 max-w-lg mx-auto">
-            “Our AI RadarScore™ scans thousands of news sources and market signals to deliver clear stock insights you can act on instantly.”
-          </p>
-          {(() => {
-            const newsSlides = [
-              { src: decisionGuidanceImg, alt: "StocksRadars Decision Guidance showing fundamental strength, news sentiment, and technical momentum analysis" },
-              { src: marketSentimentImg, alt: "StocksRadars General Market Sentiment gauge with bullish, neutral, bearish signals and S&P 500 tracker chart" },
-            ];
-            return (
-              <>
-                <div className="flex justify-center" {...newsSwipe}>
-                  <div className="w-full max-w-xs mx-auto">
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={newsIndex}
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -50 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <IPhoneFrame>
-                          <img
-                            src={newsSlides[newsIndex].src}
-                            alt={newsSlides[newsIndex].alt}
-                            className="w-full h-auto"
-                            loading="lazy"
-                          />
-                        </IPhoneFrame>
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
-                </div>
-                <div className="flex items-center justify-center gap-4 mt-6">
-                  <button
-                    onClick={() => setNewsIndex((prev) => (prev - 1 + newsSlides.length) % newsSlides.length)}
-                    className="p-2 rounded-full border border-border hover:bg-accent transition-colors"
-                    aria-label="Previous screenshot"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <div className="flex gap-2">
-                    {newsSlides.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setNewsIndex(i)}
-                        className={`w-2.5 h-2.5 rounded-full transition-colors ${i === newsIndex ? "bg-primary" : "bg-border"}`}
-                        aria-label={`Go to screenshot ${i + 1}`}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => setNewsIndex((prev) => (prev + 1) % newsSlides.length)}
-                    className="p-2 rounded-full border border-border hover:bg-accent transition-colors"
-                    aria-label="Next screenshot"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
-              </>
-            );
-          })()}
-        </motion.div>
-      </section>
-
-      {/* Advanced investors callout */}
-      <section className="container mx-auto px-4 pb-20">
-        <motion.p
-          className="text-center text-lg md:text-xl text-muted-foreground italic max-w-2xl mx-auto"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          custom={0}
-          variants={fadeUp}
-        >
-          For the more advanced investor, dive deeper into detailed fundamental and technical radars — all the data you need to make informed decisions, in one place.
-        </motion.p>
-      </section>
-
-      {/* How It Works */}
-      <section className="bg-card border-y border-border py-20" aria-label="How StocksRadars work">
-        <div className="container mx-auto px-4">
-          <h2 className="font-display text-3xl font-bold text-center mb-4">How StocksRadars Work</h2>
-          <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
-            Three simple steps to smarter stock investing decisions
-          </p>
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {[
-              { icon: Zap, title: "Sign Up 7 days Free Trial", desc: "Create your free stock analysis account in seconds with Apple, Google or email." },
-              { icon: Shield, title: "Choose Your Plan", desc: "Unlock unlimited stock recommendations and full market coverage for just $9/month." },
-              { icon: BarChart3, title: "Get StocksRadars", desc: "See clear Buy, Hold, or Sell recommendations for every Nasdaq, Dow Jones, S&P 500 stock & crypto." },
-            ].map((step, i) => (
-              <motion.div
-                key={step.title}
-                className="text-center"
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                custom={i}
-                variants={fadeUp}
-              >
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <step.icon className="w-7 h-7 text-primary" />
-                </div>
-                <h3 className="font-display font-semibold text-lg mb-2">{step.title}</h3>
-                <p className="text-muted-foreground text-sm">{step.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
-
-      <section id="pricing" ref={pricingRef} className="container mx-auto px-4 py-20" aria-label="StocksRadars pricing plans">
-        <h2 className="font-display text-3xl font-bold text-center mb-4">StocksRadars Pricing</h2>
-        <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
-          Pick the plan that fits your trading style. Upgrade or downgrade anytime.
-        </p>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-          {/* Novice Trader */}
-          <Card className="border border-border relative overflow-hidden flex flex-col">
-            <CardContent className="p-6 text-center flex flex-col flex-1">
-              <p className="text-sm font-medium text-muted-foreground mb-2">NOVICE TRADER</p>
-              <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="font-display text-4xl font-bold">$0</span>
-                <span className="text-muted-foreground text-sm">/month</span>
-              </div>
-              <p className="text-muted-foreground text-sm mb-6">7-day free trial</p>
-              <ul className="text-sm text-left space-y-3 mb-6">
-                {[
-                  "2 stock checks per day",
-                  "Nasdaq, Dow & S&P 500",
-                  "Buy/Hold/Sell radars",
-                  "Basic technical analysis",
-                ].map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <span className="text-signal-buy mt-0.5">✓</span>
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-auto">
-                <Link to="/auth" onClick={() => trackPlanClick("Novice Trader", 0)}>
-                  <Button className="w-full bg-signal-buy hover:bg-signal-buy/90 text-white" size="lg">Start Free</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Day Trader */}
-          <Card className="border border-border relative overflow-hidden flex flex-col">
-            <div className="absolute top-3 right-3">
-              <TrendingUp className="w-6 h-6 text-primary" />
-            </div>
-            <CardContent className="p-6 text-center flex flex-col flex-1">
-              <p className="text-sm font-medium text-muted-foreground mb-2">DAY TRADER</p>
-              <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="font-display text-4xl font-bold">$9</span>
-                <span className="text-muted-foreground text-sm">/month</span>
-              </div>
-              <p className="text-muted-foreground text-sm mb-6">Cancel anytime</p>
-              <ul className="text-sm text-left space-y-3 mb-6">
-                {[
-                  "25 real-time stock checks/day",
-                  "All Nasdaq, Dow & S&P 500",
-                  "Simple Traders Radars",
-                  "Real-time Buy/Hold/Sell radars",
-                  "Technical & fundamental analysis",
-                ].map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <span className="text-signal-buy mt-0.5">✓</span>
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-auto">
-                <Button className="w-full active:scale-95 active:opacity-70 transition-all" size="lg" onClick={() => handlePlanClick("day_trader")} disabled={loadingTier === "day_trader"}>
-                  {loadingTier === "day_trader" ? <span className="flex items-center gap-2"><RadarLogo size={24} /> Loading…</span> : "Get Started"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Pro Day Trader */}
-          <Card className="border-2 border-primary shadow-lg relative overflow-hidden pt-4 flex flex-col">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 translate-y-0 px-4 py-1 bg-primary text-primary-foreground text-xs font-semibold rounded-b-lg whitespace-nowrap z-10">
-              MOST POPULAR
-            </div>
-            <div className="absolute top-5 right-3">
-              <Zap className="w-6 h-6 text-primary" />
-            </div>
-            <CardContent className="p-6 pt-6 text-center flex flex-col flex-1">
-              <p className="text-sm font-semibold text-muted-foreground mb-2">PRO DAY TRADER</p>
-              <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="font-display text-4xl font-bold">$19</span>
-                <span className="text-muted-foreground text-sm">/month</span>
-              </div>
-              <p className="text-muted-foreground text-sm mb-6">Cancel anytime</p>
-              <ul className="text-sm text-left space-y-3 mb-6">
-                {[
-                  "50 real-time stock checks/day",
-                  "All Nasdaq, Dow & S&P 500",
-                  "Simple + Advanced Traders Radars",
-                  "Real-time Buy/Hold/Sell radars",
-                  "Technical & fundamental analysis",
-                  "Radars adapted to Investor Profiles",
-                  "Confidence indicators",
-                ].map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <span className="text-signal-buy mt-0.5">✓</span>
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-auto">
-                <Button className="w-full active:scale-95 active:opacity-70 transition-all" size="lg" onClick={() => handlePlanClick("pro_day_trader")} disabled={loadingTier === "pro_day_trader"}>
-                  {loadingTier === "pro_day_trader" ? <span className="flex items-center gap-2"><RadarLogo size={24} /> Loading…</span> : "Get Started"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Bull Trader */}
-          <Card className="border border-border relative overflow-hidden flex flex-col">
-            <div className="absolute top-3 right-3">
-              <Crown className="w-6 h-6 text-primary" />
-            </div>
-            <CardContent className="p-6 text-center flex flex-col flex-1">
-              <p className="text-sm font-medium text-muted-foreground mb-2">BULL TRADER</p>
-              <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="font-display text-4xl font-bold">$29</span>
-                <span className="text-muted-foreground text-sm">/month</span>
-              </div>
-              <p className="text-muted-foreground text-sm mb-6">Cancel anytime</p>
-              <ul className="text-sm text-left space-y-3 mb-6">
-                {[
-                  "Unlimited real-time stock checks",
-                  "All Nasdaq, Dow & S&P 500",
-                  "Simple + Advanced Traders Radars",
-                  "Real-time Buy/Hold/Sell radars",
-                  "Technical & fundamental analysis",
-                  "Crypto radars (BTC, ETH & more)",
-                  "Radars adapted to Investor Profiles",
-                  "Confidence indicators",
-                  "Priority support",
-                ].map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <span className="text-signal-buy mt-0.5">✓</span>
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-auto">
-                <Button className="w-full active:scale-95 active:opacity-70 transition-all" size="lg" onClick={() => handlePlanClick("bull_trader")} disabled={loadingTier === "bull_trader"}>
-                  {loadingTier === "bull_trader" ? <span className="flex items-center gap-2"><RadarLogo size={24} /> Loading…</span> : "Get Started"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Algorithm Description */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.p
-            className="text-base text-muted-foreground/80 mb-6 max-w-2xl mx-auto italic"
-            initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp}
-          >
-            Our proprietary AI-powered stock algorithm - RadarScore™ - analyze massive amounts of market data — fundamental analysis, real-time news sentiment, and technical indicators — delivering a single, clear stock recommendation you can trust.
-            <br /><br />
-            No jargon, no complexity: just actionable stock radars designed for beginner and everyday investors who want professional-grade stock market insights without the learning curve.
-          </motion.p>
-
-          <motion.p
-            className="text-sm font-medium text-muted-foreground mb-16"
-            initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0.5} variants={fadeUp}
-          >
-            Founder - D. Juskus
-          </motion.p>
-
-        </div>
-      </section>
-
-      {/* Customer Testimonials Slider */}
-      <section className="container mx-auto px-4 py-20" aria-label="Customer reviews">
-        <h2 className="font-display text-3xl font-bold text-center mb-4">What investors say about StocksRadars</h2>
-        <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
-          Real reviews from everyday investors using our stock recommendation tool
-        </p>
-        <div className="relative max-w-2xl mx-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={testimonialIndex}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.3 }}
-              {...testimonialSwipe}
-            >
-              <Card className="h-full">
-                <CardContent className="p-8">
-                  <p className="text-base text-muted-foreground mb-6 italic leading-relaxed">"{testimonials[testimonialIndex].quote}"</p>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={testimonials[testimonialIndex].avatar}
-                      alt={testimonials[testimonialIndex].name}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div>
-                      <p className="text-sm font-medium">{testimonials[testimonialIndex].name}</p>
-                      <p className="text-xs text-muted-foreground">{testimonials[testimonialIndex].role}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Left */}
+          <div>
+            <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp}>
+              <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "1rem" }}>
+                RadarScore™ AI Engine
+              </p>
             </motion.div>
-          </AnimatePresence>
-          <div className="flex items-center justify-center gap-4 mt-6">
-            <button
-              onClick={prevTestimonial}
-              className="p-2 rounded-full border border-border hover:bg-accent transition-colors"
-              aria-label="Previous testimonial"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <div className="flex gap-2">
-              {testimonials.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setTestimonialIndex(i)}
-                  className={`w-2.5 h-2.5 rounded-full transition-colors ${i === testimonialIndex ? "bg-primary" : "bg-border"}`}
-                  aria-label={`Go to testimonial ${i + 1}`}
-                />
+
+            <motion.h1 initial="hidden" animate="visible" custom={1} variants={fadeUp}
+              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(4rem, 8vw, 7rem)", lineHeight: 0.95, letterSpacing: "-0.01em", textTransform: "uppercase", margin: "0 0 1.5rem" }}>
+              <span style={{ color: WHITE }}>AI STOCK</span><br />
+              <span style={{ color: CYAN }}>SIGNALS</span>
+            </motion.h1>
+
+            <motion.p initial="hidden" animate="visible" custom={2} variants={fadeUp}
+              style={{ fontFamily: "'Barlow', sans-serif", fontSize: "1.1rem", color: MUTED, lineHeight: 1.6, marginBottom: "2rem", maxWidth: "420px" }}>
+              Professional trading rules for smart retail investors. RadarScore™ analyses fundamentals, sentiment and technicals — delivering one clear signal.
+            </motion.p>
+
+            {/* Market pills */}
+            <motion.div initial="hidden" animate="visible" custom={3} variants={fadeUp}
+              style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "2.5rem" }}>
+              {["NASDAQ", "S&P 500", "DOW JONES", "CRYPTO"].map((m) => (
+                <span key={m} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.68rem", letterSpacing: "0.14em", textTransform: "uppercase", color: CYAN, background: "rgba(0,212,255,0.08)", border: `1px solid rgba(0,212,255,0.25)`, padding: "0.3rem 0.85rem" }}>
+                  {m}
+                </span>
+              ))}
+            </motion.div>
+
+            {/* CTAs */}
+            <motion.div initial="hidden" animate="visible" custom={4} variants={fadeUp}
+              style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+              <Link to="/auth" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.85rem", letterSpacing: "0.12em", textTransform: "uppercase", padding: "0.9rem 2rem", textDecoration: "none", borderRadius: 0, animation: "cyanPulse 2s ease-in-out infinite" }}>
+                Start Free Trial
+              </Link>
+              <a href="#how-it-works" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "transparent", color: WHITE, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.85rem", letterSpacing: "0.12em", textTransform: "uppercase", padding: "0.9rem 2rem", textDecoration: "none", borderRadius: 0, border: `1px solid ${BORDER_CLR}` }}>
+                See How It Works
+              </a>
+            </motion.div>
+          </div>
+
+          {/* Right — radar */}
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+            style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <RadarVisual />
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── TICKER BAR ──────────────────────────────────────────────────────── */}
+      <TickerBar />
+
+      {/* ── HOW IT WORKS ────────────────────────────────────────────────────── */}
+      <section id="how-it-works" style={{ maxWidth: "1200px", margin: "0 auto", padding: "6rem 1.5rem" }} aria-label="How StocksRadars work">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp} style={{ textAlign: "center", marginBottom: "3rem" }}>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem" }}>Simple Process</p>
+          <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 3rem)", textTransform: "uppercase", letterSpacing: "0.02em", color: WHITE, margin: 0 }}>
+            How StocksRadars Work
+          </h2>
+        </motion.div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.25rem" }}>
+          {[
+            { icon: Zap,      num: 1, title: "Sign Up Free",       desc: "Create your free stock analysis account in seconds with Apple, Google or email." },
+            { icon: Shield,   num: 2, title: "Choose Your Plan",    desc: "Unlock unlimited stock recommendations and full market coverage." },
+            { icon: BarChart3, num: 3, title: "Get StocksRadars",   desc: "See clear Buy, Hold, or Sell signals for every Nasdaq, Dow Jones, S&P 500 stock & crypto." },
+          ].map((step, i) => (
+            <motion.div key={step.num} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
+              <StepCard {...step} />
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── INSIDE THE RADAR ────────────────────────────────────────────────── */}
+      <section style={{ background: NAVY2, borderTop: `1px solid ${BORDER_CLR}`, borderBottom: `1px solid ${BORDER_CLR}`, padding: "6rem 1.5rem" }} aria-label="Inside StocksRadars">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp} style={{ maxWidth: "700px", margin: "0 auto", textAlign: "center" }}>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem" }}>Platform Preview</p>
+          <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 3rem)", textTransform: "uppercase", letterSpacing: "0.02em", color: WHITE, marginBottom: "1rem" }}>
+            Inside the StocksRadars
+          </h2>
+          <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.95rem", color: MUTED, lineHeight: 1.7, marginBottom: "3rem" }}>
+            Select your investment horizon — <em style={{ color: WHITE }}>Short</em>, <em style={{ color: WHITE }}>Medium</em>, or <em style={{ color: WHITE }}>Long term</em> — and get personalised AI-powered Stock Radars instantly.
+          </p>
+
+          <div className="flex justify-center" {...insideSwipe}>
+            <div style={{ width: "100%", maxWidth: "280px", margin: "0 auto" }}>
+              <AnimatePresence mode="wait">
+                <motion.div key={insideIndex} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} transition={{ duration: 0.3 }}>
+                  <IPhoneFrame>
+                    <img src={insideSlides[insideIndex].src} alt={insideSlides[insideIndex].alt} style={{ width: "100%", height: "auto" }} loading="lazy" />
+                  </IPhoneFrame>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "1rem", marginTop: "1.5rem" }}>
+            <button onClick={() => setInsideIndex((p) => (p - 1 + insideSlides.length) % insideSlides.length)} style={{ background: "none", border: `1px solid ${BORDER_CLR}`, color: WHITE, width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} aria-label="Previous screenshot"><ChevronLeft size={16} /></button>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              {insideSlides.map((_, i) => (
+                <button key={i} onClick={() => setInsideIndex(i)} style={{ width: "8px", height: "8px", borderRadius: "50%", background: i === insideIndex ? CYAN : BORDER_CLR, border: "none", cursor: "pointer", padding: 0 }} aria-label={`Screenshot ${i + 1}`} />
               ))}
             </div>
-            <button
-              onClick={nextTestimonial}
-              className="p-2 rounded-full border border-border hover:bg-accent transition-colors"
-              aria-label="Next testimonial"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+            <button onClick={() => setInsideIndex((p) => (p + 1) % insideSlides.length)} style={{ background: "none", border: `1px solid ${BORDER_CLR}`, color: WHITE, width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} aria-label="Next screenshot"><ChevronRight size={16} /></button>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ── NEWS & SENTIMENT ─────────────────────────────────────────────────── */}
+      <section style={{ maxWidth: "700px", margin: "0 auto", padding: "6rem 1.5rem" }} aria-label="News sentiment analysis">
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp} style={{ textAlign: "center" }}>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem" }}>AI Analysis</p>
+          <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 3rem)", textTransform: "uppercase", letterSpacing: "0.02em", color: WHITE, marginBottom: "1rem" }}>
+            Real-Time News & Sentiment
+          </h2>
+          <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.95rem", color: MUTED, lineHeight: 1.7, marginBottom: "3rem" }}>
+            Our AI RadarScore™ scans thousands of news sources and market signals to deliver clear stock insights you can act on instantly.
+          </p>
+
+          <div className="flex justify-center" {...newsSwipe}>
+            <div style={{ width: "100%", maxWidth: "280px", margin: "0 auto" }}>
+              <AnimatePresence mode="wait">
+                <motion.div key={newsIndex} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} transition={{ duration: 0.3 }}>
+                  <IPhoneFrame>
+                    <img src={newsSlides[newsIndex].src} alt={newsSlides[newsIndex].alt} style={{ width: "100%", height: "auto" }} loading="lazy" />
+                  </IPhoneFrame>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "1rem", marginTop: "1.5rem" }}>
+            <button onClick={() => setNewsIndex((p) => (p - 1 + newsSlides.length) % newsSlides.length)} style={{ background: "none", border: `1px solid ${BORDER_CLR}`, color: WHITE, width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} aria-label="Previous"><ChevronLeft size={16} /></button>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              {newsSlides.map((_, i) => (
+                <button key={i} onClick={() => setNewsIndex(i)} style={{ width: "8px", height: "8px", borderRadius: "50%", background: i === newsIndex ? CYAN : BORDER_CLR, border: "none", cursor: "pointer", padding: 0 }} aria-label={`Slide ${i + 1}`} />
+              ))}
+            </div>
+            <button onClick={() => setNewsIndex((p) => (p + 1) % newsSlides.length)} style={{ background: "none", border: `1px solid ${BORDER_CLR}`, color: WHITE, width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} aria-label="Next"><ChevronRight size={16} /></button>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ── PRICING ─────────────────────────────────────────────────────────── */}
+      <section id="pricing" ref={pricingRef} style={{ background: NAVY2, borderTop: `1px solid ${BORDER_CLR}`, borderBottom: `1px solid ${BORDER_CLR}`, padding: "6rem 1.5rem" }} aria-label="StocksRadars pricing plans">
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp} style={{ textAlign: "center", marginBottom: "3rem" }}>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem" }}>Plans</p>
+            <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 3rem)", textTransform: "uppercase", letterSpacing: "0.02em", color: WHITE, marginBottom: "0.75rem" }}>
+              StocksRadars Pricing
+            </h2>
+            <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.95rem", color: MUTED }}>Pick the plan that fits your trading style. Upgrade or downgrade anytime.</p>
+          </motion.div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "1.25rem" }}>
+
+            {/* Novice Trader */}
+            {(() => {
+              const features = ["2 stock checks per day", "Nasdaq, Dow & S&P 500", "Buy/Hold/Sell radars", "Basic technical analysis"];
+              return (
+                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp}>
+                  <div style={{ ...navyCard(GREEN), padding: "1.75rem", display: "flex", flexDirection: "column", height: "100%" }}>
+                    <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: GREEN, marginBottom: "0.75rem" }}>NOVICE TRADER</p>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.25rem", marginBottom: "0.25rem" }}>
+                      <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "2.8rem", color: WHITE, lineHeight: 1 }}>$0</span>
+                      <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED }}>/month</span>
+                    </div>
+                    <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED, marginBottom: "1.5rem" }}>7-day free trial</p>
+                    <ul style={{ listStyle: "none", padding: 0, margin: "0 0 2rem", display: "flex", flexDirection: "column", gap: "0.6rem", flex: 1 }}>
+                      {features.map((f) => (
+                        <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: WHITE }}>
+                          <span style={{ color: GREEN, marginTop: "2px", flexShrink: 0 }}>✓</span>{f}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link to="/auth" onClick={() => trackPlanClick("Novice Trader", 0)} style={{ display: "block", textAlign: "center", background: GREEN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.8rem", letterSpacing: "0.12em", textTransform: "uppercase", padding: "0.85rem", textDecoration: "none", borderRadius: 0 }}>
+                      Start Free
+                    </Link>
+                  </div>
+                </motion.div>
+              );
+            })()}
+
+            {/* Day Trader */}
+            {(() => {
+              const features = ["25 real-time stock checks/day", "All Nasdaq, Dow & S&P 500", "Simple Traders Radars", "Real-time Buy/Hold/Sell radars", "Technical & fundamental analysis"];
+              return (
+                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} variants={fadeUp}>
+                  <div style={{ ...navyCard(CYAN), padding: "1.75rem", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
+                    <div style={{ position: "absolute", top: "1rem", right: "1rem" }}><TrendingUp size={18} color={CYAN} /></div>
+                    <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem" }}>DAY TRADER</p>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.25rem", marginBottom: "0.25rem" }}>
+                      <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "2.8rem", color: WHITE, lineHeight: 1 }}>$9</span>
+                      <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED }}>/month</span>
+                    </div>
+                    <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED, marginBottom: "1.5rem" }}>Cancel anytime</p>
+                    <ul style={{ listStyle: "none", padding: 0, margin: "0 0 2rem", display: "flex", flexDirection: "column", gap: "0.6rem", flex: 1 }}>
+                      {features.map((f) => (
+                        <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: WHITE }}>
+                          <span style={{ color: GREEN, marginTop: "2px", flexShrink: 0 }}>✓</span>{f}
+                        </li>
+                      ))}
+                    </ul>
+                    <button onClick={() => handlePlanClick("day_trader")} disabled={loadingTier === "day_trader"}
+                      style={{ background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.8rem", letterSpacing: "0.12em", textTransform: "uppercase", padding: "0.85rem", border: "none", borderRadius: 0, cursor: "pointer", width: "100%", opacity: loadingTier === "day_trader" ? 0.6 : 1 }}>
+                      {loadingTier === "day_trader" ? "Loading…" : "Get Started"}
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })()}
+
+            {/* Pro Day Trader — featured */}
+            {(() => {
+              const features = ["50 real-time stock checks/day", "All Nasdaq, Dow & S&P 500", "Simple + Advanced Radars", "Real-time Buy/Hold/Sell radars", "Technical & fundamental analysis", "Radars adapted to Investor Profiles", "Confidence indicators"];
+              return (
+                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={2} variants={fadeUp}>
+                  <div style={{ background: NAVY2, border: `2px solid ${CYAN}`, borderLeft: `5px solid ${CYAN}`, boxShadow: `0 0 40px rgba(0,212,255,0.15)`, padding: "1.75rem", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
+                    <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.58rem", letterSpacing: "0.18em", padding: "0.2rem 0.75rem" }}>MOST POPULAR</div>
+                    <div style={{ position: "absolute", top: "1rem", right: "1rem" }}><Zap size={18} color={CYAN} /></div>
+                    <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem", marginTop: "0.75rem" }}>PRO DAY TRADER</p>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.25rem", marginBottom: "0.25rem" }}>
+                      <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "2.8rem", color: WHITE, lineHeight: 1 }}>$19</span>
+                      <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED }}>/month</span>
+                    </div>
+                    <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED, marginBottom: "1.5rem" }}>Cancel anytime</p>
+                    <ul style={{ listStyle: "none", padding: 0, margin: "0 0 2rem", display: "flex", flexDirection: "column", gap: "0.6rem", flex: 1 }}>
+                      {features.map((f) => (
+                        <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: WHITE }}>
+                          <span style={{ color: GREEN, marginTop: "2px", flexShrink: 0 }}>✓</span>{f}
+                        </li>
+                      ))}
+                    </ul>
+                    <button onClick={() => handlePlanClick("pro_day_trader")} disabled={loadingTier === "pro_day_trader"}
+                      style={{ background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.8rem", letterSpacing: "0.12em", textTransform: "uppercase", padding: "0.85rem", border: "none", borderRadius: 0, cursor: "pointer", width: "100%", opacity: loadingTier === "pro_day_trader" ? 0.6 : 1 }}>
+                      {loadingTier === "pro_day_trader" ? "Loading…" : "Get Started"}
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })()}
+
+            {/* Bull Trader */}
+            {(() => {
+              const features = ["Unlimited real-time stock checks", "All Nasdaq, Dow & S&P 500", "Simple + Advanced Radars", "Real-time Buy/Hold/Sell radars", "Technical & fundamental analysis", "Crypto radars (BTC, ETH & more)", "Radars adapted to Investor Profiles", "Confidence indicators", "Priority support"];
+              return (
+                <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={3} variants={fadeUp}>
+                  <div style={{ ...navyCard(GOLD), padding: "1.75rem", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
+                    <div style={{ position: "absolute", top: "1rem", right: "1rem" }}><Crown size={18} color={GOLD} /></div>
+                    <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: GOLD, marginBottom: "0.75rem" }}>BULL TRADER</p>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.25rem", marginBottom: "0.25rem" }}>
+                      <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "2.8rem", color: WHITE, lineHeight: 1 }}>$29</span>
+                      <span style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED }}>/month</span>
+                    </div>
+                    <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED, marginBottom: "1.5rem" }}>Cancel anytime</p>
+                    <ul style={{ listStyle: "none", padding: 0, margin: "0 0 2rem", display: "flex", flexDirection: "column", gap: "0.6rem", flex: 1 }}>
+                      {features.map((f) => (
+                        <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem", fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: WHITE }}>
+                          <span style={{ color: GREEN, marginTop: "2px", flexShrink: 0 }}>✓</span>{f}
+                        </li>
+                      ))}
+                    </ul>
+                    <button onClick={() => handlePlanClick("bull_trader")} disabled={loadingTier === "bull_trader"}
+                      style={{ background: GOLD, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.8rem", letterSpacing: "0.12em", textTransform: "uppercase", padding: "0.85rem", border: "none", borderRadius: 0, cursor: "pointer", width: "100%", opacity: loadingTier === "bull_trader" ? 0.6 : 1 }}>
+                      {loadingTier === "bull_trader" ? "Loading…" : "Get Started"}
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })()}
+
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-10" role="contentinfo">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground space-y-4">
-          <p className="text-xs text-muted-foreground">
+      {/* ── FOUNDER QUOTE ───────────────────────────────────────────────────── */}
+      <section style={{ maxWidth: "760px", margin: "0 auto", padding: "5rem 1.5rem" }}>
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp} style={{ textAlign: "center" }}>
+          <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "1rem", color: MUTED, lineHeight: 1.8, fontStyle: "italic", marginBottom: "1.5rem" }}>
+            "Our proprietary AI-powered algorithm — RadarScore™ — analyses massive amounts of market data, delivering a single, clear stock recommendation you can trust. No jargon, no complexity: just actionable radars designed for everyday investors who want professional-grade insights without the learning curve."
+          </p>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.75rem", letterSpacing: "0.18em", textTransform: "uppercase", color: CYAN }}>D. Juskus — Founder</p>
+        </motion.div>
+      </section>
+
+      {/* ── TESTIMONIALS ────────────────────────────────────────────────────── */}
+      <section style={{ background: NAVY2, borderTop: `1px solid ${BORDER_CLR}`, borderBottom: `1px solid ${BORDER_CLR}`, padding: "6rem 1.5rem" }} aria-label="Customer reviews">
+        <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp} style={{ textAlign: "center", marginBottom: "3rem" }}>
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "0.75rem" }}>Reviews</p>
+            <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 3rem)", textTransform: "uppercase", letterSpacing: "0.02em", color: WHITE, marginBottom: "0.75rem" }}>
+              What investors say
+            </h2>
+            <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.9rem", color: MUTED }}>Real reviews from everyday investors using our stock recommendation tool</p>
+          </motion.div>
+
+          <AnimatePresence mode="wait">
+            <motion.div key={testimonialIndex} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} transition={{ duration: 0.3 }} {...testimonialSwipe}>
+              <div style={{ ...navyCard(CYAN), padding: "2rem 2rem 1.75rem" }}>
+                <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.95rem", color: MUTED, lineHeight: 1.75, fontStyle: "italic", marginBottom: "1.5rem" }}>
+                  "{testimonials[testimonialIndex].quote}"
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <img src={testimonials[testimonialIndex].avatar} alt={testimonials[testimonialIndex].name} style={{ width: "44px", height: "44px", borderRadius: "50%", objectFit: "cover", border: `2px solid ${BORDER_CLR}` }} />
+                  <div>
+                    <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.9rem", color: WHITE, letterSpacing: "0.05em" }}>{testimonials[testimonialIndex].name}</p>
+                    <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.75rem", color: MUTED }}>{testimonials[testimonialIndex].role}</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "1rem", marginTop: "1.5rem" }}>
+            <button onClick={prevTestimonial} style={{ background: "none", border: `1px solid ${BORDER_CLR}`, color: WHITE, width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} aria-label="Previous testimonial"><ChevronLeft size={16} /></button>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              {testimonials.map((_, i) => (
+                <button key={i} onClick={() => setTestimonialIndex(i)} style={{ width: "8px", height: "8px", borderRadius: "50%", background: i === testimonialIndex ? CYAN : BORDER_CLR, border: "none", cursor: "pointer", padding: 0 }} aria-label={`Testimonial ${i + 1}`} />
+              ))}
+            </div>
+            <button onClick={nextTestimonial} style={{ background: "none", border: `1px solid ${BORDER_CLR}`, color: WHITE, width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} aria-label="Next testimonial"><ChevronRight size={16} /></button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
+      <footer style={{ background: NAVY, borderTop: `1px solid ${BORDER_CLR}`, padding: "3rem 1.5rem 2.5rem" }} role="contentinfo">
+        <div style={{ maxWidth: "1200px", margin: "0 auto", textAlign: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", marginBottom: "1.5rem" }}>
+            <RadarLogo />
+            <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.1rem", color: WHITE }}>
+              Stocks<span style={{ color: CYAN }}>Radars</span>
+            </span>
+          </div>
+
+          <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.75rem", color: MUTED, maxWidth: "560px", margin: "0 auto 1.5rem", lineHeight: 1.6 }}>
             This information is not a personal recommendation or investment advice. Conduct your own research and consider your financial situation before making any investment decisions.
           </p>
-          <div className="flex items-center justify-center gap-4">
-            <Link to="/about" className="hover:text-foreground underline underline-offset-4">About</Link>
-            <span>·</span>
-            <Link to="/terms" className="hover:text-foreground underline underline-offset-4">Terms</Link>
-            <span>·</span>
-            <Link to="/privacy" className="hover:text-foreground underline underline-offset-4">Privacy</Link>
-            <span>·</span>
-            <Link to="/brand" className="hover:text-foreground underline underline-offset-4">Brand</Link>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "1.5rem", flexWrap: "wrap", marginBottom: "2rem" }}>
+            {[
+              { to: "/about",   label: "About"   },
+              { to: "/terms",   label: "Terms"   },
+              { to: "/privacy", label: "Privacy" },
+              { to: "/brand",   label: "Brand"   },
+              { to: "/contact", label: "Contact" },
+            ].map((link) => (
+              <Link key={link.to} to={link.to} style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: MUTED, textDecoration: "none" }}
+                className="hover:text-white transition-colors">
+                {link.label}
+              </Link>
+            ))}
           </div>
-          <div className="pt-6 mt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} StocksRadars</p>
-            <p className="text-xs text-muted-foreground">AI Stock Recommendations. All rights reserved.</p>
+
+          <div style={{ borderTop: `1px solid ${BORDER_CLR}`, paddingTop: "1.5rem" }}>
+            <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.75rem", color: MUTED }}>© {new Date().getFullYear()} StocksRadars — AI Stock Recommendations. All rights reserved.</p>
           </div>
         </div>
       </footer>
+
     </div>
   );
 }
