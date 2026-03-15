@@ -14,7 +14,8 @@ const RED    = "#FF4757";
 const GOLD   = "#FFB800";
 const ORANGE = "#FF8C42";
 const MUTED  = "#6B7A99";
-const BORDER = "#E0E8F0";
+const WHITE  = "#FFFFFF";
+const BORDER = "#1E3A7B";
 
 // ─── Signal config ────────────────────────────────────────────────────────────
 
@@ -56,10 +57,10 @@ const PROFILE_META: Record<InvestorProfile, { label: string; period: string }> =
 
 function whiteCard(leftColor: string = CYAN): React.CSSProperties {
   return {
-    background: "#FFFFFF",
+    background: NAVY2,
     border: `1px solid ${BORDER}`,
     borderLeft: `5px solid ${leftColor}`,
-    boxShadow: "0 4px 20px rgba(10,15,46,0.08)",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
   };
 }
 
@@ -230,7 +231,7 @@ export function StockSignalPanel({
               fontWeight: 900,
               fontSize: "6rem",
               lineHeight: 1,
-              color: NAVY,
+              color: WHITE,
               letterSpacing: "-0.02em",
             }}>
               {radarScore}
@@ -341,14 +342,14 @@ export function StockSignalPanel({
                 key={p}
                 onClick={isLocked ? onLockedProfileClick : () => onProfileChange(p)}
                 style={{
-                  background: "#FFFFFF",
+                  background: NAVY2,
                   border:     isActive ? `1px solid ${CYAN}` : `1px solid ${BORDER}`,
                   borderLeft: isActive ? `5px solid ${CYAN}` : `5px solid ${BORDER}`,
                   padding:    "0.875rem 0.75rem",
                   textAlign:  "left",
                   cursor:     "pointer",
                   opacity:    isLocked ? 0.55 : 1,
-                  boxShadow:  isActive ? `0 4px 16px rgba(0,212,255,0.18)` : "0 2px 8px rgba(10,15,46,0.06)",
+                  boxShadow:  isActive ? `0 4px 16px rgba(0,212,255,0.18)` : "0 2px 8px rgba(0,0,0,0.25)",
                   transition: "all 0.15s ease",
                   borderRadius: 0,
                   width: "100%",
@@ -461,7 +462,7 @@ export function StockSignalPanel({
                       fontWeight:    700,
                       letterSpacing: "0.1em",
                       textTransform: "uppercase",
-                      color:         NAVY,
+                      color:         WHITE,
                       marginBottom:  "0.15rem",
                     }}>
                       {pillar.label}
@@ -504,7 +505,7 @@ export function StockSignalPanel({
                   <div style={{
                     padding:    "0.875rem 1.25rem 1.125rem",
                     borderTop:  `1px solid ${BORDER}`,
-                    background: "#FAFBFC",
+                    background: NAVY,
                   }}>
                     {/* Score bar */}
                     <div style={{ marginBottom: "0.75rem" }}>
@@ -516,12 +517,12 @@ export function StockSignalPanel({
                           fontFamily: "'Barlow Condensed', sans-serif",
                           fontSize:   "0.65rem",
                           fontWeight: 700,
-                          color:      NAVY,
+                          color:      WHITE,
                         }}>
                           {pillar.score} / 100
                         </span>
                       </div>
-                      <div style={{ height: "6px", borderRadius: "3px", background: BORDER, overflow: "hidden" }}>
+                      <div style={{ height: "6px", borderRadius: "3px", background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
                         <div style={{
                           height:     "100%",
                           width:      `${pillar.score}%`,
@@ -542,7 +543,7 @@ export function StockSignalPanel({
                           fontFamily: "'Barlow Condensed', sans-serif",
                           fontSize:   "0.65rem",
                           fontWeight: 700,
-                          color:      NAVY,
+                          color:      WHITE,
                         }}>
                           {pillar.weight}%
                         </span>
