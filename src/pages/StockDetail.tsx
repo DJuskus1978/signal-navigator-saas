@@ -9,7 +9,7 @@ import { ArrowLeft, BarChart3, Newspaper, TrendingUp, Loader2, Lock, ChevronDown
 import { RadarLogo } from "@/components/RadarLogo";
 import { cn } from "@/lib/utils";
 
-import { AIRadarSignalCard } from "@/components/stock-detail/AIRadarSignalCard";
+import { StockSignalPanel } from "@/components/stock-detail/StockSignalPanel";
 import { PhaseCard } from "@/components/stock-detail/PhaseCard";
 import { AIDecisionGuidance } from "@/components/stock-detail/AIDecisionGuidance";
 import { AnalystRatingsSection } from "@/components/stock-detail/AnalystRatingsSection";
@@ -144,7 +144,7 @@ export default function StockDetail() {
         </div>
 
         {/* 1️⃣ AI Radar Signal Card */}
-        <AIRadarSignalCard
+        <StockSignalPanel
           stock={stock}
           isCrypto={isCrypto}
           onViewBreakdown={handleViewBreakdown}
