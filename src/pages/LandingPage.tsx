@@ -274,6 +274,32 @@ export default function LandingPage() {
           0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.4); }
           50%       { box-shadow: 0 0 0 8px rgba(0,212,255,0); }
         }
+
+        /* ── Prevent horizontal scroll site-wide ───────────────── */
+        html, body { overflow-x: hidden; max-width: 100%; }
+
+        /* ── Hero responsive layout ─────────────────────────────── */
+        .hero-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 3rem;
+          align-items: center;
+        }
+        @media (max-width: 767px) {
+          .hero-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            align-items: center;
+          }
+          .hero-left { width: 100%; text-align: center; }
+          .hero-h1 { font-size: clamp(3.5rem, 12vw, 7rem) !important; text-align: center !important; }
+          .hero-desc { max-width: 100% !important; text-align: center; margin-left: auto; margin-right: auto; }
+          .hero-pills { justify-content: center !important; }
+          .hero-ctas { flex-direction: column !important; align-items: stretch !important; gap: 0.75rem !important; }
+          .hero-ctas > * { width: 100% !important; justify-content: center !important; box-sizing: border-box; }
+          .hero-radar-col { max-width: 320px; width: 100%; }
+        }
       `}</style>
 
       {/* ── NAVBAR ──────────────────────────────────────────────────────────── */}
@@ -336,10 +362,10 @@ export default function LandingPage() {
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
       <section style={{ maxWidth: "1200px", margin: "0 auto", padding: "5rem 1.5rem 4rem" }} aria-label="Stock recommendations overview">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3rem", alignItems: "center" }} className="block md:grid">
+        <div className="hero-grid">
 
           {/* Left */}
-          <div>
+          <div className="hero-left">
             <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp}>
               <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: CYAN, marginBottom: "1rem" }}>
                 RadarScore™ AI Engine
@@ -347,18 +373,21 @@ export default function LandingPage() {
             </motion.div>
 
             <motion.h1 initial="hidden" animate="visible" custom={1} variants={fadeUp}
+              className="hero-h1"
               style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "clamp(4rem, 8vw, 7rem)", lineHeight: 0.95, letterSpacing: "-0.01em", textTransform: "uppercase", margin: "0 0 1.5rem" }}>
               <span style={{ color: WHITE }}>AI STOCK</span><br />
               <span style={{ color: CYAN }}>SIGNALS</span>
             </motion.h1>
 
             <motion.p initial="hidden" animate="visible" custom={2} variants={fadeUp}
+              className="hero-desc"
               style={{ fontFamily: "'Barlow', sans-serif", fontSize: "1.1rem", color: MUTED, lineHeight: 1.6, marginBottom: "2rem", maxWidth: "420px" }}>
               Professional trading rules for smart retail investors. RadarScore™ analyses fundamentals, sentiment and technicals — delivering one clear signal.
             </motion.p>
 
             {/* Market pills */}
             <motion.div initial="hidden" animate="visible" custom={3} variants={fadeUp}
+              className="hero-pills"
               style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "2.5rem" }}>
               {["NASDAQ", "S&P 500", "DOW JONES", "CRYPTO"].map((m) => (
                 <span key={m} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.68rem", letterSpacing: "0.14em", textTransform: "uppercase", color: CYAN, background: "rgba(0,212,255,0.08)", border: `1px solid rgba(0,212,255,0.25)`, padding: "0.3rem 0.85rem" }}>
@@ -369,6 +398,7 @@ export default function LandingPage() {
 
             {/* CTAs */}
             <motion.div initial="hidden" animate="visible" custom={4} variants={fadeUp}
+              className="hero-ctas"
               style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
               <Link to="/auth" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: CYAN, color: NAVY, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.85rem", letterSpacing: "0.12em", textTransform: "uppercase", padding: "0.9rem 2rem", textDecoration: "none", borderRadius: 0, animation: "cyanPulse 2s ease-in-out infinite" }}>
                 Start Free Trial
@@ -381,6 +411,7 @@ export default function LandingPage() {
 
           {/* Right — radar */}
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+            className="hero-radar-col"
             style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
             <RadarVisual />
           </motion.div>
