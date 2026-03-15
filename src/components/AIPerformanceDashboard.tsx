@@ -243,15 +243,25 @@ export function AIPerformanceDashboard() {
       transition={{ duration: 0.5 }}
       style={{ background: NAVY2, border: `1px solid ${BORDER_CLR}`, borderLeft: `5px solid ${CYAN}`, boxShadow: "0 4px 20px rgba(0,0,0,0.25)" }}
     >
+      <style>{`
+        @keyframes cyanPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.5); opacity: 1; }
+          50%       { box-shadow: 0 0 0 5px rgba(0,212,255,0);  opacity: 0.6; }
+        }
+      `}</style>
       {/* Header */}
       <div style={{ padding: "1.5rem 1.5rem 1.25rem", borderBottom: `1px solid ${BORDER_CLR}`, display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <Target size={18} color={CYAN} style={{ flexShrink: 0 }} />
-        <div>
-          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, margin: 0, lineHeight: 1 }}>
-            AI Performance Tracker
-          </p>
-          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "1rem", color: WHITE, margin: "0.2rem 0 0", lineHeight: 1 }}>
-            Live AI Portfolio
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.2rem" }}>
+            {/* Animated live pulse dot */}
+            <span style={{ display: "inline-block", width: "7px", height: "7px", borderRadius: "50%", background: CYAN, animation: "cyanPulse 2s ease-in-out infinite", flexShrink: 0 }} />
+            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: CYAN, margin: 0, lineHeight: 1 }}>
+              Live
+            </p>
+          </div>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "1.05rem", color: WHITE, margin: 0, lineHeight: 1.1, letterSpacing: "0.02em", textTransform: "uppercase" }}>
+            StocksRadars AI Portfolio Tracker
           </p>
           <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.75rem", color: MUTED, margin: "0.25rem 0 0", lineHeight: 1 }}>
             Real-time portfolio powered by StocksRadars AI —{" "}
@@ -287,20 +297,83 @@ export function AIPerformanceDashboard() {
         </div>
 
         {!hasData ? (
-          /* ── No data state ── */
-          <div style={{ textAlign: "center", padding: "2rem 0" }}>
-            <BarChart3 size={40} color={`${CYAN}50`} style={{ margin: "0 auto 1rem" }} />
-            <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "1rem", color: WHITE, marginBottom: "0.5rem" }}>
-              Portfolio tracking just started
-            </p>
-            <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.83rem", color: MUTED, lineHeight: 1.6, marginBottom: "1.25rem" }}>
-              Our AI is selecting the top 10 stocks from each major index daily.<br />
-              Check back to see live performance results.
-            </p>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "rgba(0,212,255,0.1)", border: `1px solid rgba(0,212,255,0.25)`, padding: "0.5rem 1.25rem", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.8rem", letterSpacing: "0.1em", color: CYAN }}>
-              <Target size={14} color={CYAN} />
-              Starting value: $100,000
+          /* ── Launch placeholder state ── */
+          <div>
+            {/* Capital + status banner */}
+            <div style={{ background: NAVY, border: `1px solid ${BORDER_CLR}`, borderLeft: `3px solid ${CYAN}`, padding: "1.25rem 1.25rem", marginBottom: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
+              <div>
+                <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: MUTED, margin: "0 0 0.25rem" }}>
+                  Starting Capital
+                </p>
+                <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "2.2rem", color: WHITE, margin: 0, lineHeight: 1 }}>
+                  $100,000
+                </p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "rgba(0,212,255,0.08)", border: `1px solid rgba(0,212,255,0.25)`, padding: "0.5rem 1rem" }}>
+                <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: CYAN, display: "inline-block", animation: "cyanPulse 2s ease-in-out infinite", flexShrink: 0 }} />
+                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", color: CYAN }}>
+                  AI Portfolio Launching — First Signals Processing Today
+                </span>
+              </div>
             </div>
+
+            {/* Strategy info cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "1rem" }}>
+              {[
+                { label: "Strategy",         value: "Top AI signals across Nasdaq, S&P 500 & Dow Jones" },
+                { label: "Universe",          value: "30 positions — top 10 per index, rebalanced daily" },
+                { label: "Risk Management",   value: "Max 5% per position — hard stop-loss at -8%" },
+                { label: "First Positions",   value: "Expected within 24 hours of launch" },
+              ].map((item) => (
+                <div key={item.label} style={{ background: NAVY, border: `1px solid ${BORDER_CLR}`, padding: "0.875rem 1rem" }}>
+                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: MUTED, margin: "0 0 0.3rem" }}>
+                    {item.label}
+                  </p>
+                  <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.8rem", color: WHITE, margin: 0, lineHeight: 1.4 }}>
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Benchmarks preview — will populate with real data */}
+            <div style={{ border: `1px solid ${BORDER_CLR}`, overflow: "hidden", marginBottom: "0.75rem" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ background: NAVY }}>
+                    <th style={{ textAlign: "left", padding: "0.6rem 1rem", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: MUTED }}>Strategy</th>
+                    <th style={{ textAlign: "right", padding: "0.6rem 1rem", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: MUTED }}>Return</th>
+                    <th style={{ textAlign: "right", padding: "0.6rem 1rem", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: MUTED }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { name: "🤖 StocksRadars AI", ret: "—",    highlight: true },
+                    { name: "S&P 500",             ret: "—",    highlight: false },
+                    { name: "NASDAQ",              ret: "—",    highlight: false },
+                    { name: "Dow Jones",           ret: "—",    highlight: false },
+                  ].map((row) => (
+                    <tr key={row.name} style={{ borderTop: `1px solid ${BORDER_CLR}`, background: row.highlight ? "rgba(0,212,255,0.04)" : "transparent" }}>
+                      <td style={{ padding: "0.7rem 1rem", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: row.highlight ? 700 : 500, fontSize: "0.85rem", color: row.highlight ? CYAN : WHITE }}>
+                        {row.name}
+                      </td>
+                      <td style={{ padding: "0.7rem 1rem", textAlign: "right", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: "0.85rem", color: MUTED }}>
+                        {row.ret}
+                      </td>
+                      <td style={{ padding: "0.7rem 1rem", textAlign: "right" }}>
+                        <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.15rem 0.5rem", background: "rgba(0,212,255,0.08)", color: CYAN }}>
+                          {row.highlight ? "Launching" : "Tracking"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <p style={{ fontFamily: "'Barlow', sans-serif", fontSize: "0.68rem", color: MUTED, textAlign: "center", lineHeight: 1.5, opacity: 0.7, margin: 0 }}>
+              AI dynamically selects and rebalances top 10 stocks from Nasdaq, S&amp;P 500 and Dow Jones daily based on RadarScore. Check back in 24 hours for live results.
+            </p>
           </div>
         ) : (
           <>
